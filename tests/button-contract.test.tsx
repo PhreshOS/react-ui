@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { standardTheme } from "@phreshos/core"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { createRef, type ReactNode } from "react"
+import { standardTheme } from "@phreshos/core"
 import { Button, ThemeProvider } from "../source/main.js"
 
 afterEach(cleanup)

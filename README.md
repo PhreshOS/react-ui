@@ -82,13 +82,16 @@ const spacing = useScale(theme.spacing)
 Explicit values such as `4rem` are used directly — passing them through a
 Theme hook would perform no additional work.
 
-`Surface` is the shared opaque system material. It preserves the native
-`<div>` contract and adds no layout or geometry of its own:
+`Surface` is the shared opaque system material. It derives its background from
+the middle treatment of the Theme background, preserves the native `<div>`
+contract, and adds no layout or geometry of its own:
 
 ```tsx
 <Surface className="grid rounded-xl shadow-lg">
   ...
 </Surface>
+
+<Surface color="strong">...</Surface>
 ```
 
 Its grain, tactile texture, and specular light are painted as background
@@ -169,8 +172,9 @@ Pending Buttons remain focusable but cannot activate. Disabled Buttons leave
 the focus order entirely. The native element defaults to `type="button"`, so
 placing it inside a form never triggers an accidental submission.
 
-`ThemeProvider` accepts a plain `ThemeProperties` snapshot, so the library
-remains usable without either environment SDK. A Program can adapt its
+`ThemeProvider` accepts a plain `ThemeProperties` snapshot, such as Core's
+`standardTheme`, so the library remains usable without either environment SDK.
+A Program can adapt its
 observable Host value at the application boundary:
 
 ```tsx

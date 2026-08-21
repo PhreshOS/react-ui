@@ -1,7 +1,7 @@
-import { standardTheme } from "@phreshos/core"
 import { cleanup, render, screen } from "@testing-library/react"
 import { createRef } from "react"
 import { afterEach, describe, expect, it } from "vitest"
+import { standardTheme } from "@phreshos/core"
 import { GlassSurface, ThemeProvider } from "../source/main.js"
 
 afterEach(cleanup)
@@ -32,7 +32,7 @@ describe("GlassSurface", function () {
     expect(glass.style.borderRadius).toBe("18px")
     expect(glass.style.padding).toBe("12px")
     expect(glass.style.color).toBe("rgb(24, 52, 71)")
-    expect(glass.style.backgroundColor).toBe("color-mix(in srgb, rgb(237, 248, 252) 12%, transparent)")
+    expect(glass.style.backgroundColor).toBe("color-mix(in srgb, rgb(245, 244, 238) 12%, transparent)")
     expect(glass.style.backdropFilter).toContain("blur(4px) saturate(1.8) brightness(1.06)")
     expect(glass.style.boxShadow).toContain("inset 1px 1px 0")
     expect(glass.textContent).toBe("Content")
@@ -54,7 +54,7 @@ describe("GlassSurface", function () {
     const displacement = glass.querySelector("feDisplacementMap")
 
     expect(glass.style.backdropFilter).toContain("blur(2px) saturate(1.8) brightness(1.09)")
-    expect(glass.style.backgroundColor).toBe("color-mix(in srgb, rgb(237, 248, 252) 18%, transparent)")
+    expect(glass.style.backgroundColor).toBe("color-mix(in srgb, rgb(245, 244, 238) 18%, transparent)")
     expect(displacement?.getAttribute("scale")).toBe("105")
   })
 
@@ -102,7 +102,7 @@ describe("GlassSurface", function () {
 
     const glass = screen.getByTestId("glass")
 
-    expect(glass.style.backgroundColor).toBe("color-mix(in srgb, rgb(237, 248, 252) 30%, transparent)")
+    expect(glass.style.backgroundColor).toBe("color-mix(in srgb, rgb(245, 244, 238) 30%, transparent)")
     expect(glass.style.backgroundImage).toContain("30%")
     expect(glass.style.opacity).toBe("")
     expect(glass.textContent).toBe("Content")

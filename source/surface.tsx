@@ -1,8 +1,10 @@
 import { forwardRef } from "react"
 import type { ComponentPropsWithoutRef, CSSProperties } from "react"
+import { color as deriveColor, type Colorable, type ColorLevel } from "@phreshos/core"
+import { useTheme } from "./theme-provider.js"
 
-/** Native properties accepted by the shared surface. */
-export type SurfaceProps = ComponentPropsWithoutRef<"div">
+/** Properties accepted by the shared surface. */
+export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "color"> & Colorable<ColorLevel>
 
 /**
  * Contains content within the system's shared opaque material.
@@ -11,13 +13,16 @@ export type SurfaceProps = ComponentPropsWithoutRef<"div">
  * elevation remain ordinary native container concerns.
  */
 export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface(
-  { style, ...properties },
+  { color = "base", style, ...properties },
   ref
 ) {
+  const theme = useTheme()
+  const backgroundColor = deriveColor(theme.background)[color]
+
   return <div
     {...properties}
     ref={ref}
-    style={{ ...material, ...style }}
+    style={{ ...material, backgroundColor, ...style }}
   />
 })
 
@@ -28,7 +33,6 @@ const tactile = "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='ht
 const specular = "linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(240, 238, 230, 0.12) 60%, rgba(210, 208, 200, 0.18) 100%)"
 
 const material = Object.freeze({
-  backgroundColor: "#f5f4ee",
   backgroundImage: `${specular}, ${tactile}, ${grain}`,
   backgroundBlendMode: "normal, overlay, multiply",
   border: "1px solid rgba(15, 17, 21, 0.08)",
