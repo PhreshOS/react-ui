@@ -82,6 +82,19 @@ const spacing = useScale(theme.spacing)
 Explicit values such as `4rem` are used directly — passing them through a
 Theme hook would perform no additional work.
 
+`Surface` is the shared opaque system material. It preserves the native
+`<div>` contract and adds no layout or geometry of its own:
+
+```tsx
+<Surface className="grid rounded-xl shadow-lg">
+  ...
+</Surface>
+```
+
+Its grain, tactile texture, and specular light are painted as background
+layers, so children remain direct children of the container. Surface does not
+blur the content behind it.
+
 The Theme stores unrestricted CSS background, foreground, and accent sources.
 Core derives the fixed `subtle`, `soft`, `base`, `strong`, and `intense`
 treatments from any supplied color, preserving the value exactly at `base`.
