@@ -1,10 +1,13 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { createRef, type ReactNode } from "react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 import { standardTheme } from "@phreshos/core"
 import { Surface, ThemeProvider } from "../source/main.js"
 
-afterEach(cleanup)
+afterEach(function () {
+  cleanup()
+  vi.restoreAllMocks()
+})
 
 describe("Surface", function () {
   it("requires the explicit Theme that supplies its background", function () {
@@ -32,13 +35,18 @@ describe("Surface", function () {
     expect(surface.style.borderRadius).toBe("18px")
     expect(surface.style.padding).toBe("12px")
     expect(surface.querySelector("span")?.textContent).toBe("Content")
+    expect(surface.querySelector("[data-surface-material]")).toBeInstanceOf(SVGSVGElement)
     expect(surface.querySelector("canvas")).toBeNull()
   })
 
-  it("renders only the Theme radius and foreground without enabling blur", function () {
+  it("renders the complete Theme material without enabling blur", function () {
     renderSurface(<Surface data-testid="surface" />)
 
     const surface = screen.getByTestId("surface")
+    const material = required(surface.querySelector<SVGSVGElement>("[data-surface-material]"))
+    const base = required(material.querySelector<SVGRectElement>("[data-surface-base]"))
+    const grain = required(material.querySelector<SVGRectElement>("[data-surface-grain]"))
+    const edge = required(material.querySelector<SVGRectElement>("[data-surface-edge]"))
 
     expect(surface.style.backgroundColor).toBe("")
     expect(surface.style.backgroundImage).toBe("")
@@ -46,18 +54,35 @@ describe("Surface", function () {
     expect(surface.style.borderRadius).toBe("10px")
     expect(surface.style.color).toBe("rgb(24, 52, 71)")
     expect(surface.style.backdropFilter).toBe("")
+    expect(surface.style.position).toBe("relative")
+    expect(surface.style.isolation).toBe("isolate")
+    expect(material.style.opacity).toBe("1")
+    expect(base.getAttribute("fill")).toBe("#f5f4ee")
+    expect(grain.getAttribute("opacity")).toBe("0.04")
+    expect(material.querySelectorAll("[data-surface-grain-tone]")).toHaveLength(16)
+    expect(edge.getAttribute("stroke")).toBe("rgb(15, 17, 21)")
+    expect(edge.getAttribute("stroke-opacity")).toBe("0.08")
+    expect(edge.getAttribute("stroke-width")).toBe("2")
   })
 
-  it("ignores canvas color treatments", function () {
+  it("resolves Theme color treatments and direct colors into each local material", function () {
     renderSurface(<>
       <Surface data-testid="base" />
       <Surface data-testid="strong" color="strong" />
       <Surface data-testid="direct" color="#123456" />
     </>)
 
-    expect(screen.getByTestId("base").style.backgroundColor).toBe("")
-    expect(screen.getByTestId("strong").style.backgroundColor).toBe("")
-    expect(screen.getByTestId("direct").style.backgroundColor).toBe("")
+    expect(baseColor("base")).toBe("#f5f4ee")
+    expect(baseColor("strong")).toBe("color-mix(in oklch, #f5f4ee 82%, black)")
+    expect(baseColor("direct")).toBe("#123456")
+  })
+
+  it("uses the top-level Theme background as its default material color", function () {
+    render(<ThemeProvider theme={{ ...standardTheme, background: "#123456" }}>
+      <Surface data-testid="surface" />
+    </ThemeProvider>)
+
+    expect(baseColor("surface")).toBe("#123456")
   })
 
   it("accepts concrete material ranges without leaking them as div attributes", function () {
@@ -70,9 +95,13 @@ describe("Surface", function () {
     />)
 
     const surface = screen.getByTestId("surface")
+    const material = required(surface.querySelector<SVGSVGElement>("[data-surface-material]"))
+    const grain = required(material.querySelector<SVGRectElement>("[data-surface-grain]"))
 
     expect(surface.style.backdropFilter).toBe("blur(8px)")
     expect(surface.style.backgroundColor).toBe("")
+    expect(grain.getAttribute("opacity")).toBe("0.9")
+    expect(material.style.opacity).toBe("0.5")
     expect(surface.hasAttribute("grain")).toBe(false)
     expect(surface.hasAttribute("animation")).toBe(false)
     expect(surface.hasAttribute("backdrop")).toBe(false)
@@ -92,8 +121,60 @@ describe("Surface", function () {
     expect(surface.style.backdropFilter).toBe("")
     expect(surface.style.getPropertyValue("-webkit-backdrop-filter")).toBe("")
   })
+
+  it("keeps caller-provided position and native backdrop styles authoritative", function () {
+    renderSurface(<Surface
+      data-testid="surface"
+      backdrop={0}
+      style={{ position: "absolute", isolation: "auto", backdropFilter: "saturate(2)" }}
+    />)
+
+    const surface = screen.getByTestId("surface")
+
+    expect(surface.style.position).toBe("absolute")
+    expect(surface.style.isolation).toBe("isolate")
+    expect(surface.style.backdropFilter).toBe("saturate(2)")
+  })
+
+  it("animates only the Surface that explicitly enables animation", function () {
+    let frame: FrameRequestCallback | undefined
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation(callback => {
+      frame = callback
+      return 1
+    })
+    vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => undefined)
+
+    renderSurface(<>
+      <Surface data-testid="animated" animation={4} />
+      <Surface data-testid="static" animation={0} />
+    </>)
+
+    const animated = grainPath("animated")
+    const staticPath = grainPath("static")
+    const animatedStart = animated.getAttribute("d")
+    const staticStart = staticPath.getAttribute("d")
+
+    frame?.(1000)
+
+    expect(animated.getAttribute("d")).not.toBe(animatedStart)
+    expect(staticPath.getAttribute("d")).toBe(staticStart)
+    expect(window.requestAnimationFrame).toHaveBeenCalledTimes(2)
+  })
 })
 
 function renderSurface(surface: ReactNode) {
   return render(<ThemeProvider theme={standardTheme}>{surface}</ThemeProvider>)
+}
+
+function baseColor(testId: string) {
+  return required(screen.getByTestId(testId).querySelector("[data-surface-base]")).getAttribute("fill")
+}
+
+function grainPath(testId: string) {
+  return required(screen.getByTestId(testId).querySelector<SVGPathElement>("[data-surface-grain-tone]"))
+}
+
+function required<T>(value: T | null): T {
+  if (value === null) throw new Error("Expected Surface material test element.")
+  return value
 }

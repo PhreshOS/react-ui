@@ -82,9 +82,10 @@ const spacing = useScale(theme.spacing)
 Explicit values such as `4rem` are used directly — passing them through a
 Theme hook would perform no additional work.
 
-`Surface` is temporarily running as a div-only diagnostic. It renders exactly
-one native `<div>` and creates no canvas, renderer, animation loop, or graphics
-context:
+`Surface` keeps a native `<div>` as its public container and gives every
+instance one locally owned pure-SVG material. The material uses a deterministic
+64×64 micro-pattern derived from the former shader grain; it creates no canvas,
+WebGL context, or shared texture:
 
 ```tsx
 <Surface className="grid rounded-xl shadow-lg">
@@ -95,11 +96,14 @@ context:
 <Surface color="#101114" grain={0.2} animation={8} backdrop={4} opacity={0.9}>...</Surface>
 ```
 
-The canvas-specific `color`, `grain`, `animation`, and `opacity` properties are
-accepted and consumed so existing callers remain valid, but they currently do
-nothing and never reach the DOM. Radius and foreground remain ordinary Theme
-styles. Backdrop remains a div-owned CSS effect and emits no filter property
-when its resolved value is zero.
+`color` resolves from `Theme.background`; its semantic levels derive from that
+same source and a direct color remains an explicit local override. `grain`,
+`animation`, `backdrop`, and `opacity` resolve from `Theme.surface`, accept
+their semantic levels or direct values, and remain bounded by Core's Theme
+limits. Radius and foreground remain ordinary Theme styles. Backdrop belongs
+to the outer div and emits no filter property when its resolved value is zero.
+Animation defaults to zero; only explicitly animated Surfaces join the internal
+document clock, while every texture and seed remains local to its own Surface.
 
 The Theme stores unrestricted CSS background, foreground, and accent sources.
 Core derives the fixed `subtle`, `soft`, `base`, `strong`, and `intense`

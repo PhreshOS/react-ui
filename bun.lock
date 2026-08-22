@@ -22,7 +22,7 @@
         "vitest": "^4.1.1",
       },
       "peerDependencies": {
-        "@phreshos/core": "^0.1.4",
+        "@phreshos/core": "^0.1.7",
         "react": "^19.2.0",
         "react-dom": "^19.2.0",
       },
