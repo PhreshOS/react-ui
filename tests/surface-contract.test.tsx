@@ -39,13 +39,12 @@ describe("Surface", function () {
     expect(surface.querySelector("canvas")).toBeNull()
   })
 
-  it("renders the complete Theme material without enabling blur", function () {
+  it("renders the grain-free standard Theme material without enabling blur", function () {
     renderSurface(<Surface data-testid="surface" />)
 
     const surface = screen.getByTestId("surface")
     const material = required(surface.querySelector<SVGSVGElement>("[data-surface-material]"))
     const base = required(material.querySelector<SVGRectElement>("[data-surface-base]"))
-    const grain = required(material.querySelector<SVGRectElement>("[data-surface-grain]"))
 
     expect(surface.style.backgroundColor).toBe("")
     expect(surface.style.backgroundImage).toBe("")
@@ -58,10 +57,9 @@ describe("Surface", function () {
     expect(material.style.opacity).toBe("1")
     expect(material.style.border).toBe("1px solid rgba(15, 17, 21, 0.08)")
     expect(material.style.boxSizing).toBe("border-box")
-    expect(base.getAttribute("fill")).toBe("#f5f4ee")
-    expect(grain.getAttribute("opacity")).toBeNull()
-    expect(material.querySelectorAll("[data-surface-grain-tone]")).toHaveLength(16)
-    expect(material.querySelector("[data-surface-grain-tone='0']")?.getAttribute("fill")).toBe("color-mix(in srgb, #f5f4ee 96%, rgb(0 0 0) 4%)")
+    expect(base.getAttribute("fill")).toBe("#fffff5")
+    expect(material.querySelector("[data-surface-grain]")).toBeNull()
+    expect(material.querySelector("[data-surface-grain-tone]")).toBeNull()
     expect(material.querySelector("[data-surface-distortion]")).toBeNull()
     expect(material.querySelector("[data-surface-edge]")).toBeNull()
   })
@@ -73,8 +71,8 @@ describe("Surface", function () {
       <Surface data-testid="direct" color="#123456" />
     </>)
 
-    expect(baseColor("base")).toBe("#f5f4ee")
-    expect(baseColor("strong")).toBe("color-mix(in oklch, #f5f4ee 82%, black)")
+    expect(baseColor("base")).toBe("#fffff5")
+    expect(baseColor("strong")).toBe("color-mix(in oklch, #fffff5 82%, black)")
     expect(baseColor("direct")).toBe("#123456")
   })
 
@@ -109,7 +107,7 @@ describe("Surface", function () {
     expect(surface.style.backdropFilter).toContain("blur(8px) saturate(1.8) brightness(1.06)")
     expect(surface.style.backgroundColor).toBe("")
     expect(grain.getAttribute("opacity")).toBeNull()
-    expect(material.querySelector("[data-surface-grain-tone='0']")?.getAttribute("fill")).toBe("color-mix(in srgb, #f5f4ee 10%, rgb(0 0 0) 90%)")
+    expect(material.querySelector("[data-surface-grain-tone='0']")?.getAttribute("fill")).toBe("color-mix(in srgb, #fffff5 10%, rgb(0 0 0) 90%)")
     expect(material.querySelectorAll("[data-surface-distortion-stage]")).toHaveLength(3)
     expect(material.style.opacity).toBe("0.5")
     expect(surface.hasAttribute("grain")).toBe(false)
@@ -194,8 +192,8 @@ describe("Surface", function () {
     vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => undefined)
 
     renderSurface(<>
-      <Surface data-testid="animated" animation={4} />
-      <Surface data-testid="static" animation={0} />
+      <Surface data-testid="animated" grain={0.04} grainAmount={1} animation={4} />
+      <Surface data-testid="static" grain={0.04} grainAmount={1} animation={0} />
     </>)
 
     const animated = grainPath("animated")
