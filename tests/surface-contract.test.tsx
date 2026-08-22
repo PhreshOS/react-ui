@@ -3,7 +3,6 @@ import { createRef, type ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 import { standardTheme } from "@phreshos/core"
 import { Surface, ThemeProvider } from "../source/main.js"
-import { prepareSurfaceLayout } from "../source/surface-renderer.js"
 
 afterEach(cleanup)
 
@@ -33,32 +32,32 @@ describe("Surface", function () {
     expect(surface.style.borderRadius).toBe("18px")
     expect(surface.style.padding).toBe("12px")
     expect(surface.querySelector("span")?.textContent).toBe("Content")
-    expect(surface.querySelector("canvas[data-surface-material]")).not.toBeNull()
+    expect(surface.querySelector("canvas")).toBeNull()
   })
 
-  it("uses the Theme Surface defaults as its non-WebGL fallback without enabling blur", function () {
+  it("renders only the Theme radius and foreground without enabling blur", function () {
     renderSurface(<Surface data-testid="surface" />)
 
     const surface = screen.getByTestId("surface")
 
-    expect(surface.style.backgroundColor).toBe("rgb(245, 244, 238)")
+    expect(surface.style.backgroundColor).toBe("")
     expect(surface.style.backgroundImage).toBe("")
-    expect(surface.style.border).toBe("1px solid rgba(15, 17, 21, 0.08)")
+    expect(surface.style.border).toBe("")
     expect(surface.style.borderRadius).toBe("10px")
     expect(surface.style.color).toBe("rgb(24, 52, 71)")
     expect(surface.style.backdropFilter).toBe("")
   })
 
-  it("uses color to select the Surface background treatment", function () {
+  it("ignores canvas color treatments", function () {
     renderSurface(<>
       <Surface data-testid="base" />
       <Surface data-testid="strong" color="strong" />
       <Surface data-testid="direct" color="#123456" />
     </>)
 
-    expect(screen.getByTestId("base").style.backgroundColor).toBe("rgb(245, 244, 238)")
-    expect(screen.getByTestId("strong").style.backgroundColor).toContain("color-mix(in oklch")
-    expect(screen.getByTestId("direct").style.backgroundColor).toBe("rgb(18, 52, 86)")
+    expect(screen.getByTestId("base").style.backgroundColor).toBe("")
+    expect(screen.getByTestId("strong").style.backgroundColor).toBe("")
+    expect(screen.getByTestId("direct").style.backgroundColor).toBe("")
   })
 
   it("accepts concrete material ranges without leaking them as div attributes", function () {
@@ -73,7 +72,7 @@ describe("Surface", function () {
     const surface = screen.getByTestId("surface")
 
     expect(surface.style.backdropFilter).toBe("blur(8px)")
-    expect(surface.style.backgroundColor).toContain("color-mix(in srgb")
+    expect(surface.style.backgroundColor).toBe("")
     expect(surface.hasAttribute("grain")).toBe(false)
     expect(surface.hasAttribute("animation")).toBe(false)
     expect(surface.hasAttribute("backdrop")).toBe(false)
@@ -92,37 +91,6 @@ describe("Surface", function () {
 
     expect(surface.style.backdropFilter).toBe("")
     expect(surface.style.getPropertyValue("-webkit-backdrop-filter")).toBe("")
-  })
-})
-
-describe("Surface material layout", function () {
-  it("does not replace an existing positioning owner", function () {
-    const surface = document.createElement("div")
-    surface.style.position = "absolute"
-
-    const restore = prepareSurfaceLayout(surface)
-
-    expect(surface.style.position).toBe("absolute")
-    expect(surface.style.isolation).toBe("isolate")
-
-    restore()
-
-    expect(surface.style.position).toBe("absolute")
-    expect(surface.style.isolation).toBe("")
-  })
-
-  it("creates and restores a containing block only for a static Surface", function () {
-    const surface = document.createElement("div")
-
-    const restore = prepareSurfaceLayout(surface)
-
-    expect(surface.style.position).toBe("relative")
-    expect(surface.style.isolation).toBe("isolate")
-
-    restore()
-
-    expect(surface.style.position).toBe("")
-    expect(surface.style.isolation).toBe("")
   })
 })
 

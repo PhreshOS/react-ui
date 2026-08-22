@@ -82,11 +82,9 @@ const spacing = useScale(theme.spacing)
 Explicit values such as `4rem` are used directly — passing them through a
 Theme hook would perform no additional work.
 
-`Surface` is the shared system material. It derives concrete defaults from the
-Theme's `surface` section and preserves the native `<div>` contract. Surfaces
-in one document share one offscreen WebGL context. Each Surface receives an
-independent immutable frame through its local presentation canvas, keeping the
-material behind only its own content:
+`Surface` is temporarily running as a div-only diagnostic. It renders exactly
+one native `<div>` and creates no canvas, renderer, animation loop, or graphics
+context:
 
 ```tsx
 <Surface className="grid rounded-xl shadow-lg">
@@ -97,14 +95,11 @@ material behind only its own content:
 <Surface color="#101114" grain={0.2} animation={8} backdrop={4} opacity={0.9}>...</Surface>
 ```
 
-`color` accepts a color level or direct CSS color. `grain`, `animation`,
-`backdrop`, and `opacity` accept a scale level or direct number and are clamped
-to Core's property-specific ranges. Radius comes from the Theme unless native
-style overrides it. Backdrop blur is opt-in: when its resolved value is zero,
-Surface emits no backdrop-filter property. Unsupported WebGL environments keep
-a solid CSS material fallback without restoring the removed SVG grain. Shared
-rendering requires `OffscreenCanvas`, WebGL 2, transferable `ImageBitmap`
-frames, and the canvas `bitmaprenderer` context.
+The canvas-specific `color`, `grain`, `animation`, and `opacity` properties are
+accepted and consumed so existing callers remain valid, but they currently do
+nothing and never reach the DOM. Radius and foreground remain ordinary Theme
+styles. Backdrop remains a div-owned CSS effect and emits no filter property
+when its resolved value is zero.
 
 The Theme stores unrestricted CSS background, foreground, and accent sources.
 Core derives the fixed `subtle`, `soft`, `base`, `strong`, and `intense`
