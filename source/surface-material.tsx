@@ -1,10 +1,15 @@
-import { useEffect, useId, useMemo, useRef } from "react"
+import { Fragment, useEffect, useMemo, useRef } from "react"
 
 interface SurfaceMaterialProps {
   readonly animation: number
   readonly color: string
+  readonly distortion: number
   readonly grain: number
+  readonly grainAmount: number
+  readonly identity: string
   readonly opacity: number
+  readonly ripples: number
+  readonly waves: number
 }
 
 interface AnimationEntry {
@@ -14,24 +19,28 @@ interface AnimationEntry {
 }
 
 /** The locally owned SVG paint layer inside one Surface. */
-export function SurfaceMaterial({ animation, color, grain, opacity }: SurfaceMaterialProps) {
-  const identity = `phresh-surface-${useId().replaceAll(":", "")}`
+export function SurfaceMaterial({ animation, color, distortion, grain, grainAmount, identity, opacity, ripples, waves }: SurfaceMaterialProps) {
   const seed = useMemo(() => seedFrom(identity), [identity])
-  const initial = useMemo(() => grainPaths(seed, 0), [seed])
+  const hasPaint = opacity > 0
+  const hasGrain = hasPaint && grain > 0 && grainAmount > 0
+  const hasDistortion = distortion > 0 || waves > 0 || ripples > 0
+  const initial = useMemo(() => hasGrain ? grainPaths(seed, 0, grainAmount) : [], [grainAmount, hasGrain, seed])
   const svg = useRef<SVGSVGElement>(null)
   const paths = useRef<Array<SVGPathElement | null>>([])
 
   useEffect(() => {
     paths.current.forEach((path, tone) => path?.setAttribute("d", initial[tone] ?? ""))
-    if (animation === 0 || !svg.current) return
+    if (animation === 0 || !hasGrain || !svg.current) return
 
     const paint = (frame: number) => {
-      const values = grainPaths(seed, frame)
+      const values = grainPaths(seed, frame, grainAmount)
       paths.current.forEach((path, tone) => path?.setAttribute("d", values[tone] ?? ""))
     }
 
     return animate(svg.current, animation, paint)
-  }, [animation, initial, seed])
+  }, [animation, grainAmount, hasGrain, initial, seed])
+
+  if (!hasPaint && !hasDistortion) return null
 
   return <svg
     ref={svg}
@@ -47,37 +56,127 @@ export function SurfaceMaterial({ animation, color, grain, opacity }: SurfaceMat
       height: "100%",
       overflow: "hidden",
       borderRadius: "inherit",
-      border: "1px solid rgba(15, 17, 21, 0.08)",
+      border: hasPaint ? "1px solid rgba(15, 17, 21, 0.08)" : undefined,
       boxSizing: "border-box",
       opacity,
       pointerEvents: "none"
     }}
   >
-    <defs>
-      <pattern id={identity} width={patternSize} height={patternSize} patternUnits="userSpaceOnUse">
-        {initial.map((path, tone) => {
-          const channel = Math.round(tone / (toneCount - 1) * 255)
-          return <path
-            key={tone}
-            ref={node => { paths.current[tone] = node }}
-            data-surface-grain-tone={tone}
-            d={path}
-            fill={`rgb(${channel}, ${channel}, ${channel})`}
-            shapeRendering="crispEdges"
-          />
-        })}
-      </pattern>
-    </defs>
-    <rect data-surface-base="" width="100%" height="100%" fill={color} />
-    <rect
+    {(hasGrain || hasDistortion) && <defs>
+      {hasDistortion && <DistortionFilter
+        distortion={distortion}
+        identity={identity}
+        ripples={ripples}
+        seed={seed}
+        waves={waves}
+      />}
+      {hasGrain && <pattern id={`${identity}-grain`} width={patternSize} height={patternSize} patternUnits="userSpaceOnUse">
+        {initial.map((path, tone) => <path
+          key={tone}
+          ref={node => { paths.current[tone] = node }}
+          data-surface-grain-tone={tone}
+          d={path}
+          fill={grainTone(color, tone, grain)}
+          shapeRendering="crispEdges"
+        />)}
+      </pattern>}
+    </defs>}
+    {hasPaint && <rect data-surface-base="" width="100%" height="100%" fill={color} />}
+    {hasGrain && <rect
       data-surface-grain=""
       width="100%"
       height="100%"
-      fill={`url(#${identity})`}
-      opacity={grain}
+      fill={`url(#${identity}-grain)`}
       shapeRendering="crispEdges"
-    />
+    />}
   </svg>
+}
+
+function DistortionFilter({ distortion, identity, ripples, seed, waves }: Readonly<{
+  distortion: number
+  identity: string
+  ripples: number
+  seed: number
+  waves: number
+}>) {
+  const organicResult = distortion > 0 ? `${identity}-organic` : "SourceGraphic"
+  const wavesResult = waves > 0 ? `${identity}-waves` : organicResult
+
+  return <filter
+    id={`${identity}-distortion`}
+    data-surface-distortion=""
+    x="-20%"
+    y="-20%"
+    width="140%"
+    height="140%"
+    colorInterpolationFilters="sRGB"
+  >
+    {distortion > 0 && <Fragment>
+      <feTurbulence
+        data-surface-distortion-noise=""
+        type="fractalNoise"
+        baseFrequency="0.008 0.008"
+        numOctaves={2}
+        seed={92}
+        result={`${identity}-organic-noise`}
+      />
+      <feGaussianBlur
+        in={`${identity}-organic-noise`}
+        stdDeviation={2}
+        result={`${identity}-organic-noise-blurred`}
+      />
+      <feDisplacementMap
+        data-surface-distortion-stage="organic"
+        in="SourceGraphic"
+        in2={`${identity}-organic-noise-blurred`}
+        scale={distortion}
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result={organicResult}
+      />
+    </Fragment>}
+    {waves > 0 && <Fragment>
+      <feTurbulence
+        type="turbulence"
+        baseFrequency="0.006 0.045"
+        numOctaves={1}
+        seed={seed + 17}
+        result={`${identity}-wave-noise`}
+      />
+      <feDisplacementMap
+        data-surface-distortion-stage="waves"
+        in={organicResult}
+        in2={`${identity}-wave-noise`}
+        scale={waves}
+        xChannelSelector="R"
+        yChannelSelector="G"
+        result={wavesResult}
+      />
+    </Fragment>}
+    {ripples > 0 && <Fragment>
+      <feTurbulence
+        type="turbulence"
+        baseFrequency="0.055"
+        numOctaves={2}
+        seed={seed + 31}
+        result={`${identity}-ripple-noise`}
+      />
+      <feDisplacementMap
+        data-surface-distortion-stage="ripples"
+        in={wavesResult}
+        in2={`${identity}-ripple-noise`}
+        scale={ripples}
+        xChannelSelector="B"
+        yChannelSelector="G"
+      />
+    </Fragment>}
+  </filter>
+}
+
+function grainTone(color: string, tone: number, intensity: number) {
+  const channel = Math.round(tone / (toneCount - 1) * 255)
+  const percentage = Math.round(intensity * 10_000) / 100
+  return `color-mix(in srgb, ${color} ${100 - percentage}%, rgb(${channel} ${channel} ${channel}) ${percentage}%)`
 }
 
 class AnimationClock {
@@ -140,7 +239,7 @@ function animate(element: SVGSVGElement, rate: number, paint: (frame: number) =>
   return clock.subscribe(rate, paint)
 }
 
-function grainPaths(seed: number, frame: number) {
+function grainPaths(seed: number, frame: number, amount: number) {
   const tones = Array.from({ length: toneCount }, () => [] as string[])
   const frameX = frame * 19.17
   const frameY = frame * 7.31
@@ -149,6 +248,8 @@ function grainPaths(seed: number, frame: number) {
     for (let x = 0; x < patternSize; x += 1) {
       const pointX = x + seed * 41
       const pointY = y + seed * 17
+      const presence = shaderHash(pointX + frameX + 71.9, pointY + frameY + 13.7)
+      if (presence > amount) continue
       const fine = shaderHash(Math.floor(pointX * 1.18) + frameX, Math.floor(pointY * 1.18) + frameY)
       const clustered = shaderHash(Math.floor(pointX * 0.47) + frameX + 31.7, Math.floor(pointY * 0.47) + frameY + 31.7)
       const value = clamp(fine * 0.8 + clustered * 0.2, 0, 1)

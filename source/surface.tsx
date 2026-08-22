@@ -1,9 +1,10 @@
-import { forwardRef, useCallback, useLayoutEffect, useRef } from "react"
+import { forwardRef, useCallback, useId, useLayoutEffect, useRef } from "react"
 import type { ComponentPropsWithoutRef } from "react"
 import {
   color as deriveColor,
   isScaleLevel,
   scale,
+  scaleMultiplier,
   themeLimits,
   type ColorLevel,
   type ScaleLevel,
@@ -23,6 +24,9 @@ export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "color" | "opac
   /** Theme-derived level or direct grain intensity from zero to one. */
   grain?: ScaleLevel | number
 
+  /** Theme-derived level or direct retained grain amount from zero to one. */
+  grainAmount?: ScaleLevel | number
+
   /** Theme-derived level or direct grain changes per second from zero to 16. */
   animation?: ScaleLevel | number
 
@@ -31,14 +35,30 @@ export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "color" | "opac
 
   /** Theme-derived level or direct material opacity from zero to one. */
   opacity?: ScaleLevel | number
+
+  /** Theme-derived level or direct organic displacement from zero to 140 pixels. */
+  distortion?: ScaleLevel | number
+
+  /** Theme-derived level or direct directional displacement from zero to 40 pixels. */
+  waves?: ScaleLevel | number
+
+  /** Theme-derived level or direct ripple displacement from zero to 40 pixels. */
+  ripples?: ScaleLevel | number
+
+  /** Theme-derived level or direct backdrop saturation multiplier. */
+  saturation?: ScaleLevel | number
+
+  /** Theme-derived level or direct backdrop brightness multiplier. */
+  brightness?: ScaleLevel | number
 }>
 
 /** Contains content above one independent pure-SVG Surface material. */
 export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface(
-  { animation, backdrop, children, color, grain, opacity, style, ...properties },
+  { animation, backdrop, brightness, children, color, distortion, grain, grainAmount, opacity, ripples, saturation, style, waves, ...properties },
   forwardedRef
 ) {
   const theme = useTheme()
+  const identity = `phresh-surface-${useId().replaceAll(":", "")}`
   const element = useRef<HTMLDivElement | null>(null)
   const ref = useCallback((node: HTMLDivElement | null) => {
     element.current = node
@@ -47,12 +67,25 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
   }, [forwardedRef])
   const resolvedColor = resolveColor(color, theme.background)
   const resolvedGrain = resolveScale(grain, theme.surface.grain, themeLimits.surface.grain)
+  const resolvedGrainAmount = resolveScale(grainAmount, theme.surface.grainAmount, themeLimits.surface.grainAmount)
   const resolvedAnimation = resolveScale(animation, theme.surface.animation, themeLimits.surface.animation)
   const resolvedBackdrop = resolveScale(backdrop, theme.surface.backdrop, themeLimits.surface.backdrop)
   const resolvedOpacity = resolveScale(opacity, theme.surface.opacity, themeLimits.surface.opacity)
-  const blur = resolvedBackdrop === 0 ? {} : {
-    backdropFilter: `blur(${resolvedBackdrop}px)`,
-    WebkitBackdropFilter: `blur(${resolvedBackdrop}px)`
+  const resolvedDistortion = resolveScale(distortion, theme.surface.distortion, themeLimits.surface.distortion)
+  const resolvedWaves = resolveScale(waves, theme.surface.waves, themeLimits.surface.waves)
+  const resolvedRipples = resolveScale(ripples, theme.surface.ripples, themeLimits.surface.ripples)
+  const resolvedSaturation = resolveMultiplier(saturation, theme.surface.saturation, themeLimits.surface.saturation)
+  const resolvedBrightness = resolveMultiplier(brightness, theme.surface.brightness, themeLimits.surface.brightness)
+  const hasDistortion = resolvedDistortion > 0 || resolvedWaves > 0 || resolvedRipples > 0
+  const nativeFilters = [
+    resolvedBackdrop === 0 ? "" : `blur(${resolvedBackdrop}px)`,
+    resolvedSaturation === 1 ? "" : `saturate(${resolvedSaturation})`,
+    resolvedBrightness === 1 ? "" : `brightness(${resolvedBrightness})`
+  ].filter(Boolean)
+  const filters = [hasDistortion ? `url("#${identity}-distortion")` : "", ...nativeFilters].filter(Boolean)
+  const backdropStyle = filters.length === 0 ? {} : {
+    backdropFilter: filters.join(" "),
+    ...(nativeFilters.length === 0 ? {} : { WebkitBackdropFilter: nativeFilters.join(" ") })
   }
 
   useLayoutEffect(() => {
@@ -66,15 +99,20 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
     style={{
       borderRadius: theme.radius,
       color: theme.foreground,
-      ...blur,
+      ...backdropStyle,
       ...style
     }}
   >
     <SurfaceMaterial
       animation={resolvedAnimation}
       color={resolvedColor}
+      distortion={resolvedDistortion}
       grain={resolvedGrain}
+      grainAmount={resolvedGrainAmount}
+      identity={identity}
       opacity={resolvedOpacity}
+      ripples={resolvedRipples}
+      waves={resolvedWaves}
     />
     {children}
   </div>
@@ -91,6 +129,12 @@ function isColorLevel(value: SurfaceColor): value is ColorLevel {
 
 function resolveScale(value: ScaleLevel | number | undefined, base: number, range: ThemeRange) {
   const resolved = isScaleLevel(value) ? scale(base, value) : value ?? base
+  const finite = Number.isFinite(resolved) ? resolved : base
+  return Math.min(range.maximum, Math.max(range.minimum, finite))
+}
+
+function resolveMultiplier(value: ScaleLevel | number | undefined, base: number, range: ThemeRange) {
+  const resolved = isScaleLevel(value) ? scaleMultiplier(base, value) : value ?? base
   const finite = Number.isFinite(resolved) ? resolved : base
   return Math.min(range.maximum, Math.max(range.minimum, finite))
 }

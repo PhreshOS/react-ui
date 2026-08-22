@@ -59,8 +59,10 @@ describe("Surface", function () {
     expect(material.style.border).toBe("1px solid rgba(15, 17, 21, 0.08)")
     expect(material.style.boxSizing).toBe("border-box")
     expect(base.getAttribute("fill")).toBe("#f5f4ee")
-    expect(grain.getAttribute("opacity")).toBe("0.04")
+    expect(grain.getAttribute("opacity")).toBeNull()
     expect(material.querySelectorAll("[data-surface-grain-tone]")).toHaveLength(16)
+    expect(material.querySelector("[data-surface-grain-tone='0']")?.getAttribute("fill")).toBe("color-mix(in srgb, #f5f4ee 96%, rgb(0 0 0) 4%)")
+    expect(material.querySelector("[data-surface-distortion]")).toBeNull()
     expect(material.querySelector("[data-surface-edge]")).toBeNull()
   })
 
@@ -88,8 +90,14 @@ describe("Surface", function () {
     renderSurface(<Surface
       data-testid="surface"
       grain={0.9}
+      grainAmount={0.5}
       animation={12}
       backdrop={8}
+      distortion={70}
+      waves={12}
+      ripples={8}
+      saturation={1.8}
+      brightness={1.06}
       opacity={0.5}
     />)
 
@@ -97,28 +105,70 @@ describe("Surface", function () {
     const material = required(surface.querySelector<SVGSVGElement>("[data-surface-material]"))
     const grain = required(material.querySelector<SVGRectElement>("[data-surface-grain]"))
 
-    expect(surface.style.backdropFilter).toBe("blur(8px)")
+    expect(surface.style.backdropFilter).toContain("url(")
+    expect(surface.style.backdropFilter).toContain("blur(8px) saturate(1.8) brightness(1.06)")
     expect(surface.style.backgroundColor).toBe("")
-    expect(grain.getAttribute("opacity")).toBe("0.9")
+    expect(grain.getAttribute("opacity")).toBeNull()
+    expect(material.querySelector("[data-surface-grain-tone='0']")?.getAttribute("fill")).toBe("color-mix(in srgb, #f5f4ee 10%, rgb(0 0 0) 90%)")
+    expect(material.querySelectorAll("[data-surface-distortion-stage]")).toHaveLength(3)
     expect(material.style.opacity).toBe("0.5")
     expect(surface.hasAttribute("grain")).toBe(false)
+    expect(surface.hasAttribute("grainAmount")).toBe(false)
     expect(surface.hasAttribute("animation")).toBe(false)
     expect(surface.hasAttribute("backdrop")).toBe(false)
+    expect(surface.hasAttribute("distortion")).toBe(false)
+    expect(surface.hasAttribute("waves")).toBe(false)
+    expect(surface.hasAttribute("ripples")).toBe(false)
+    expect(surface.hasAttribute("saturation")).toBe(false)
+    expect(surface.hasAttribute("brightness")).toBe(false)
     expect(surface.hasAttribute("opacity")).toBe(false)
   })
 
   it("removes its backdrop properties when the resolved value returns to zero", function () {
-    const rendered = renderSurface(<Surface data-testid="surface" backdrop={8} />)
+    const rendered = renderSurface(<Surface data-testid="surface" backdrop={8} distortion={70} saturation={1.8} brightness={1.06} />)
     const surface = screen.getByTestId("surface")
 
-    expect(surface.style.backdropFilter).toBe("blur(8px)")
+    expect(surface.style.backdropFilter).toContain("url(")
 
     rendered.rerender(<ThemeProvider theme={standardTheme}>
-      <Surface data-testid="surface" backdrop={0} />
+      <Surface data-testid="surface" backdrop={0} distortion={0} waves={0} ripples={0} saturation={1} brightness={1} />
     </ThemeProvider>)
 
     expect(surface.style.backdropFilter).toBe("")
     expect(surface.style.getPropertyValue("-webkit-backdrop-filter")).toBe("")
+    expect(surface.querySelector("[data-surface-distortion]")).toBeNull()
+  })
+
+  it("omits grain and its animation when either grain dimension is zero", function () {
+    vi.spyOn(window, "requestAnimationFrame")
+
+    renderSurface(<>
+      <Surface data-testid="no-intensity" grain={0} grainAmount={1} animation={16} />
+      <Surface data-testid="no-amount" grain={1} grainAmount={0} animation={16} />
+    </>)
+
+    for (const testId of ["no-intensity", "no-amount"]) {
+      const material = required(screen.getByTestId(testId).querySelector<SVGSVGElement>("[data-surface-material]"))
+      expect(material.querySelector("[data-surface-grain]")).toBeNull()
+      expect(material.querySelector("[data-surface-grain-tone]")).toBeNull()
+    }
+    expect(window.requestAnimationFrame).not.toHaveBeenCalled()
+  })
+
+  it("omits the complete SVG material when opacity and displacement are zero", function () {
+    renderSurface(<Surface data-testid="surface" opacity={0} distortion={0} waves={0} ripples={0} />)
+
+    expect(screen.getByTestId("surface").querySelector("[data-surface-material]")).toBeNull()
+  })
+
+  it("creates only the enabled SVG displacement stages", function () {
+    renderSurface(<Surface data-testid="surface" distortion={0} waves={12} ripples={0} />)
+
+    const material = required(screen.getByTestId("surface").querySelector<SVGSVGElement>("[data-surface-material]"))
+    expect(material.querySelector('[data-surface-distortion-stage="organic"]')).toBeNull()
+    expect(material.querySelector('[data-surface-distortion-stage="waves"]')).not.toBeNull()
+    expect(material.querySelector('[data-surface-distortion-stage="ripples"]')).toBeNull()
+    expect(material.querySelector("[data-surface-distortion-noise]")).toBeNull()
   })
 
   it("keeps caller-provided position and native backdrop styles authoritative", function () {
