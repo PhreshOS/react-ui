@@ -47,6 +47,8 @@ export function SurfaceMaterial({ animation, color, grain, opacity }: SurfaceMat
       height: "100%",
       overflow: "hidden",
       borderRadius: "inherit",
+      border: "1px solid rgba(15, 17, 21, 0.08)",
+      boxSizing: "border-box",
       opacity,
       pointerEvents: "none"
     }}
@@ -74,16 +76,6 @@ export function SurfaceMaterial({ animation, color, grain, opacity }: SurfaceMat
       fill={`url(#${identity})`}
       opacity={grain}
       shapeRendering="crispEdges"
-    />
-    <rect
-      data-surface-edge=""
-      width="100%"
-      height="100%"
-      fill="none"
-      stroke="rgb(15, 17, 21)"
-      strokeOpacity="0.08"
-      strokeWidth="2"
-      vectorEffect="non-scaling-stroke"
     />
   </svg>
 }

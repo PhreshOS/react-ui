@@ -46,7 +46,6 @@ describe("Surface", function () {
     const material = required(surface.querySelector<SVGSVGElement>("[data-surface-material]"))
     const base = required(material.querySelector<SVGRectElement>("[data-surface-base]"))
     const grain = required(material.querySelector<SVGRectElement>("[data-surface-grain]"))
-    const edge = required(material.querySelector<SVGRectElement>("[data-surface-edge]"))
 
     expect(surface.style.backgroundColor).toBe("")
     expect(surface.style.backgroundImage).toBe("")
@@ -57,12 +56,12 @@ describe("Surface", function () {
     expect(surface.style.position).toBe("relative")
     expect(surface.style.isolation).toBe("isolate")
     expect(material.style.opacity).toBe("1")
+    expect(material.style.border).toBe("1px solid rgba(15, 17, 21, 0.08)")
+    expect(material.style.boxSizing).toBe("border-box")
     expect(base.getAttribute("fill")).toBe("#f5f4ee")
     expect(grain.getAttribute("opacity")).toBe("0.04")
     expect(material.querySelectorAll("[data-surface-grain-tone]")).toHaveLength(16)
-    expect(edge.getAttribute("stroke")).toBe("rgb(15, 17, 21)")
-    expect(edge.getAttribute("stroke-opacity")).toBe("0.08")
-    expect(edge.getAttribute("stroke-width")).toBe("2")
+    expect(material.querySelector("[data-surface-edge]")).toBeNull()
   })
 
   it("resolves Theme color treatments and direct colors into each local material", function () {
