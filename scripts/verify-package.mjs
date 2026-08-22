@@ -71,14 +71,14 @@ import * as icons from "@phreshos/react-ui/icons"
 import {
   Button,
   Flex,
-  GlassSurface,
   Grid,
+  Surface,
   ThemeProvider,
   resolveRadius,
   resolveSpacing
 } from "@phreshos/react-ui"
 
-for (const exported of [Button, Flex, GlassSurface, Grid, ThemeProvider, resolveRadius, resolveSpacing]) {
+for (const exported of [Button, Flex, Grid, Surface, ThemeProvider, resolveRadius, resolveSpacing]) {
   assert.notEqual(exported, undefined)
 }
 assert.deepEqual(Object.keys(icons), [])
@@ -89,17 +89,17 @@ assert.deepEqual(Object.keys(icons), [])
   writeFileSync(
     join(consumer, "consumer.tsx"),
     `import { standardTheme } from "@phreshos/core"
-import { Button, Flex, GlassSurface, Grid, ThemeProvider } from "@phreshos/react-ui"
+import { Button, Flex, Grid, Surface, ThemeProvider } from "@phreshos/react-ui"
 
 const view = (
   <ThemeProvider theme={standardTheme}>
-    <GlassSurface radius="large">
+    <Surface>
       <Grid columns={2} gap="small">
         <Flex align="center" justify="between">
           <Button onPress={() => undefined}>Save</Button>
         </Flex>
       </Grid>
-    </GlassSurface>
+    </Surface>
   </ThemeProvider>
 )
 

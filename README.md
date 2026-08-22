@@ -120,36 +120,14 @@ const colors = useColor(theme.accent)
 <strong style={{ color: colors.strong }} />
 ```
 
-`GlassSurface` is the shared translucent material. The Theme supplies its
-background, foreground, and concrete default values for distortion, blur,
-saturation, brightness, and material opacity. The component derives its tint
-from the background and applies the foreground to its content, while accent
-remains independent for emphasis and interaction. The surface may also derive
-a small or large treatment from each numeric default without turning those
-levels into system state.
-
-Derived opacity is capped at thirty percent and never fades the surface's
-content. Layout, spacing, radius, and external elevation remain ordinary
-container concerns:
-
-```tsx
-<GlassSurface className="rounded-xl p-3">
-  ...
-</GlassSurface>
-
-<GlassSurface color="soft" distortion="large" blur="small" opacity="medium">
-  ...
-</GlassSurface>
-```
-
 Shape-owning components accept the shared `Radius` value directly. Semantic
 levels are derived from the Theme's concrete radius through the same
 `scale()` rule used for spacing, while numbers and CSS values remain explicit
 overrides:
 
 ```tsx
-<GlassSurface radius="large">...</GlassSurface>
-<GlassSurface radius="2rem">...</GlassSurface>
+<Button radius="large">...</Button>
+<Button radius="2rem">...</Button>
 ```
 
 Structures whose native element owns the shape derive from the explicit

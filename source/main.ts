@@ -8,7 +8,6 @@ export { ThemeProvider, useTheme, type ThemeProviderProps } from "./theme-provid
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
 export { Surface, type SurfaceColor, type SurfaceProps } from "./surface.js"
-export { GlassSurface, type GlassSurfaceProps } from "./glass-surface.js"
 export { Button, type ButtonProps } from "./button.js"
 export type { LayoutAlignment, LayoutGap, LayoutJustification } from "./layout.js"
 export { resolveRadius, type Radius, type RadiusProps } from "./radius.js"
