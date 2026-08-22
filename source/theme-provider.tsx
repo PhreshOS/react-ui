@@ -11,7 +11,7 @@ export function ThemeProvider({ children, theme }: ThemeProviderProps) {
 }
 
 /** Returns the complete snapshot supplied by the nearest ThemeProvider. */
-export function useTheme() {
+export function useTheme(): ThemeProperties {
   const properties = useContext(ThemeContext)
 
   if (properties === missing) throw new Error("useTheme() requires a ThemeProvider")
@@ -20,7 +20,7 @@ export function useTheme() {
 }
 
 /** Internal optional read used by primitives with both raw and themed values. */
-export function useThemeIfAvailable() {
+export function useThemeIfAvailable(): ThemeProperties | null {
   const properties = useContext(ThemeContext)
   return properties === missing ? null : properties
 }
