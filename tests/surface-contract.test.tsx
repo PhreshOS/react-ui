@@ -56,8 +56,13 @@ describe("Surface", function () {
     expect(surface.style.position).toBe("relative")
     expect(surface.style.isolation).toBe("isolate")
     expect(material.style.opacity).toBe("1")
-    expect(material.style.border).toBe("1px solid color-mix(in srgb, rgb(255, 255, 245) 15%, transparent)")
     expect(material.style.boxSizing).toBe("border-box")
+    const border = required(surface.querySelector<HTMLElement>("[data-surface-border]"))
+    expect(border.style.borderStyle).toBe("solid")
+    expect(border.style.borderWidth).toBe("1px")
+    expect(border.style.borderColor).toBe("color-mix(in oklch, rgb(255, 255, 245) 88%, white) color-mix(in oklch, rgb(255, 255, 245) 94%, black) color-mix(in oklch, rgb(255, 255, 245) 94%, black) color-mix(in oklch, rgb(255, 255, 245) 88%, white)")
+    expect(border.style.borderRadius).toBe("inherit")
+    expect(border.style.opacity).toBe("0.3")
     expect(base.getAttribute("fill")).toBe("#fffff5")
     expect(material.querySelector("[data-surface-grain]")).toBeNull()
     expect(material.querySelector("[data-surface-grain-tone]")).toBeNull()
@@ -75,9 +80,9 @@ describe("Surface", function () {
     expect(baseColor("base")).toBe("#fffff5")
     expect(baseColor("strong")).toBe("color-mix(in oklch, #fffff5 82%, black)")
     expect(baseColor("direct")).toBe("#123456")
-    expect(materialBorder("base")).toBe("1px solid color-mix(in srgb, rgb(255, 255, 245) 15%, transparent)")
-    expect(materialBorder("strong")).toBe("1px solid color-mix(in srgb, color-mix(in oklch, rgb(255, 255, 245) 82%, black) 15%, transparent)")
-    expect(materialBorder("direct")).toBe("1px solid color-mix(in srgb, rgb(18, 52, 86) 15%, transparent)")
+    expect(borderColor("base")).toContain("rgb(255, 255, 245)")
+    expect(borderColor("strong")).toContain("color-mix(in oklch, rgb(255, 255, 245) 82%, black)")
+    expect(borderColor("direct")).toContain("rgb(18, 52, 86)")
   })
 
   it("uses the top-level Theme background as its default material color", function () {
@@ -226,8 +231,8 @@ function baseColor(testId: string) {
   return required(screen.getByTestId(testId).querySelector("[data-surface-base]")).getAttribute("fill")
 }
 
-function materialBorder(testId: string) {
-  return required(screen.getByTestId(testId).querySelector<SVGSVGElement>("[data-surface-material]")).style.border
+function borderColor(testId: string) {
+  return required(screen.getByTestId(testId).querySelector<HTMLElement>("[data-surface-border]")).style.borderColor
 }
 
 function grainPath(testId: string) {

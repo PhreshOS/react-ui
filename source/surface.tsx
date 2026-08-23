@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useId, useLayoutEffect, useRef } from "react"
-import type { ComponentPropsWithoutRef } from "react"
+import type { ComponentPropsWithoutRef, CSSProperties } from "react"
 import {
   color as deriveColor,
   isScaleLevel,
@@ -8,6 +8,7 @@ import {
   themeLimits,
   type ColorLevel,
   type ScaleLevel,
+  type ThemeProperties,
   type ThemeRange
 } from "@phreshos/core"
 import { SurfaceMaterial } from "./surface-material.js"
@@ -52,7 +53,30 @@ export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "color" | "opac
   brightness?: ScaleLevel | number
 }>
 
-/** Contains content above one independent pure-SVG Surface material. */
+type SurfaceControls = Pick<SurfaceProps,
+  "animation" |
+  "backdrop" |
+  "brightness" |
+  "color" |
+  "distortion" |
+  "grain" |
+  "grainAmount" |
+  "opacity" |
+  "ripples" |
+  "saturation" |
+  "waves"
+>
+
+const layerStyle = {
+  position: "absolute",
+  inset: 0,
+  borderRadius: "inherit",
+  pointerEvents: "none"
+} satisfies CSSProperties
+
+const borderOpacity = 0.3
+
+/** Contains content above locally owned Surface material layers. */
 export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface(
   { animation, backdrop, brightness, children, color, distortion, grain, grainAmount, opacity, ripples, saturation, style, waves, ...properties },
   forwardedRef
@@ -60,29 +84,12 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
   const theme = useTheme()
   const identity = `phresh-surface-${useId().replaceAll(":", "")}`
   const element = useRef<HTMLDivElement | null>(null)
-  const ref = useCallback((node: HTMLDivElement | null) => {
+  const capture = useCallback((node: HTMLDivElement | null) => {
     element.current = node
     if (typeof forwardedRef === "function") forwardedRef(node)
     else if (forwardedRef) forwardedRef.current = node
   }, [forwardedRef])
-  const resolvedColor = resolveColor(color, theme.background)
-  const resolvedGrain = resolveScale(grain, theme.surface.grain, themeLimits.surface.grain)
-  const resolvedGrainAmount = resolveScale(grainAmount, theme.surface.grainAmount, themeLimits.surface.grainAmount)
-  const resolvedAnimation = resolveScale(animation, theme.surface.animation, themeLimits.surface.animation)
-  const resolvedBackdrop = resolveScale(backdrop, theme.surface.backdrop, themeLimits.surface.backdrop)
-  const resolvedOpacity = resolveScale(opacity, theme.surface.opacity, themeLimits.surface.opacity)
-  const resolvedDistortion = resolveScale(distortion, theme.surface.distortion, themeLimits.surface.distortion)
-  const resolvedWaves = resolveScale(waves, theme.surface.waves, themeLimits.surface.waves)
-  const resolvedRipples = resolveScale(ripples, theme.surface.ripples, themeLimits.surface.ripples)
-  const resolvedSaturation = resolveMultiplier(saturation, theme.surface.saturation, themeLimits.surface.saturation)
-  const resolvedBrightness = resolveMultiplier(brightness, theme.surface.brightness, themeLimits.surface.brightness)
-  const hasDistortion = resolvedDistortion > 0 || resolvedWaves > 0 || resolvedRipples > 0
-  const nativeFilters = [
-    resolvedBackdrop === 0 ? "" : `blur(${resolvedBackdrop}px)`,
-    resolvedSaturation === 1 ? "" : `saturate(${resolvedSaturation})`,
-    resolvedBrightness === 1 ? "" : `brightness(${resolvedBrightness})`
-  ].filter(Boolean)
-  const nativeFilter = nativeFilters.join(" ")
+  const resolved = resolveSurface({ animation, backdrop, brightness, color, distortion, grain, grainAmount, opacity, ripples, saturation, waves }, theme)
 
   useLayoutEffect(() => {
     const surface = element.current
@@ -91,33 +98,44 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
 
   return <div
     {...properties}
-    ref={ref}
+    ref={capture}
     style={{
       borderRadius: theme.radius,
       color: theme.foreground,
       ...style
     }}
   >
-    {hasDistortion && <BackdropLayer
+    {resolved.refracts && <BackdropLayer
       name="refraction"
       filter={`url("#${identity}-distortion")`}
       zIndex={-3}
     />}
-    {nativeFilter && <BackdropLayer name="frost" filter={nativeFilter} zIndex={-2} />}
-    <SurfaceMaterial
-      animation={resolvedAnimation}
-      color={resolvedColor}
-      distortion={resolvedDistortion}
-      grain={resolvedGrain}
-      grainAmount={resolvedGrainAmount}
-      identity={identity}
-      opacity={resolvedOpacity}
-      ripples={resolvedRipples}
-      waves={resolvedWaves}
-    />
+    {resolved.frost && <BackdropLayer name="frost" filter={resolved.frost} zIndex={-2} />}
+    <SurfaceBorder color={resolved.material.color} />
+    <SurfaceMaterial identity={identity} {...resolved.material} />
     {children}
   </div>
 })
+
+/** Draws one continuous edge from the same color as the Surface material. */
+function SurfaceBorder({ color }: Readonly<{ color: string }>) {
+  const highlight = `color-mix(in oklch, ${color} 88%, white)`
+  const shade = `color-mix(in oklch, ${color} 94%, black)`
+
+  return <div
+    data-surface-border=""
+    aria-hidden="true"
+    style={{
+      ...layerStyle,
+      zIndex: 0,
+      borderStyle: "solid",
+      borderWidth: 1,
+      borderColor: `${highlight} ${shade} ${shade} ${highlight}`,
+      boxSizing: "border-box",
+      opacity: borderOpacity
+    }}
+  />
+}
 
 /** Keeps refraction and native frost in independent compositor passes. */
 function BackdropLayer({ filter, name, zIndex }: Readonly<{ filter: string, name: string, zIndex: number }>) {
@@ -125,15 +143,39 @@ function BackdropLayer({ filter, name, zIndex }: Readonly<{ filter: string, name
     data-surface-backdrop={name}
     aria-hidden="true"
     style={{
-      position: "absolute",
-      inset: 0,
+      ...layerStyle,
       zIndex,
-      borderRadius: "inherit",
       backdropFilter: filter,
-      WebkitBackdropFilter: filter,
-      pointerEvents: "none"
+      WebkitBackdropFilter: filter
     }}
   />
+}
+
+function resolveSurface(values: SurfaceControls, theme: ThemeProperties) {
+  const material = {
+    animation: resolveScale(values.animation, theme.surface.animation, themeLimits.surface.animation),
+    color: resolveColor(values.color, theme.background),
+    distortion: resolveScale(values.distortion, theme.surface.distortion, themeLimits.surface.distortion),
+    grain: resolveScale(values.grain, theme.surface.grain, themeLimits.surface.grain),
+    grainAmount: resolveScale(values.grainAmount, theme.surface.grainAmount, themeLimits.surface.grainAmount),
+    opacity: resolveScale(values.opacity, theme.surface.opacity, themeLimits.surface.opacity),
+    ripples: resolveScale(values.ripples, theme.surface.ripples, themeLimits.surface.ripples),
+    waves: resolveScale(values.waves, theme.surface.waves, themeLimits.surface.waves)
+  }
+  const backdrop = resolveScale(values.backdrop, theme.surface.backdrop, themeLimits.surface.backdrop)
+  const saturation = resolveMultiplier(values.saturation, theme.surface.saturation, themeLimits.surface.saturation)
+  const brightness = resolveMultiplier(values.brightness, theme.surface.brightness, themeLimits.surface.brightness)
+  const frost = [
+    backdrop === 0 ? "" : `blur(${backdrop}px)`,
+    saturation === 1 ? "" : `saturate(${saturation})`,
+    brightness === 1 ? "" : `brightness(${brightness})`
+  ].filter(Boolean).join(" ")
+
+  return {
+    material,
+    frost,
+    refracts: material.distortion > 0 || material.waves > 0 || material.ripples > 0
+  }
 }
 
 function resolveColor(value: SurfaceColor | undefined, base: string) {

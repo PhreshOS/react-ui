@@ -56,7 +56,6 @@ export function SurfaceMaterial({ animation, color, distortion, grain, grainAmou
       height: "100%",
       overflow: "hidden",
       borderRadius: "inherit",
-      border: hasPaint ? `1px solid color-mix(in srgb, ${color} 15%, transparent)` : undefined,
       boxSizing: "border-box",
       opacity,
       pointerEvents: "none"
