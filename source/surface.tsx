@@ -82,11 +82,7 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
     resolvedSaturation === 1 ? "" : `saturate(${resolvedSaturation})`,
     resolvedBrightness === 1 ? "" : `brightness(${resolvedBrightness})`
   ].filter(Boolean)
-  const filters = [hasDistortion ? `url("#${identity}-distortion")` : "", ...nativeFilters].filter(Boolean)
-  const backdropStyle = filters.length === 0 ? {} : {
-    backdropFilter: filters.join(" "),
-    ...(nativeFilters.length === 0 ? {} : { WebkitBackdropFilter: nativeFilters.join(" ") })
-  }
+  const nativeFilter = nativeFilters.join(" ")
 
   useLayoutEffect(() => {
     const surface = element.current
@@ -99,10 +95,15 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
     style={{
       borderRadius: theme.radius,
       color: theme.foreground,
-      ...backdropStyle,
       ...style
     }}
   >
+    {hasDistortion && <BackdropLayer
+      name="refraction"
+      filter={`url("#${identity}-distortion")`}
+      zIndex={-3}
+    />}
+    {nativeFilter && <BackdropLayer name="frost" filter={nativeFilter} zIndex={-2} />}
     <SurfaceMaterial
       animation={resolvedAnimation}
       color={resolvedColor}
@@ -117,6 +118,23 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
     {children}
   </div>
 })
+
+/** Keeps refraction and native frost in independent compositor passes. */
+function BackdropLayer({ filter, name, zIndex }: Readonly<{ filter: string, name: string, zIndex: number }>) {
+  return <div
+    data-surface-backdrop={name}
+    aria-hidden="true"
+    style={{
+      position: "absolute",
+      inset: 0,
+      zIndex,
+      borderRadius: "inherit",
+      backdropFilter: filter,
+      WebkitBackdropFilter: filter,
+      pointerEvents: "none"
+    }}
+  />
+}
 
 function resolveColor(value: SurfaceColor | undefined, base: string) {
   if (value === undefined) return base

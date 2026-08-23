@@ -52,10 +52,11 @@ describe("Surface", function () {
     expect(surface.style.borderRadius).toBe("10px")
     expect(surface.style.color).toBe("rgb(24, 52, 71)")
     expect(surface.style.backdropFilter).toBe("")
+    expect(surface.querySelector("[data-surface-backdrop]")).toBeNull()
     expect(surface.style.position).toBe("relative")
     expect(surface.style.isolation).toBe("isolate")
     expect(material.style.opacity).toBe("1")
-    expect(material.style.border).toBe("1px solid rgba(15, 17, 21, 0.08)")
+    expect(material.style.border).toBe("1px solid color-mix(in srgb, rgb(255, 255, 245) 15%, transparent)")
     expect(material.style.boxSizing).toBe("border-box")
     expect(base.getAttribute("fill")).toBe("#fffff5")
     expect(material.querySelector("[data-surface-grain]")).toBeNull()
@@ -74,6 +75,9 @@ describe("Surface", function () {
     expect(baseColor("base")).toBe("#fffff5")
     expect(baseColor("strong")).toBe("color-mix(in oklch, #fffff5 82%, black)")
     expect(baseColor("direct")).toBe("#123456")
+    expect(materialBorder("base")).toBe("1px solid color-mix(in srgb, rgb(255, 255, 245) 15%, transparent)")
+    expect(materialBorder("strong")).toBe("1px solid color-mix(in srgb, color-mix(in oklch, rgb(255, 255, 245) 82%, black) 15%, transparent)")
+    expect(materialBorder("direct")).toBe("1px solid color-mix(in srgb, rgb(18, 52, 86) 15%, transparent)")
   })
 
   it("uses the top-level Theme background as its default material color", function () {
@@ -102,13 +106,17 @@ describe("Surface", function () {
     const surface = screen.getByTestId("surface")
     const material = required(surface.querySelector<SVGSVGElement>("[data-surface-material]"))
     const grain = required(material.querySelector<SVGRectElement>("[data-surface-grain]"))
+    const refraction = required(surface.querySelector<HTMLElement>("[data-surface-backdrop='refraction']"))
+    const frost = required(surface.querySelector<HTMLElement>("[data-surface-backdrop='frost']"))
 
-    expect(surface.style.backdropFilter).toContain("url(")
-    expect(surface.style.backdropFilter).toContain("blur(8px) saturate(1.8) brightness(1.06)")
+    expect(surface.style.backdropFilter).toBe("")
+    expect(refraction.style.backdropFilter).toContain("url(")
+    expect(frost.style.backdropFilter).toBe("blur(8px) saturate(1.8) brightness(1.06)")
     expect(surface.style.backgroundColor).toBe("")
     expect(grain.getAttribute("opacity")).toBeNull()
     expect(material.querySelector("[data-surface-grain-tone='0']")?.getAttribute("fill")).toBe("color-mix(in srgb, #fffff5 10%, rgb(0 0 0) 90%)")
-    expect(material.querySelectorAll("[data-surface-distortion-stage]")).toHaveLength(3)
+    expect(material.querySelectorAll("[data-surface-distortion-field]")).toHaveLength(3)
+    expect(material.querySelectorAll("[data-surface-distortion-stage]")).toHaveLength(1)
     expect(material.style.opacity).toBe("0.5")
     expect(surface.hasAttribute("grain")).toBe(false)
     expect(surface.hasAttribute("grainAmount")).toBe(false)
@@ -126,14 +134,13 @@ describe("Surface", function () {
     const rendered = renderSurface(<Surface data-testid="surface" backdrop={8} distortion={70} saturation={1.8} brightness={1.06} />)
     const surface = screen.getByTestId("surface")
 
-    expect(surface.style.backdropFilter).toContain("url(")
+    expect(surface.querySelectorAll("[data-surface-backdrop]")).toHaveLength(2)
 
     rendered.rerender(<ThemeProvider theme={standardTheme}>
       <Surface data-testid="surface" backdrop={0} distortion={0} waves={0} ripples={0} saturation={1} brightness={1} />
     </ThemeProvider>)
 
-    expect(surface.style.backdropFilter).toBe("")
-    expect(surface.style.getPropertyValue("-webkit-backdrop-filter")).toBe("")
+    expect(surface.querySelector("[data-surface-backdrop]")).toBeNull()
     expect(surface.querySelector("[data-surface-distortion]")).toBeNull()
   })
 
@@ -159,13 +166,15 @@ describe("Surface", function () {
     expect(screen.getByTestId("surface").querySelector("[data-surface-material]")).toBeNull()
   })
 
-  it("creates only the enabled SVG displacement stages", function () {
+  it("combines only enabled distortion fields into one displacement stage", function () {
     renderSurface(<Surface data-testid="surface" distortion={0} waves={12} ripples={0} />)
 
     const material = required(screen.getByTestId("surface").querySelector<SVGSVGElement>("[data-surface-material]"))
-    expect(material.querySelector('[data-surface-distortion-stage="organic"]')).toBeNull()
-    expect(material.querySelector('[data-surface-distortion-stage="waves"]')).not.toBeNull()
-    expect(material.querySelector('[data-surface-distortion-stage="ripples"]')).toBeNull()
+    expect(material.querySelector('[data-surface-distortion-field="organic"]')).toBeNull()
+    expect(material.querySelector('[data-surface-distortion-field="waves"]')).not.toBeNull()
+    expect(material.querySelector('[data-surface-distortion-field="ripples"]')).toBeNull()
+    expect(material.querySelectorAll('[data-surface-distortion-stage="combined"]')).toHaveLength(1)
+    expect(material.querySelector("[data-surface-distortion-combine]")).toBeNull()
     expect(material.querySelector("[data-surface-distortion-noise]")).toBeNull()
   })
 
@@ -215,6 +224,10 @@ function renderSurface(surface: ReactNode) {
 
 function baseColor(testId: string) {
   return required(screen.getByTestId(testId).querySelector("[data-surface-base]")).getAttribute("fill")
+}
+
+function materialBorder(testId: string) {
+  return required(screen.getByTestId(testId).querySelector<SVGSVGElement>("[data-surface-material]")).style.border
 }
 
 function grainPath(testId: string) {

@@ -56,7 +56,7 @@ export function SurfaceMaterial({ animation, color, distortion, grain, grainAmou
       height: "100%",
       overflow: "hidden",
       borderRadius: "inherit",
-      border: hasPaint ? "1px solid rgba(15, 17, 21, 0.08)" : undefined,
+      border: hasPaint ? `1px solid color-mix(in srgb, ${color} 15%, transparent)` : undefined,
       boxSizing: "border-box",
       opacity,
       pointerEvents: "none"
@@ -99,8 +99,14 @@ function DistortionFilter({ distortion, identity, ripples, seed, waves }: Readon
   seed: number
   waves: number
 }>) {
-  const organicResult = distortion > 0 ? `${identity}-organic` : "SourceGraphic"
-  const wavesResult = waves > 0 ? `${identity}-waves` : organicResult
+  const fields = [
+    distortion > 0 && { name: "organic", strength: distortion, x: "R" },
+    waves > 0 && { name: "waves", strength: waves, x: "R" },
+    ripples > 0 && { name: "ripples", strength: ripples, x: "B" }
+  ].filter((field): field is DistortionField => Boolean(field))
+  const scale = fields.reduce((total, field) => total + field.strength, 0)
+  const weighted = fields.map(field => `${identity}-${field.name}-weighted`)
+  const map = `${identity}-distortion-map`
 
   return <filter
     id={`${identity}-distortion`}
@@ -114,6 +120,7 @@ function DistortionFilter({ distortion, identity, ripples, seed, waves }: Readon
     {distortion > 0 && <Fragment>
       <feTurbulence
         data-surface-distortion-noise=""
+        data-surface-distortion-field="organic"
         type="fractalNoise"
         baseFrequency="0.008 0.008"
         numOctaves={2}
@@ -125,52 +132,69 @@ function DistortionFilter({ distortion, identity, ripples, seed, waves }: Readon
         stdDeviation={2}
         result={`${identity}-organic-noise-blurred`}
       />
-      <feDisplacementMap
-        data-surface-distortion-stage="organic"
-        in="SourceGraphic"
-        in2={`${identity}-organic-noise-blurred`}
-        scale={distortion}
-        xChannelSelector="R"
-        yChannelSelector="G"
-        result={organicResult}
-      />
     </Fragment>}
     {waves > 0 && <Fragment>
       <feTurbulence
+        data-surface-distortion-field="waves"
         type="turbulence"
         baseFrequency="0.006 0.045"
         numOctaves={1}
         seed={seed + 17}
-        result={`${identity}-wave-noise`}
-      />
-      <feDisplacementMap
-        data-surface-distortion-stage="waves"
-        in={organicResult}
-        in2={`${identity}-wave-noise`}
-        scale={waves}
-        xChannelSelector="R"
-        yChannelSelector="G"
-        result={wavesResult}
+        result={`${identity}-waves-noise`}
       />
     </Fragment>}
     {ripples > 0 && <Fragment>
       <feTurbulence
+        data-surface-distortion-field="ripples"
         type="turbulence"
         baseFrequency="0.055"
         numOctaves={2}
         seed={seed + 31}
-        result={`${identity}-ripple-noise`}
-      />
-      <feDisplacementMap
-        data-surface-distortion-stage="ripples"
-        in={wavesResult}
-        in2={`${identity}-ripple-noise`}
-        scale={ripples}
-        xChannelSelector="B"
-        yChannelSelector="G"
+        result={`${identity}-ripples-noise`}
       />
     </Fragment>}
+    {fields.map(field => <feColorMatrix
+      key={field.name}
+      data-surface-distortion-weight={field.name}
+      in={`${identity}-${field.name}-noise${field.name === "organic" ? "-blurred" : ""}`}
+      type="matrix"
+      values={weightMatrix(field.x, field.strength / scale)}
+      result={`${identity}-${field.name}-weighted`}
+    />)}
+    {weighted.slice(1).map((field, index) => <feComposite
+      key={field}
+      data-surface-distortion-combine=""
+      in={index === 0 ? weighted[0] : `${identity}-distortion-sum-${index}`}
+      in2={field}
+      operator="arithmetic"
+      k2={1}
+      k3={1}
+      result={index === weighted.length - 2 ? map : `${identity}-distortion-sum-${index + 1}`}
+    />)}
+    <feDisplacementMap
+      data-surface-distortion-stage="combined"
+      in="SourceGraphic"
+      in2={weighted.length === 1 ? weighted[0] : map}
+      scale={scale}
+      xChannelSelector="R"
+      yChannelSelector="G"
+    />
   </filter>
+}
+
+interface DistortionField {
+  readonly name: "organic" | "waves" | "ripples"
+  readonly strength: number
+  readonly x: "R" | "B"
+}
+
+function weightMatrix(x: DistortionField["x"], weight: number) {
+  const red = x === "R" ? `${weight} 0 0 0 0` : `0 0 ${weight} 0 0`
+
+  return `${red}
+          0 ${weight} 0 0 0
+          0 0 0 0 0
+          0 0 0 1 0`
 }
 
 function grainTone(color: string, tone: number, intensity: number) {

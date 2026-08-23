@@ -83,9 +83,10 @@ Explicit values such as `4rem` are used directly — passing them through a
 Theme hook would perform no additional work.
 
 `Surface` keeps a native `<div>` as its public container and gives every
-instance one locally owned pure-SVG material. The material uses a deterministic
-64×64 micro-pattern derived from the former shader grain; it creates no canvas,
-WebGL context, or shared texture:
+instance one locally owned pure-SVG material plus only the backdrop layers its
+settings enable. The material uses a deterministic 64×64 micro-pattern derived
+from the former shader grain; it creates no canvas, WebGL context, or shared
+texture:
 
 ```tsx
 <Surface className="grid rounded-xl shadow-lg">
@@ -104,13 +105,15 @@ same source and a direct color remains an explicit local override. `grain`,
 their semantic levels or direct values, and remain bounded by Core's Theme
 limits. Radius and foreground remain ordinary Theme styles. Grain intensity
 controls tonal distance while grain amount controls retained cell density.
-When either is zero, Surface creates no grain pattern or paths. Backdrop blur
-emits no CSS function at zero; each zero-valued displacement stage is absent
-from the local SVG filter, and the filter itself is absent when all three are
-zero. Neutral saturation and brightness at one are also omitted. Animation
-defaults to zero; only a Surface with visible grain and a positive rate joins
-the internal document clock, while every texture and seed remains local to its
-own Surface.
+When either is zero, Surface creates no grain pattern or paths. Refraction and
+native frost use independent backdrop layers so blur does not soften the
+displaced image. Enabled organic, wave, and ripple fields are combined
+mathematically before one displacement pass; each zero-valued field is absent,
+and the filter and refraction layer are absent when all three are zero.
+Backdrop blur emits no CSS function at zero. Neutral saturation and brightness
+at one are also omitted. Animation defaults to zero; only a Surface with
+visible grain and a positive rate joins the internal document clock, while
+every texture and seed remains local to its own Surface.
 
 The Theme stores unrestricted CSS background, foreground, and accent sources.
 Core derives the fixed `subtle`, `soft`, `base`, `strong`, and `intense`
