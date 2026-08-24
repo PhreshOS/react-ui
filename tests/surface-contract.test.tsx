@@ -58,9 +58,10 @@ describe("Surface", function () {
     expect(material.style.opacity).toBe("1")
     expect(material.style.boxSizing).toBe("border-box")
     const border = required(surface.querySelector<HTMLElement>("[data-surface-border]"))
-    expect(border.style.borderStyle).toBe("solid")
-    expect(border.style.borderWidth).toBe("1.5px")
-    expect(border.style.borderColor).toBe("color-mix(in oklch, rgb(255, 255, 245) 88%, white) color-mix(in oklch, rgb(255, 255, 245) 94%, black) color-mix(in oklch, rgb(255, 255, 245) 94%, black) color-mix(in oklch, rgb(255, 255, 245) 88%, white)")
+    expect(border.style.borderStyle).toBe("")
+    expect(border.style.borderWidth).toBe("")
+    expect(border.style.borderColor).toBe("")
+    expect(border.style.boxShadow).toBe("inset 0 0 0 1px color-mix(in oklch, #fffff5 94%, black)")
     expect(border.style.borderRadius).toBe("inherit")
     expect(border.style.opacity).toBe("1")
     expect(base.getAttribute("fill")).toBe("#fffff5")
@@ -80,9 +81,9 @@ describe("Surface", function () {
     expect(baseColor("base")).toBe("#fffff5")
     expect(baseColor("strong")).toBe("color-mix(in oklch, #fffff5 82%, black)")
     expect(baseColor("direct")).toBe("#123456")
-    expect(borderColor("base")).toContain("rgb(255, 255, 245)")
-    expect(borderColor("strong")).toContain("color-mix(in oklch, rgb(255, 255, 245) 82%, black)")
-    expect(borderColor("direct")).toContain("rgb(18, 52, 86)")
+    expect(borderColor("base")).toContain("#fffff5")
+    expect(borderColor("strong")).toContain("color-mix(in oklch, #fffff5 82%, black)")
+    expect(borderColor("direct")).toContain("#123456")
   })
 
   it("uses the top-level Theme background as its default material color", function () {
@@ -235,7 +236,7 @@ function baseColor(testId: string) {
 }
 
 function borderColor(testId: string) {
-  return required(screen.getByTestId(testId).querySelector<HTMLElement>("[data-surface-border]")).style.borderColor
+  return required(screen.getByTestId(testId).querySelector<HTMLElement>("[data-surface-border]")).style.boxShadow
 }
 
 function grainPath(testId: string) {

@@ -115,10 +115,9 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
   </div>
 })
 
-/** Draws one continuous edge from the same color as the Surface material. */
+/** Draws one uniform inset edge from the same color as the Surface material. */
 function SurfaceBorder({ color, opacity }: Readonly<{ color: string, opacity: number }>) {
-  const highlight = `color-mix(in oklch, ${color} 88%, white)`
-  const shade = `color-mix(in oklch, ${color} 94%, black)`
+  const edge = `color-mix(in oklch, ${color} 94%, black)`
 
   return <div
     data-surface-border=""
@@ -126,10 +125,8 @@ function SurfaceBorder({ color, opacity }: Readonly<{ color: string, opacity: nu
     style={{
       ...layerStyle,
       zIndex: 0,
-      borderStyle: "solid",
-      borderWidth: 1.5,
-      borderColor: `${highlight} ${shade} ${shade} ${highlight}`,
       boxSizing: "border-box",
+      boxShadow: `inset 0 0 0 1px ${edge}`,
       opacity
     }}
   />

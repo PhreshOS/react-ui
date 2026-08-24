@@ -105,6 +105,8 @@ same source and a direct color remains an explicit local override. `grain`,
 their semantic levels or direct values, and remain bounded by Core's Theme
 limits. Radius and foreground remain ordinary Theme styles. Grain intensity
 controls tonal distance while grain amount controls retained cell density.
+Each Surface owns one uniform one-pixel inset edge derived from its resolved
+material color; consumers supply only their radius and do not redraw the edge.
 When either is zero, Surface creates no grain pattern or paths. Refraction and
 native frost use independent backdrop layers so blur does not soften the
 displaced image. Enabled organic, wave, and ripple fields are combined
