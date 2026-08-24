@@ -59,10 +59,10 @@ describe("Surface", function () {
     expect(material.style.boxSizing).toBe("border-box")
     const border = required(surface.querySelector<HTMLElement>("[data-surface-border]"))
     expect(border.style.borderStyle).toBe("solid")
-    expect(border.style.borderWidth).toBe("1px")
+    expect(border.style.borderWidth).toBe("1.5px")
     expect(border.style.borderColor).toBe("color-mix(in oklch, rgb(255, 255, 245) 88%, white) color-mix(in oklch, rgb(255, 255, 245) 94%, black) color-mix(in oklch, rgb(255, 255, 245) 94%, black) color-mix(in oklch, rgb(255, 255, 245) 88%, white)")
     expect(border.style.borderRadius).toBe("inherit")
-    expect(border.style.opacity).toBe("0.3")
+    expect(border.style.opacity).toBe("1")
     expect(base.getAttribute("fill")).toBe("#fffff5")
     expect(material.querySelector("[data-surface-grain]")).toBeNull()
     expect(material.querySelector("[data-surface-grain-tone]")).toBeNull()
@@ -168,7 +168,10 @@ describe("Surface", function () {
   it("omits the complete SVG material when opacity and displacement are zero", function () {
     renderSurface(<Surface data-testid="surface" opacity={0} distortion={0} waves={0} ripples={0} />)
 
-    expect(screen.getByTestId("surface").querySelector("[data-surface-material]")).toBeNull()
+    const surface = screen.getByTestId("surface")
+
+    expect(surface.querySelector("[data-surface-material]")).toBeNull()
+    expect(required(surface.querySelector<HTMLElement>("[data-surface-border]")).style.opacity).toBe("0")
   })
 
   it("combines only enabled distortion fields into one displacement stage", function () {

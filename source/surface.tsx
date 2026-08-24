@@ -74,8 +74,6 @@ const layerStyle = {
   pointerEvents: "none"
 } satisfies CSSProperties
 
-const borderOpacity = 0.3
-
 /** Contains content above locally owned Surface material layers. */
 export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface(
   { animation, backdrop, brightness, children, color, distortion, grain, grainAmount, opacity, ripples, saturation, style, waves, ...properties },
@@ -111,14 +109,14 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
       zIndex={-3}
     />}
     {resolved.frost && <BackdropLayer name="frost" filter={resolved.frost} zIndex={-2} />}
-    <SurfaceBorder color={resolved.material.color} />
+    <SurfaceBorder color={resolved.material.color} opacity={resolveScale("large", resolved.material.opacity, themeLimits.surface.opacity)} />
     <SurfaceMaterial identity={identity} {...resolved.material} />
     {children}
   </div>
 })
 
 /** Draws one continuous edge from the same color as the Surface material. */
-function SurfaceBorder({ color }: Readonly<{ color: string }>) {
+function SurfaceBorder({ color, opacity }: Readonly<{ color: string, opacity: number }>) {
   const highlight = `color-mix(in oklch, ${color} 88%, white)`
   const shade = `color-mix(in oklch, ${color} 94%, black)`
 
@@ -129,10 +127,10 @@ function SurfaceBorder({ color }: Readonly<{ color: string }>) {
       ...layerStyle,
       zIndex: 0,
       borderStyle: "solid",
-      borderWidth: 1,
+      borderWidth: 1.5,
       borderColor: `${highlight} ${shade} ${shade} ${highlight}`,
       boxSizing: "border-box",
-      opacity: borderOpacity
+      opacity
     }}
   />
 }
