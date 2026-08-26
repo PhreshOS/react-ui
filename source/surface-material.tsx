@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef } from "react"
 
 interface SurfaceMaterialProps {
-  readonly animation: number
+  readonly grainAnimation: number
   readonly color: string
   readonly distortion: number
   readonly grain: number
@@ -19,7 +19,7 @@ interface AnimationEntry {
 }
 
 /** The locally owned SVG paint layer inside one Surface. */
-export function SurfaceMaterial({ animation, color, distortion, grain, grainAmount, identity, opacity, ripples, waves }: SurfaceMaterialProps) {
+export function SurfaceMaterial({ color, distortion, grain, grainAmount, grainAnimation, identity, opacity, ripples, waves }: SurfaceMaterialProps) {
   const seed = useMemo(() => seedFrom(identity), [identity])
   const hasPaint = opacity > 0
   const hasGrain = hasPaint && grain > 0 && grainAmount > 0
@@ -30,15 +30,15 @@ export function SurfaceMaterial({ animation, color, distortion, grain, grainAmou
 
   useEffect(() => {
     paths.current.forEach((path, tone) => path?.setAttribute("d", initial[tone] ?? ""))
-    if (animation === 0 || !hasGrain || !svg.current) return
+    if (grainAnimation === 0 || !hasGrain || !svg.current) return
 
     const paint = (frame: number) => {
       const values = grainPaths(seed, frame, grainAmount)
       paths.current.forEach((path, tone) => path?.setAttribute("d", values[tone] ?? ""))
     }
 
-    return animate(svg.current, animation, paint)
-  }, [animation, grainAmount, hasGrain, initial, seed])
+    return animate(svg.current, grainAnimation, paint)
+  }, [grainAnimation, grainAmount, hasGrain, initial, seed])
 
   if (!hasPaint && !hasDistortion) return null
 

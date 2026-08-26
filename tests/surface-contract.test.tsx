@@ -99,7 +99,7 @@ describe("Surface", function () {
       data-testid="surface"
       grain={0.9}
       grainAmount={0.5}
-      animation={12}
+      grainAnimation={12}
       backdrop={8}
       distortion={70}
       waves={12}
@@ -126,7 +126,7 @@ describe("Surface", function () {
     expect(material.style.opacity).toBe("0.5")
     expect(surface.hasAttribute("grain")).toBe(false)
     expect(surface.hasAttribute("grainAmount")).toBe(false)
-    expect(surface.hasAttribute("animation")).toBe(false)
+    expect(surface.hasAttribute("grainAnimation")).toBe(false)
     expect(surface.hasAttribute("backdrop")).toBe(false)
     expect(surface.hasAttribute("distortion")).toBe(false)
     expect(surface.hasAttribute("waves")).toBe(false)
@@ -154,8 +154,8 @@ describe("Surface", function () {
     vi.spyOn(window, "requestAnimationFrame")
 
     renderSurface(<>
-      <Surface data-testid="no-intensity" grain={0} grainAmount={1} animation={16} />
-      <Surface data-testid="no-amount" grain={1} grainAmount={0} animation={16} />
+      <Surface data-testid="no-intensity" grain={0} grainAmount={1} grainAnimation={16} />
+      <Surface data-testid="no-amount" grain={1} grainAmount={0} grainAnimation={16} />
     </>)
 
     for (const testId of ["no-intensity", "no-amount"]) {
@@ -210,8 +210,8 @@ describe("Surface", function () {
     vi.spyOn(window, "cancelAnimationFrame").mockImplementation(() => undefined)
 
     renderSurface(<>
-      <Surface data-testid="animated" grain={0.04} grainAmount={1} animation={4} />
-      <Surface data-testid="static" grain={0.04} grainAmount={1} animation={0} />
+      <Surface data-testid="animated" grain={0.04} grainAmount={1} grainAnimation={4} />
+      <Surface data-testid="static" grain={0.04} grainAmount={1} grainAnimation={0} />
     </>)
 
     const animated = grainPath("animated")
