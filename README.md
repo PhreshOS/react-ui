@@ -175,18 +175,18 @@ A Program can adapt its
 observable Host value at the application boundary:
 
 ```tsx
-import { HostProvider, useHostTheme } from "@phreshos/react"
+import { SystemProvider, useSystemTheme } from "@phreshos/react"
 import { ThemeProvider } from "@phreshos/react-ui"
 
 function ThemedApplication({ children }) {
-  const theme = useHostTheme()
+  const theme = useSystemTheme()
 
   return <ThemeProvider theme={theme}>{children}</ThemeProvider>
 }
 
-<HostProvider provide={["theme"]} fallback={null}>
+<SystemProvider provide={["theme"]} fallback={null}>
   <ThemedApplication>{children}</ThemedApplication>
-</HostProvider>
+</SystemProvider>
 ```
 
 ## Standing requirements
