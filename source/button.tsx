@@ -4,7 +4,7 @@ import { Button as AriaButton } from "react-aria-components"
 import type { ButtonProps as AriaButtonProps } from "react-aria-components"
 import { scale, type ScaleLevel } from "./scale.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
-import { useTheme } from "./theme-provider.js"
+import { useAppearance, useResolveTheme } from "./appearance-provider.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
 
@@ -25,7 +25,7 @@ export interface ButtonProps extends NativeButtonProps, RadiusProps {
   /** Runs once for a normalized pointer, Enter, or Space activation. */
   readonly onPress?: () => void
 
-  /** Derives the Button's spacing from the Theme's concrete default. */
+  /** Derives the Button's spacing from Appearance's concrete default. */
   readonly size?: ScaleLevel
 
   /** Additional native styles that do not replace the Button's identity. */
@@ -33,7 +33,7 @@ export interface ButtonProps extends NativeButtonProps, RadiusProps {
 
 }
 
-/** A Theme-aware action with normalized pointer and keyboard behavior. */
+/** An Appearance-aware action with normalized pointer and keyboard behavior. */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
     children,
@@ -48,9 +48,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   },
   ref
 ) {
-  const theme = useTheme()
-  const spacing = scale(theme.spacing, size)
-  const borderRadius = resolveRadius(radius, theme)
+  const appearance = useAppearance()
+  const spacing = scale(useResolveTheme(appearance.spacing), size)
+  const borderRadius = resolveRadius(radius, appearance)
+  const foreground = useResolveTheme(appearance.foreground)
 
   return <AriaButton
     {...properties}
@@ -68,7 +69,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       pending,
       size,
       spacing,
-      foreground: theme.foreground,
+      foreground,
       style
     })}
   >{children}</AriaButton>

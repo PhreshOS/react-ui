@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { createRef, type ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { standardTheme } from "@phreshos/core"
-import { Surface, ThemeProvider } from "../source/main.js"
+import { standardAppearance } from "@phreshos/core"
+import { AppearanceProvider, Surface } from "../source/main.js"
 
 afterEach(function () {
   cleanup()
@@ -11,7 +11,7 @@ afterEach(function () {
 
 describe("Surface", function () {
   it("requires the explicit Theme that supplies its background", function () {
-    expect(() => render(<Surface />)).toThrow("useTheme() requires a ThemeProvider")
+    expect(() => render(<Surface />)).toThrow("useAppearance() requires an AppearanceProvider")
   })
 
   it("preserves the complete native div contract", function () {
@@ -87,9 +87,9 @@ describe("Surface", function () {
   })
 
   it("uses the top-level Theme background as its default material color", function () {
-    render(<ThemeProvider theme={{ ...standardTheme, background: "#123456" }}>
+    render(<AppearanceProvider appearance={{ ...standardAppearance, background: { light: "#123456", dark: "#123456" } }} theme="light">
       <Surface data-testid="surface" />
-    </ThemeProvider>)
+    </AppearanceProvider>)
 
     expect(baseColor("surface")).toBe("#123456")
   })
@@ -140,9 +140,9 @@ describe("Surface", function () {
 
     expect(surface.querySelectorAll("[data-surface-backdrop]")).toHaveLength(2)
 
-    rendered.rerender(<ThemeProvider theme={standardTheme}>
+    rendered.rerender(<AppearanceProvider appearance={standardAppearance} theme="light">
       <Surface data-testid="surface" backdrop={0} distortion={0} waves={0} ripples={0} saturation={1} brightness={1} />
-    </ThemeProvider>)
+    </AppearanceProvider>)
 
     expect(surface.querySelector("[data-surface-backdrop]")).toBeNull()
     expect(surface.querySelector("[data-surface-distortion]")).toBeNull()
@@ -208,7 +208,7 @@ describe("Surface", function () {
 })
 
 function renderSurface(surface: ReactNode) {
-  return render(<ThemeProvider theme={standardTheme}>{surface}</ThemeProvider>)
+  return render(<AppearanceProvider appearance={standardAppearance} theme="light">{surface}</AppearanceProvider>)
 }
 
 function baseColor(testId: string) {

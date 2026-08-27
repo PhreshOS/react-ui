@@ -1,17 +1,17 @@
 import type { CSSProperties } from "react"
-import type { ThemeProperties } from "@phreshos/core"
+import type { Appearance } from "@phreshos/core"
 import { isScaleLevel, scale, type ScaleLevel } from "./scale.js"
 
-/** A Theme-derived level, pixel value, or explicit CSS spacing value. */
+/** An Appearance-derived level, pixel value, or explicit CSS spacing value. */
 export type Spacing = ScaleLevel | number | (string & {})
 
 /** Resolves spacing while preserving explicit CSS and pixel values. */
-export function resolveSpacing(value: ScaleLevel, theme: ThemeProperties | null): number
-export function resolveSpacing(value: Spacing | undefined, theme: ThemeProperties | null): CSSProperties["gap"]
-export function resolveSpacing(value: Spacing | undefined, theme: ThemeProperties | null): CSSProperties["gap"] {
+export function resolveSpacing(value: ScaleLevel, appearance: Appearance | null): number
+export function resolveSpacing(value: Spacing | undefined, appearance: Appearance | null): CSSProperties["gap"]
+export function resolveSpacing(value: Spacing | undefined, appearance: Appearance | null): CSSProperties["gap"] {
   if (!isScaleLevel(value)) return value
 
-  if (!theme) throw new Error("Semantic spacing requires a ThemeProvider")
+  if (!appearance) throw new Error("Semantic spacing requires an AppearanceProvider")
 
-  return scale(theme.spacing, value)
+  return scale(appearance.spacing.light, value)
 }

@@ -4,7 +4,13 @@
  * Components enter this surface only after their implementation-independent
  * behavior contract has been established by the package's tests.
  */
-export { ThemeProvider, useTheme, type ThemeProviderProps } from "./theme-provider.js"
+export {
+  AppearanceProvider,
+  useAppearance,
+  useResolveTheme,
+  useTheme,
+  type AppearanceProviderProps
+} from "./appearance-provider.js"
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
 export { Surface, type SurfaceColor, type SurfaceProps } from "./surface.js"

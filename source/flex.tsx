@@ -2,7 +2,7 @@ import { forwardRef } from "react"
 import type { ComponentPropsWithoutRef } from "react"
 import { alignment, justification, resolveGap } from "./layout.js"
 import type { LayoutAlignment, LayoutGap, LayoutJustification } from "./layout.js"
-import { useThemeIfAvailable } from "./theme-provider.js"
+import { useAppearanceIfAvailable } from "./appearance-provider.js"
 
 /** Properties accepted by the Flex layout primitive. */
 export interface FlexProps extends ComponentPropsWithoutRef<"div"> {
@@ -30,7 +30,7 @@ export const Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
   { align, direction, gap, inline = false, justify, style, wrap, ...properties },
   ref
 ) {
-  const theme = useThemeIfAvailable()
+  const appearance = useAppearanceIfAvailable()
 
   return <div
     {...properties}
@@ -41,7 +41,7 @@ export const Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
       alignItems: alignment(align) ?? style?.alignItems,
       flexDirection: direction ?? style?.flexDirection,
       flexWrap: wrap === undefined ? style?.flexWrap : wrap === "reverse" ? "wrap-reverse" : wrap ? "wrap" : "nowrap",
-      gap: gap === undefined ? style?.gap : resolveGap(gap, theme),
+      gap: gap === undefined ? style?.gap : resolveGap(gap, appearance),
       justifyContent: justification(justify) ?? style?.justifyContent
     }}
   />

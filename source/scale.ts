@@ -1,9 +1,9 @@
 import { useMemo } from "react"
 
-/** A visual level derived around one concrete Theme value. */
+/** A visual level derived around one concrete Appearance value. */
 export type ScaleLevel = "xsmall" | "small" | "medium" | "large" | "xlarge"
 
-/** Every visual level derived around one concrete Theme value. */
+/** Every visual level derived around one concrete Appearance value. */
 export type NumericScale = Readonly<Record<ScaleLevel, number>>
 
 const factors: Readonly<Record<ScaleLevel, number>> = Object.freeze({
@@ -40,7 +40,7 @@ export function scaleMultiplier(value: number, level: ScaleLevel): number {
   return 1 + (value - 1) * factors[level]
 }
 
-/** Returns every visual level derived from one concrete Theme value. */
+/** Returns every visual level derived from one concrete Appearance value. */
 export function useScale(value: number): NumericScale {
   return useMemo(() => numericScale(value), [value])
 }

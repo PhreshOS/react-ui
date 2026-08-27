@@ -1,8 +1,8 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { createRef } from "react"
 import { afterEach, describe, expect, it } from "vitest"
-import { standardTheme } from "@phreshos/core"
-import { Flex, Grid, ThemeProvider } from "../source/main.js"
+import { standardAppearance } from "@phreshos/core"
+import { AppearanceProvider, Flex, Grid } from "../source/main.js"
 
 afterEach(cleanup)
 
@@ -47,14 +47,14 @@ describe("Flex", function () {
     expect(layout.style.gap).toBe("1rem")
   })
 
-  it("resolves semantic gaps from the nearest ThemeProvider", function () {
-    render(<ThemeProvider theme={standardTheme}>
+  it("resolves semantic gaps from the nearest AppearanceProvider", function () {
+    render(<AppearanceProvider appearance={standardAppearance} theme="light">
       <Flex data-testid="xsmall" gap="xsmall" />
       <Flex data-testid="small" gap="small" />
       <Flex data-testid="medium" gap="medium" />
       <Flex data-testid="large" gap="large" />
       <Flex data-testid="xlarge" gap="xlarge" />
-    </ThemeProvider>)
+    </AppearanceProvider>)
 
     expect(screen.getByTestId("xsmall").style.gap).toBe("3px")
     expect(screen.getByTestId("small").style.gap).toBe("6px")

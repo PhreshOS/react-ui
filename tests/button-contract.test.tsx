@@ -2,8 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { createRef, type ReactNode } from "react"
-import { standardTheme } from "@phreshos/core"
-import { Button, ThemeProvider } from "../source/main.js"
+import { standardAppearance } from "@phreshos/core"
+import { AppearanceProvider, Button } from "../source/main.js"
 
 afterEach(cleanup)
 
@@ -59,8 +59,8 @@ describe("Button", function () {
 
     const button = screen.getByRole("button", { name: "Continue" })
 
-    expect(button.style.paddingInline).toBe(`${standardTheme.spacing * 2 * 2 / 3}px`)
-    expect(button.style.borderRadius).toBe(`${standardTheme.radius * 0.25}px`)
+    expect(button.style.paddingInline).toBe(`${standardAppearance.spacing.light * 2 * 2 / 3}px`)
+    expect(button.style.borderRadius).toBe(`${standardAppearance.radius.light * 0.25}px`)
     expect(button.style.color).toBe("rgb(24, 52, 71)")
     expect(button.style.fontSize).toBe("14px")
   })
@@ -75,5 +75,5 @@ describe("Button", function () {
 })
 
 function renderButton(button: ReactNode) {
-  return render(<ThemeProvider theme={standardTheme}>{button}</ThemeProvider>)
+  return render(<AppearanceProvider appearance={standardAppearance} theme="light">{button}</AppearanceProvider>)
 }

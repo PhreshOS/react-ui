@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react"
-import type { ThemeProperties } from "@phreshos/core"
+import type { Appearance } from "@phreshos/core"
 import { resolveSpacing, type Spacing } from "./spacing.js"
 
 /** Cross-axis alignment shared by layout containers. */
@@ -37,8 +37,8 @@ export function justification(value: LayoutJustification | undefined): CSSProper
 }
 
 /** Resolves semantic spacing while preserving explicit CSS gap values. */
-export function resolveGap(value: LayoutGap | undefined, theme: ThemeProperties | null): CSSProperties["gap"] {
-  return resolveSpacing(value, theme)
+export function resolveGap(value: LayoutGap | undefined, appearance: Appearance | null): CSSProperties["gap"] {
+  return resolveSpacing(value, appearance)
 }
 
 export function tracks(value: number | string | undefined, property: "columns" | "rows"): string | undefined {

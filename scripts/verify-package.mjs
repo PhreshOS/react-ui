@@ -73,14 +73,14 @@ import {
   Flex,
   Grid,
   Surface,
-  ThemeProvider,
+  AppearanceProvider,
   resolveRadius,
   resolveSpacing,
   useColor,
   useScale
 } from "@phreshos/react-ui"
 
-for (const exported of [Button, Flex, Grid, Surface, ThemeProvider, resolveRadius, resolveSpacing, useColor, useScale]) {
+for (const exported of [AppearanceProvider, Button, Flex, Grid, Surface, resolveRadius, resolveSpacing, useColor, useScale]) {
   assert.notEqual(exported, undefined)
 }
 assert.deepEqual(Object.keys(icons), [])
@@ -90,18 +90,18 @@ assert.deepEqual(Object.keys(icons), [])
 
   writeFileSync(
     join(consumer, "consumer.tsx"),
-    `import { standardTheme } from "@phreshos/core"
-import { Button, Flex, Grid, Surface, ThemeProvider, useColor, useScale } from "@phreshos/react-ui"
+    `import { standardAppearance } from "@phreshos/core"
+import { AppearanceProvider, Button, Flex, Grid, Surface, useColor, useScale } from "@phreshos/react-ui"
 
 function Derived() {
-  const spacing = useScale(standardTheme.spacing)
-  const accent = useColor(standardTheme.accent)
+  const spacing = useScale(standardAppearance.spacing.light)
+  const accent = useColor(standardAppearance.accent.light)
 
   return <span style={{ color: accent.base, padding: spacing.small }}>Derived</span>
 }
 
 const view = (
-  <ThemeProvider theme={standardTheme}>
+  <AppearanceProvider appearance={standardAppearance} theme="light">
     <Surface>
       <Grid columns={2} gap="small">
         <Flex align="center" justify="between">
@@ -110,7 +110,7 @@ const view = (
         </Flex>
       </Grid>
     </Surface>
-  </ThemeProvider>
+  </AppearanceProvider>
 )
 
 void view
