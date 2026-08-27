@@ -1,7 +1,6 @@
-import { Fragment, useEffect, useMemo, useRef } from "react"
+import { Fragment, useMemo } from "react"
 
 interface SurfaceMaterialProps {
-  readonly grainAnimation: number
   readonly color: string
   readonly distortion: number
   readonly grain: number
@@ -12,38 +11,17 @@ interface SurfaceMaterialProps {
   readonly waves: number
 }
 
-interface AnimationEntry {
-  readonly paint: (frame: number) => void
-  readonly rate: number
-  frame: number
-}
-
 /** The locally owned SVG paint layer inside one Surface. */
-export function SurfaceMaterial({ color, distortion, grain, grainAmount, grainAnimation, identity, opacity, ripples, waves }: SurfaceMaterialProps) {
+export function SurfaceMaterial({ color, distortion, grain, grainAmount, identity, opacity, ripples, waves }: SurfaceMaterialProps) {
   const seed = useMemo(() => seedFrom(identity), [identity])
   const hasPaint = opacity > 0
   const hasGrain = hasPaint && grain > 0 && grainAmount > 0
   const hasDistortion = distortion > 0 || waves > 0 || ripples > 0
-  const initial = useMemo(() => hasGrain ? grainPaths(seed, 0, grainAmount) : [], [grainAmount, hasGrain, seed])
-  const svg = useRef<SVGSVGElement>(null)
-  const paths = useRef<Array<SVGPathElement | null>>([])
-
-  useEffect(() => {
-    paths.current.forEach((path, tone) => path?.setAttribute("d", initial[tone] ?? ""))
-    if (grainAnimation === 0 || !hasGrain || !svg.current) return
-
-    const paint = (frame: number) => {
-      const values = grainPaths(seed, frame, grainAmount)
-      paths.current.forEach((path, tone) => path?.setAttribute("d", values[tone] ?? ""))
-    }
-
-    return animate(svg.current, grainAnimation, paint)
-  }, [grainAnimation, grainAmount, hasGrain, initial, seed])
+  const initial = useMemo(() => hasGrain ? grainPaths(seed, grainAmount) : [], [grainAmount, hasGrain, seed])
 
   if (!hasPaint && !hasDistortion) return null
 
   return <svg
-    ref={svg}
     data-surface-material=""
     aria-hidden="true"
     focusable="false"
@@ -72,7 +50,6 @@ export function SurfaceMaterial({ color, distortion, grain, grainAmount, grainAn
       {hasGrain && <pattern id={`${identity}-grain`} width={patternSize} height={patternSize} patternUnits="userSpaceOnUse">
         {initial.map((path, tone) => <path
           key={tone}
-          ref={node => { paths.current[tone] = node }}
           data-surface-grain-tone={tone}
           d={path}
           fill={grainTone(color, tone, grain)}
@@ -202,79 +179,17 @@ function grainTone(color: string, tone: number, intensity: number) {
   return `color-mix(in srgb, ${color} ${100 - percentage}%, rgb(${channel} ${channel} ${channel}) ${percentage}%)`
 }
 
-class AnimationClock {
-  readonly #entries = new Set<AnimationEntry>()
-  readonly #view: Window
-  #request: number | undefined
-
-  constructor(view: Window) {
-    this.#view = view
-  }
-
-  subscribe(rate: number, paint: (frame: number) => void) {
-    const entry = { rate, paint, frame: -1 }
-    this.#entries.add(entry)
-    this.#start()
-
-    return () => {
-      this.#entries.delete(entry)
-      if (this.#entries.size === 0) this.#stop()
-    }
-  }
-
-  #start() {
-    if (this.#request !== undefined) return
-    this.#request = this.#view.requestAnimationFrame(this.#tick)
-  }
-
-  #stop() {
-    if (this.#request === undefined) return
-    this.#view.cancelAnimationFrame(this.#request)
-    this.#request = undefined
-  }
-
-  #tick = (time: number) => {
-    this.#entries.forEach(entry => {
-      const frame = Math.floor(time / 1000 * entry.rate)
-      if (frame === entry.frame) return
-      entry.frame = frame
-      entry.paint(frame)
-    })
-
-    this.#request = this.#entries.size === 0
-      ? undefined
-      : this.#view.requestAnimationFrame(this.#tick)
-  }
-}
-
-const clocks = new WeakMap<Window, AnimationClock>()
-
-function animate(element: SVGSVGElement, rate: number, paint: (frame: number) => void) {
-  const view = element.ownerDocument.defaultView
-  if (!view) return
-
-  let clock = clocks.get(view)
-  if (!clock) {
-    clock = new AnimationClock(view)
-    clocks.set(view, clock)
-  }
-
-  return clock.subscribe(rate, paint)
-}
-
-function grainPaths(seed: number, frame: number, amount: number) {
+function grainPaths(seed: number, amount: number) {
   const tones = Array.from({ length: toneCount }, () => [] as string[])
-  const frameX = frame * 19.17
-  const frameY = frame * 7.31
 
   for (let y = 0; y < patternSize; y += 1) {
     for (let x = 0; x < patternSize; x += 1) {
       const pointX = x + seed * 41
       const pointY = y + seed * 17
-      const presence = shaderHash(pointX + frameX + 71.9, pointY + frameY + 13.7)
+      const presence = shaderHash(pointX + 71.9, pointY + 13.7)
       if (presence > amount) continue
-      const fine = shaderHash(Math.floor(pointX * 1.18) + frameX, Math.floor(pointY * 1.18) + frameY)
-      const clustered = shaderHash(Math.floor(pointX * 0.47) + frameX + 31.7, Math.floor(pointY * 0.47) + frameY + 31.7)
+      const fine = shaderHash(Math.floor(pointX * 1.18), Math.floor(pointY * 1.18))
+      const clustered = shaderHash(Math.floor(pointX * 0.47) + 31.7, Math.floor(pointY * 0.47) + 31.7)
       const value = clamp(fine * 0.8 + clustered * 0.2, 0, 1)
       const tone = Math.min(toneCount - 1, Math.floor(value * toneCount))
       tones[tone]?.push(`M${x} ${y}h1v1h-1z`)

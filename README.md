@@ -94,13 +94,13 @@ texture:
 </Surface>
 
 <Surface color="strong" grain="large">...</Surface>
-<Surface color="#101114" grain={0.2} grainAnimation={8} backdrop={4} opacity={0.9}>...</Surface>
+<Surface color="#101114" grain={0.2} backdrop={4} opacity={0.9}>...</Surface>
 <Surface distortion={70} waves={8} ripples={4} saturation={1.4} brightness={1.04}>...</Surface>
 ```
 
 `color` resolves from `Theme.background`; its semantic levels derive from that
 same source and a direct color remains an explicit local override. `grain`,
-`grainAmount`, `grainAnimation`, `backdrop`, `opacity`, `distortion`, `waves`,
+`grainAmount`, `backdrop`, `opacity`, `distortion`, `waves`,
 `ripples`, `saturation`, and `brightness` resolve from `Theme.surface`, accept
 their semantic levels or direct values, and remain bounded by Core's Theme
 limits. Radius and foreground remain ordinary Theme styles. Grain intensity

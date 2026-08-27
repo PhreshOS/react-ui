@@ -28,9 +28,6 @@ export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "color" | "opac
   /** Theme-derived level or direct retained grain amount from zero to one. */
   grainAmount?: ScaleLevel | number
 
-  /** Theme-derived level or direct grain changes per second from zero to 16. */
-  grainAnimation?: ScaleLevel | number
-
   /** Theme-derived level or direct backdrop blur from zero to 24 CSS pixels. */
   backdrop?: ScaleLevel | number
 
@@ -54,7 +51,6 @@ export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "color" | "opac
 }>
 
 type SurfaceControls = Pick<SurfaceProps,
-  "grainAnimation" |
   "backdrop" |
   "brightness" |
   "color" |
@@ -76,7 +72,7 @@ const layerStyle = {
 
 /** Contains content above locally owned Surface material layers. */
 export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface(
-  { backdrop, brightness, children, color, distortion, grain, grainAmount, grainAnimation, opacity, ripples, saturation, style, waves, ...properties },
+  { backdrop, brightness, children, color, distortion, grain, grainAmount, opacity, ripples, saturation, style, waves, ...properties },
   forwardedRef
 ) {
   const theme = useTheme()
@@ -87,7 +83,7 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
     if (typeof forwardedRef === "function") forwardedRef(node)
     else if (forwardedRef) forwardedRef.current = node
   }, [forwardedRef])
-  const resolved = resolveSurface({ backdrop, brightness, color, distortion, grain, grainAmount, grainAnimation, opacity, ripples, saturation, waves }, theme)
+  const resolved = resolveSurface({ backdrop, brightness, color, distortion, grain, grainAmount, opacity, ripples, saturation, waves }, theme)
 
   useLayoutEffect(() => {
     const surface = element.current
@@ -148,7 +144,6 @@ function BackdropLayer({ filter, name, zIndex }: Readonly<{ filter: string, name
 
 function resolveSurface(values: SurfaceControls, theme: ThemeProperties) {
   const material = {
-    grainAnimation: resolveScale(values.grainAnimation, theme.surface.grainAnimation, themeLimits.surface.grainAnimation),
     color: resolveColor(values.color, theme.background),
     distortion: resolveScale(values.distortion, theme.surface.distortion, themeLimits.surface.distortion),
     grain: resolveScale(values.grain, theme.surface.grain, themeLimits.surface.grain),
