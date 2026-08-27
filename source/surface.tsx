@@ -1,16 +1,12 @@
 import { forwardRef, useCallback, useId, useLayoutEffect, useRef } from "react"
 import type { ComponentPropsWithoutRef, CSSProperties } from "react"
 import {
-  color as deriveColor,
-  isScaleLevel,
-  scale,
-  scaleMultiplier,
   themeLimits,
-  type ColorLevel,
-  type ScaleLevel,
   type ThemeProperties,
   type ThemeRange
 } from "@phreshos/core"
+import { color as deriveColor, type ColorLevel } from "./color.js"
+import { isScaleLevel, scale, scaleMultiplier, type ScaleLevel } from "./scale.js"
 import { SurfaceMaterial } from "./surface-material.js"
 import { useTheme } from "./theme-provider.js"
 

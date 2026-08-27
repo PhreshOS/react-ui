@@ -75,10 +75,12 @@ import {
   Surface,
   ThemeProvider,
   resolveRadius,
-  resolveSpacing
+  resolveSpacing,
+  useColor,
+  useScale
 } from "@phreshos/react-ui"
 
-for (const exported of [Button, Flex, Grid, Surface, ThemeProvider, resolveRadius, resolveSpacing]) {
+for (const exported of [Button, Flex, Grid, Surface, ThemeProvider, resolveRadius, resolveSpacing, useColor, useScale]) {
   assert.notEqual(exported, undefined)
 }
 assert.deepEqual(Object.keys(icons), [])
@@ -89,7 +91,14 @@ assert.deepEqual(Object.keys(icons), [])
   writeFileSync(
     join(consumer, "consumer.tsx"),
     `import { standardTheme } from "@phreshos/core"
-import { Button, Flex, Grid, Surface, ThemeProvider } from "@phreshos/react-ui"
+import { Button, Flex, Grid, Surface, ThemeProvider, useColor, useScale } from "@phreshos/react-ui"
+
+function Derived() {
+  const spacing = useScale(standardTheme.spacing)
+  const accent = useColor(standardTheme.accent)
+
+  return <span style={{ color: accent.base, padding: spacing.small }}>Derived</span>
+}
 
 const view = (
   <ThemeProvider theme={standardTheme}>
@@ -97,6 +106,7 @@ const view = (
       <Grid columns={2} gap="small">
         <Flex align="center" justify="between">
           <Button onPress={() => undefined}>Save</Button>
+          <Derived />
         </Flex>
       </Grid>
     </Surface>

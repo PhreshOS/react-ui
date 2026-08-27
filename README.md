@@ -68,11 +68,11 @@ Theme's concrete default spacing:
 <Grid gap="large">...</Grid>
 ```
 
-Structures that own native spacing pass the explicit Theme value to the
-general React SDK hook instead:
+Structures that own native spacing pass the explicit Theme value to React UI's
+general derivation hook:
 
 ```tsx
-import { useScale } from "@phreshos/react"
+import { useScale } from "@phreshos/react-ui"
 
 const spacing = useScale(theme.spacing)
 
@@ -118,14 +118,14 @@ visible grain and a positive rate joins the internal document clock, while
 every texture and seed remains local to its own Surface.
 
 The Theme stores unrestricted CSS background, foreground, and accent sources.
-Core derives the fixed `subtle`, `soft`, `base`, `strong`, and `intense`
+React UI derives the fixed `subtle`, `soft`, `base`, `strong`, and `intense`
 treatments from any supplied color, preserving the value exactly at `base`.
-`useColor(value)` in the React SDK memoizes that calculation without
-implicitly choosing a Theme property. CSS performs the nearby mixing in
-OKLCH, so React UI does not own or persist a parallel palette of its own:
+`useColor(value)` memoizes that calculation without implicitly choosing a
+Theme property. CSS performs the nearby mixing in OKLCH, and the System retains
+only the concrete Theme color:
 
 ```tsx
-import { useColor } from "@phreshos/react"
+import { useColor } from "@phreshos/react-ui"
 
 const colors = useColor(theme.accent)
 
@@ -143,10 +143,10 @@ overrides:
 ```
 
 Structures whose native element owns the shape derive from the explicit
-radius value through the same general React SDK hook:
+radius value through the same React UI hook:
 
 ```tsx
-import { useScale } from "@phreshos/react"
+import { useScale } from "@phreshos/react-ui"
 
 const radius = useScale(theme.radius)
 

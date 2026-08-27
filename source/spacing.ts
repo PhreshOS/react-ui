@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react"
 import type { ThemeProperties } from "@phreshos/core"
-import { isScaleLevel, scale, type ScaleLevel } from "@phreshos/core"
+import { isScaleLevel, scale, type ScaleLevel } from "./scale.js"
 
 /** A Theme-derived level, pixel value, or explicit CSS spacing value. */
 export type Spacing = ScaleLevel | number | (string & {})

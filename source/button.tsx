@@ -2,7 +2,7 @@ import { forwardRef } from "react"
 import type { CSSProperties, ReactNode } from "react"
 import { Button as AriaButton } from "react-aria-components"
 import type { ButtonProps as AriaButtonProps } from "react-aria-components"
-import { scale, type ScaleLevel } from "@phreshos/core"
+import { scale, type ScaleLevel } from "./scale.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { useTheme } from "./theme-provider.js"
 

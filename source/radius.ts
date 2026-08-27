@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react"
 import type { Shapeable, ThemeProperties } from "@phreshos/core"
-import { isScaleLevel, scale, type ScaleLevel } from "@phreshos/core"
+import { isScaleLevel, scale, type ScaleLevel } from "./scale.js"
 
 /** A Theme-derived level, pixel value, or explicit CSS corner radius. */
 export type Radius = ScaleLevel | number | (string & {})
