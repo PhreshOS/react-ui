@@ -5,19 +5,12 @@ import {
   type AppearanceSurface,
   type AppearanceRange
 } from "@phreshos/core"
-import { color as deriveColor, type ColorLevel } from "./color.js"
 import { isScaleLevel, scale, scaleMultiplier, type ScaleLevel } from "./scale.js"
 import { SurfaceMaterial } from "./surface-material.js"
 import { useAppearance, useResolveTheme } from "./appearance-provider.js"
 
-/** An Appearance-derived treatment or direct CSS color. */
-export type SurfaceColor = ColorLevel | (string & {})
-
 /** Native div properties plus controls for the locally owned material. */
-export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "color" | "opacity"> & Readonly<{
-  /** Appearance-derived treatment or direct CSS material color. */
-  color?: SurfaceColor
-
+export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "opacity"> & Readonly<{
   /** Appearance-derived level or direct grain intensity from zero to one. */
   grain?: ScaleLevel | number
 
@@ -49,7 +42,6 @@ export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "color" | "opac
 type SurfaceControls = Pick<SurfaceProps,
   "backdrop" |
   "brightness" |
-  "color" |
   "distortion" |
   "grain" |
   "grainAmount" |
@@ -68,7 +60,7 @@ const layerStyle = {
 
 /** Contains content above locally owned Surface material layers. */
 export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface(
-  { backdrop, brightness, children, color, distortion, grain, grainAmount, opacity, ripples, saturation, style, waves, ...properties },
+  { backdrop, brightness, children, distortion, grain, grainAmount, opacity, ripples, saturation, style, waves, ...properties },
   forwardedRef
 ) {
   const appearance = useAppearance()
@@ -83,7 +75,7 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
     if (typeof forwardedRef === "function") forwardedRef(node)
     else if (forwardedRef) forwardedRef.current = node
   }, [forwardedRef])
-  const resolved = resolveSurface({ backdrop, brightness, color, distortion, grain, grainAmount, opacity, ripples, saturation, waves }, background, surface)
+  const resolved = resolveSurface({ backdrop, brightness, distortion, grain, grainAmount, opacity, ripples, saturation, waves }, background, surface)
 
   useLayoutEffect(() => {
     const surface = element.current
@@ -144,7 +136,7 @@ function BackdropLayer({ filter, name, zIndex }: Readonly<{ filter: string, name
 
 function resolveSurface(values: SurfaceControls, background: string, surface: AppearanceSurface) {
   const material = {
-    color: resolveColor(values.color, background),
+    color: background,
     distortion: resolveScale(values.distortion, surface.distortion, appearanceLimits.surface.distortion),
     grain: resolveScale(values.grain, surface.grain, appearanceLimits.surface.grain),
     grainAmount: resolveScale(values.grainAmount, surface.grainAmount, appearanceLimits.surface.grainAmount),
@@ -166,15 +158,6 @@ function resolveSurface(values: SurfaceControls, background: string, surface: Ap
     frost,
     refracts: material.distortion > 0 || material.waves > 0 || material.ripples > 0
   }
-}
-
-function resolveColor(value: SurfaceColor | undefined, base: string) {
-  if (value === undefined) return base
-  return isColorLevel(value) ? deriveColor(base)[value] : value
-}
-
-function isColorLevel(value: SurfaceColor): value is ColorLevel {
-  return value === "subtle" || value === "soft" || value === "base" || value === "strong" || value === "intense"
 }
 
 function resolveScale(value: ScaleLevel | number | undefined, base: number, range: AppearanceRange) {

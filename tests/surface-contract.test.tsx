@@ -21,6 +21,7 @@ describe("Surface", function () {
       ref={ref}
       data-testid="surface"
       className="custom"
+      color="#123456"
       aria-label="Workspace"
       style={{ borderRadius: 18, padding: 12 }}
     >
@@ -31,11 +32,13 @@ describe("Surface", function () {
 
     expect(ref.current).toBe(surface)
     expect(surface.className).toBe("custom")
+    expect(surface.getAttribute("color")).toBe("#123456")
     expect(surface.getAttribute("aria-label")).toBe("Workspace")
     expect(surface.style.borderRadius).toBe("18px")
     expect(surface.style.padding).toBe("12px")
     expect(surface.querySelector("span")?.textContent).toBe("Content")
     expect(surface.querySelector("[data-surface-material]")).toBeInstanceOf(SVGSVGElement)
+    expect(baseColor("surface")).toBe("#fffff5")
     expect(surface.querySelector("canvas")).toBeNull()
   })
 
@@ -69,21 +72,6 @@ describe("Surface", function () {
     expect(material.querySelector("[data-surface-grain-tone]")).toBeNull()
     expect(material.querySelector("[data-surface-distortion]")).toBeNull()
     expect(material.querySelector("[data-surface-edge]")).toBeNull()
-  })
-
-  it("resolves Theme color treatments and direct colors into each local material", function () {
-    renderSurface(<>
-      <Surface data-testid="base" />
-      <Surface data-testid="strong" color="strong" />
-      <Surface data-testid="direct" color="#123456" />
-    </>)
-
-    expect(baseColor("base")).toBe("#fffff5")
-    expect(baseColor("strong")).toBe("color-mix(in oklch, #fffff5 82%, black)")
-    expect(baseColor("direct")).toBe("#123456")
-    expect(borderColor("base")).toContain("#fffff5")
-    expect(borderColor("strong")).toContain("color-mix(in oklch, #fffff5 82%, black)")
-    expect(borderColor("direct")).toContain("#123456")
   })
 
   it("uses the top-level Theme background as its default material color", function () {
@@ -213,10 +201,6 @@ function renderSurface(surface: ReactNode) {
 
 function baseColor(testId: string) {
   return required(screen.getByTestId(testId).querySelector("[data-surface-base]")).getAttribute("fill")
-}
-
-function borderColor(testId: string) {
-  return required(screen.getByTestId(testId).querySelector<HTMLElement>("[data-surface-border]")).style.boxShadow
 }
 
 function required<T>(value: T | null): T {
