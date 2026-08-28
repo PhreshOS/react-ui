@@ -28,7 +28,7 @@ An application using the Client SDK composes the packages explicitly:
 
 ```tsx
 const appearance = useSystemAppearance()
-const theme = useSystemTheme()
+const { theme } = useDesktopPreferences()
 
 return <AppearanceProvider appearance={appearance} theme={theme}>
   {children}
