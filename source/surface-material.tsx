@@ -1,4 +1,5 @@
 import { Fragment, useMemo } from "react"
+import { scale } from "./scale.js"
 
 interface SurfaceMaterialProps {
   readonly color: string
@@ -23,6 +24,7 @@ export function SurfaceMaterial({ color, distortion, grain, grainAmount, identit
 
   return <svg
     data-surface-material=""
+    data-surface-border={hasPaint ? "" : undefined}
     aria-hidden="true"
     focusable="false"
     style={{
@@ -34,8 +36,10 @@ export function SurfaceMaterial({ color, distortion, grain, grainAmount, identit
       height: "100%",
       overflow: "hidden",
       borderRadius: "inherit",
+      borderColor: edgeColor(color, opacity),
+      borderStyle: hasPaint ? "solid" : "none",
+      borderWidth: hasPaint ? 1 : 0,
       boxSizing: "border-box",
-      opacity,
       pointerEvents: "none"
     }}
   >
@@ -57,15 +61,26 @@ export function SurfaceMaterial({ color, distortion, grain, grainAmount, identit
         />)}
       </pattern>}
     </defs>}
-    {hasPaint && <rect data-surface-base="" width="100%" height="100%" fill={color} />}
-    {hasGrain && <rect
-      data-surface-grain=""
-      width="100%"
-      height="100%"
-      fill={`url(#${identity}-grain)`}
-      shapeRendering="crispEdges"
-    />}
+    {hasPaint && <g data-surface-paint="" opacity={opacity}>
+      <rect data-surface-base="" width="100%" height="100%" fill={color} />
+      {hasGrain && <rect
+        data-surface-grain=""
+        width="100%"
+        height="100%"
+        fill={`url(#${identity}-grain)`}
+        shapeRendering="crispEdges"
+      />}
+    </g>}
   </svg>
+}
+
+function edgeColor(color: string, opacity: number) {
+  const edge = `color-mix(in oklch, ${color} 94%, black)`
+  const edgeOpacity = Math.min(1, scale(opacity, "large"))
+
+  if (edgeOpacity === 1) return edge
+
+  return `color-mix(in srgb, ${edge} ${Math.round(edgeOpacity * 10_000) / 100}%, transparent)`
 }
 
 function DistortionFilter({ distortion, identity, ripples, seed, waves }: Readonly<{

@@ -54,15 +54,16 @@ radii require Appearance because their concrete source is `spacing` or
 ## Surface
 
 `Surface` is the shared visual material. It accepts native `div` properties
-plus local overrides for color, grain, grain amount, backdrop blur, opacity,
+plus local overrides for grain, grain amount, backdrop blur, opacity,
 distortion, waves, ripples, saturation, and brightness. Omitted controls derive
 from the resolved Appearance. A zero-valued optional effect is omitted from the
 rendered material so disabled work costs nothing.
 
-Each Surface owns its SVG material while the Surface element itself carries
-its border. Backdrop refraction and frost remain separate compositor layers.
-Radius and foreground resolve from Appearance; elevation stays with the
-surrounding layout. Caller CSS may override the border directly.
+Each Surface returns one plain geometry and content container. Its existing SVG
+material paints both the fill and its material-derived border; no separate
+border element is rendered. Backdrop refraction and frost remain separate
+compositor layers. Radius and foreground resolve from Appearance; elevation
+stays with the surrounding layout.
 
 ## Components
 

@@ -76,7 +76,6 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
     else if (forwardedRef) forwardedRef.current = node
   }, [forwardedRef])
   const resolved = resolveSurface({ backdrop, brightness, distortion, grain, grainAmount, opacity, ripples, saturation, waves }, background, surface)
-  const borderColor = resolveBorderColor(resolved.material.color, resolved.material.opacity)
 
   useLayoutEffect(() => {
     const surface = element.current
@@ -87,11 +86,7 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
     {...properties}
     ref={capture}
     style={{
-      borderColor,
-      borderStyle: "solid",
-      borderWidth: 1,
       borderRadius: radius,
-      boxSizing: "border-box",
       color: foreground,
       ...style
     }}
@@ -157,16 +152,6 @@ function resolveMultiplier(value: ScaleLevel | number | undefined, base: number,
   const resolved = isScaleLevel(value) ? scaleMultiplier(base, value) : value ?? base
   const finite = Number.isFinite(resolved) ? resolved : base
   return Math.min(range.maximum, Math.max(range.minimum, finite))
-}
-
-function resolveBorderColor(color: string, opacity: number) {
-  const edge = `color-mix(in oklch, ${color} 94%, black)`
-  const resolvedOpacity = resolveScale("large", opacity, appearanceLimits.surface.opacity)
-
-  if (resolvedOpacity === 0) return "transparent"
-  if (resolvedOpacity === 1) return edge
-
-  return `color-mix(in srgb, ${edge} ${Math.round(resolvedOpacity * 10_000) / 100}%, transparent)`
 }
 
 function prepareSurfaceLayout(element: HTMLElement) {
