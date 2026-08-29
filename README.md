@@ -48,7 +48,8 @@ pointer, the thumb is transparent outside its scrollable area, uses foreground
 at 10% inside it, and rises to 20% directly under the pointer. Touch documents
 retain the 10% thumb. The standardized scrollbar API has no thumb-hover state,
 so its fallback stops at 10%. Standard and WebKit rules are mutually exclusive
-so the standard thin width cannot override the padded geometry.
+so the standard thin width cannot override the padded geometry. WebKit hover
+also invalidates the scrollbar style to ensure Safari repaints each state.
 
 ## Levels
 

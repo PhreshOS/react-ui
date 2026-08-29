@@ -60,6 +60,10 @@ const stylesheet = `
   }
 
   @media (hover: hover) and (pointer: fine) {
+    *:hover {
+      --phreshos-scrollbar-repaint: ;
+    }
+
     *::-webkit-scrollbar-thumb {
       background-color: transparent;
     }

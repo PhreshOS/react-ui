@@ -43,6 +43,7 @@ describe("AppearanceProvider", function () {
     expect(rendered.container.children).toHaveLength(1)
     expect(style?.textContent).toContain("*:hover::-webkit-scrollbar-thumb")
     expect(style?.textContent).toContain("*::-webkit-scrollbar-thumb:hover")
+    expect(style?.textContent).toContain("--phreshos-scrollbar-repaint: ;")
     expect(style?.textContent).toContain("@supports not selector(::-webkit-scrollbar)")
     expect(style?.textContent).toContain("@supports selector(::-webkit-scrollbar)")
     expect(style?.textContent).toContain("scrollbar-color: transparent transparent")
