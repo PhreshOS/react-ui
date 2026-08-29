@@ -27,19 +27,18 @@ collapses Appearance into a second retained object.
 An application using the Client SDK composes the packages explicitly:
 
 ```tsx
-import { useDesktopPreferences, useDocumentColorScheme, useSystemAppearance } from "@phreshos/react"
+import { useDesktopPreferences, useSystemAppearance } from "@phreshos/react"
 
 const appearance = useSystemAppearance()
 const { theme } = useDesktopPreferences()
-useDocumentColorScheme(theme)
 
 return <AppearanceProvider appearance={appearance} theme={theme}>
   {children}
 </AppearanceProvider>
 ```
 
-The React SDK owns `useDocumentColorScheme(theme)` because synchronizing the
-browser document is React integration, not a visual primitive.
+Document color-scheme negotiation belongs to the System iframe and the Client
+HTML document, not to a visual component or React hook.
 
 ## Levels
 
