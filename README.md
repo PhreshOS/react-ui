@@ -44,9 +44,9 @@ HTML document, not to a visual component or React hook.
 no rendered container: one document stylesheet derives a thin rounded thumb
 from Appearance foreground, spacing, and radius, leaves the track transparent,
 and gives its container three pixels of transparent padding. The thumb uses the
-foreground at half opacity and fades smoothly when a precise pointer enters or
-leaves its scrollable area. Touch documents retain a visible thumb because they
-have no cursor hover lifecycle.
+foreground at 20% opacity and appears or disappears when a precise pointer
+enters or leaves its scrollable area. Touch documents retain a visible thumb
+because they have no cursor hover lifecycle.
 
 ## Levels
 

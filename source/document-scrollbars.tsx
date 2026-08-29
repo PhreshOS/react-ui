@@ -36,7 +36,6 @@ const stylesheet = `
   border-radius: var(${properties.radius});
   background-color: var(${properties.thumb});
   background-clip: padding-box;
-  transition: background-color 120ms ease-out;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -69,11 +68,6 @@ const stylesheet = `
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *::-webkit-scrollbar-thumb {
-    transition: none;
-  }
-}
 `
 
 const documents = new WeakMap<Document, DocumentScrollbars>()
@@ -86,7 +80,7 @@ export default function DocumentScrollbars({ appearance, theme }: Readonly<{ app
   const thumbSize = Math.max(4, Math.round(scale(appearance.spacing.light, "small")) - 2)
   const size = thumbSize + padding * 2
   const values = {
-    thumb: colorOpacity(foreground, 0.5),
+    thumb: colorOpacity(foreground, 0.2),
     size: `${size}px`,
     padding: `${padding}px`,
     radius: `${Math.min(appearance.radius.light, padding + thumbSize / 2)}px`
