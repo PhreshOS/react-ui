@@ -19,8 +19,12 @@ const stylesheet = `
   }
 
   @media (hover: hover) and (pointer: fine) {
+    * {
+      scrollbar-color: transparent transparent;
+    }
+
     *:hover {
-      scrollbar-color: var(${properties.thumbHover}) transparent;
+      scrollbar-color: var(${properties.thumb}) transparent;
     }
   }
 
@@ -56,14 +60,23 @@ const stylesheet = `
   }
 
   @media (hover: hover) and (pointer: fine) {
+    *::-webkit-scrollbar-thumb {
+      background-color: transparent;
+    }
+
     *:hover::-webkit-scrollbar-thumb {
+      background-color: var(${properties.thumb});
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
       background-color: var(${properties.thumbHover});
     }
   }
 
   @media (forced-colors: active) {
     *::-webkit-scrollbar-thumb,
-    *:hover::-webkit-scrollbar-thumb {
+    *:hover::-webkit-scrollbar-thumb,
+    *::-webkit-scrollbar-thumb:hover {
       background-color: ButtonText;
     }
   }
