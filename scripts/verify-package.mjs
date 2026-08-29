@@ -77,10 +77,11 @@ import {
   resolveRadius,
   resolveSpacing,
   useColor,
+  useDocumentColorScheme,
   useScale
 } from "@phreshos/react-ui"
 
-for (const exported of [AppearanceProvider, Button, Flex, Grid, Surface, resolveRadius, resolveSpacing, useColor, useScale]) {
+for (const exported of [AppearanceProvider, Button, Flex, Grid, Surface, resolveRadius, resolveSpacing, useColor, useDocumentColorScheme, useScale]) {
   assert.notEqual(exported, undefined)
 }
 assert.deepEqual(Object.keys(icons), [])
@@ -91,9 +92,10 @@ assert.deepEqual(Object.keys(icons), [])
   writeFileSync(
     join(consumer, "consumer.tsx"),
     `import { standardAppearance } from "@phreshos/core"
-import { AppearanceProvider, Button, Flex, Grid, Surface, useColor, useScale } from "@phreshos/react-ui"
+import { AppearanceProvider, Button, Flex, Grid, Surface, useColor, useDocumentColorScheme, useScale } from "@phreshos/react-ui"
 
 function Derived() {
+  useDocumentColorScheme("light")
   const spacing = useScale(standardAppearance.spacing.light)
   const accent = useColor(standardAppearance.accent.light)
 

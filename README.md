@@ -27,13 +27,21 @@ collapses Appearance into a second retained object.
 An application using the Client SDK composes the packages explicitly:
 
 ```tsx
+import { useDocumentColorScheme } from "@phreshos/react-ui"
+
 const appearance = useSystemAppearance()
 const { theme } = useDesktopPreferences()
+useDocumentColorScheme(theme)
 
 return <AppearanceProvider appearance={appearance} theme={theme}>
   {children}
 </AppearanceProvider>
 ```
+
+`useDocumentColorScheme(theme)` explicitly synchronizes the document root's
+native `color-scheme` and restores its previous value on unmount. Call it once
+at the application root; reading Theme or Desktop preferences has no document
+side effect.
 
 ## Levels
 
@@ -65,5 +73,6 @@ Appearance; elevation stays with the surrounding layout.
 - `Flex` and `Grid`: small layout primitives that preserve native props.
 - `AppearanceProvider`, `useAppearance`, `useTheme`, `useResolveTheme`:
   environment-neutral appearance composition.
+- `useDocumentColorScheme`: explicit browser document integration.
 - `useScale`, `useColor`, `resolveSpacing`, `resolveRadius`: explicit visual
   derivation helpers.

@@ -11,6 +11,7 @@ export {
   useTheme,
   type AppearanceProviderProps
 } from "./appearance-provider.js"
+export { default as useDocumentColorScheme } from "./document-color-scheme.js"
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
 export { Surface, type SurfaceProps } from "./surface.js"
