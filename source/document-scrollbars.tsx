@@ -93,7 +93,7 @@ const documents = new WeakMap<Document, DocumentScrollbars>()
 export default function DocumentScrollbars({ appearance, theme }: Readonly<{ appearance: Appearance, theme: Theme }>) {
   const identity = useRef(Symbol("AppearanceProvider")).current
   const foreground = theme === "dark" ? appearance.foreground.dark : appearance.foreground.light
-  const padding = 5
+  const padding = 2
   const thumbSize = Math.max(4, Math.round(scale(appearance.spacing.light, "small")) - 2)
   const size = thumbSize + padding * 2
   const values = {
