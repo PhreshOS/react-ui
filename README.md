@@ -46,7 +46,8 @@ from Appearance foreground, spacing, and radius, leaves the track transparent,
 and gives its container five pixels of transparent padding. The thumb uses the
 foreground at 10% opacity and rises to 20% while a precise pointer is over its
 scrollable area. Touch documents retain the 10% thumb because they have no
-cursor hover lifecycle.
+cursor hover lifecycle. Standard and WebKit scrollbar rules are mutually
+exclusive so the standard thin width cannot override the padded geometry.
 
 ## Levels
 

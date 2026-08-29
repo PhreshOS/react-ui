@@ -12,55 +12,62 @@ const properties = {
 } as const
 
 const stylesheet = `
-* {
-  scrollbar-color: var(${properties.thumb}) transparent;
-  scrollbar-width: thin;
-}
-
-*::-webkit-scrollbar {
-  width: var(${properties.size});
-  height: var(${properties.size});
-  background: transparent;
-}
-
-*::-webkit-scrollbar-track,
-*::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
-*::-webkit-scrollbar-button {
-  display: none;
-}
-
-*::-webkit-scrollbar-thumb {
-  border: var(${properties.padding}) solid transparent;
-  border-radius: var(${properties.radius});
-  background-color: var(${properties.thumb});
-  background-clip: padding-box;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  *:hover {
-    scrollbar-color: var(${properties.thumbHover}) transparent;
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-color: var(${properties.thumb}) transparent;
+    scrollbar-width: thin;
   }
 
-  *:hover::-webkit-scrollbar-thumb {
-    background-color: var(${properties.thumbHover});
+  @media (hover: hover) and (pointer: fine) {
+    *:hover {
+      scrollbar-color: var(${properties.thumbHover}) transparent;
+    }
+  }
+
+  @media (forced-colors: active) {
+    *,
+    *:hover {
+      scrollbar-color: auto;
+    }
   }
 }
 
-@media (forced-colors: active) {
-  *,
-  *:hover {
-    scrollbar-color: auto;
+@supports selector(::-webkit-scrollbar) {
+  *::-webkit-scrollbar {
+    width: var(${properties.size});
+    height: var(${properties.size});
+    background: transparent;
   }
 
-  *::-webkit-scrollbar-thumb,
-  *:hover::-webkit-scrollbar-thumb {
-    background-color: ButtonText;
+  *::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-button {
+    display: none;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    border: var(${properties.padding}) solid transparent;
+    border-radius: var(${properties.radius});
+    background-color: var(${properties.thumb});
+    background-clip: padding-box;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    *:hover::-webkit-scrollbar-thumb {
+      background-color: var(${properties.thumbHover});
+    }
+  }
+
+  @media (forced-colors: active) {
+    *::-webkit-scrollbar-thumb,
+    *:hover::-webkit-scrollbar-thumb {
+      background-color: ButtonText;
+    }
   }
 }
-
 `
 
 const documents = new WeakMap<Document, DocumentScrollbars>()
