@@ -5,6 +5,7 @@ import { scale } from "./scale.js"
 
 const properties = {
   thumb: "--phreshos-scrollbar-thumb",
+  thumbHover: "--phreshos-scrollbar-thumb-hover",
   size: "--phreshos-scrollbar-size",
   padding: "--phreshos-scrollbar-padding",
   radius: "--phreshos-scrollbar-radius"
@@ -39,20 +40,12 @@ const stylesheet = `
 }
 
 @media (hover: hover) and (pointer: fine) {
-  * {
-    scrollbar-color: transparent transparent;
-  }
-
   *:hover {
-    scrollbar-color: var(${properties.thumb}) transparent;
-  }
-
-  *::-webkit-scrollbar-thumb {
-    background-color: transparent;
+    scrollbar-color: var(${properties.thumbHover}) transparent;
   }
 
   *:hover::-webkit-scrollbar-thumb {
-    background-color: var(${properties.thumb});
+    background-color: var(${properties.thumbHover});
   }
 }
 
@@ -76,11 +69,12 @@ const documents = new WeakMap<Document, DocumentScrollbars>()
 export default function DocumentScrollbars({ appearance, theme }: Readonly<{ appearance: Appearance, theme: Theme }>) {
   const identity = useRef(Symbol("AppearanceProvider")).current
   const foreground = theme === "dark" ? appearance.foreground.dark : appearance.foreground.light
-  const padding = 3
+  const padding = 5
   const thumbSize = Math.max(4, Math.round(scale(appearance.spacing.light, "small")) - 2)
   const size = thumbSize + padding * 2
   const values = {
-    thumb: colorOpacity(foreground, 0.2),
+    thumb: colorOpacity(foreground, 0.1),
+    thumbHover: colorOpacity(foreground, 0.2),
     size: `${size}px`,
     padding: `${padding}px`,
     radius: `${Math.min(appearance.radius.light, padding + thumbSize / 2)}px`
@@ -93,7 +87,7 @@ export default function DocumentScrollbars({ appearance, theme }: Readonly<{ app
 
   useInsertionEffect(function () {
     if (typeof document !== "undefined") update(document, identity, values)
-  }, [values.thumb, values.size, values.padding, values.radius])
+  }, [values.thumb, values.thumbHover, values.size, values.padding, values.radius])
 
   return null
 }
@@ -146,6 +140,7 @@ function apply(state: DocumentScrollbars) {
   if (!values) return
 
   state.root.style.setProperty(properties.thumb, values.thumb)
+  state.root.style.setProperty(properties.thumbHover, values.thumbHover)
   state.root.style.setProperty(properties.size, values.size)
   state.root.style.setProperty(properties.padding, values.padding)
   state.root.style.setProperty(properties.radius, values.radius)
@@ -160,6 +155,7 @@ function restore(state: DocumentScrollbars) {
 
 interface ScrollbarValues {
   readonly thumb: string
+  readonly thumbHover: string
   readonly size: string
   readonly padding: string
   readonly radius: string

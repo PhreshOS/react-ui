@@ -42,23 +42,26 @@ describe("AppearanceProvider", function () {
 
     expect(rendered.container.children).toHaveLength(1)
     expect(style?.textContent).toContain("*:hover::-webkit-scrollbar-thumb")
-    expect(style?.textContent).toContain("scrollbar-color: transparent transparent")
+    expect(style?.textContent).toContain("scrollbar-color: var(--phreshos-scrollbar-thumb-hover) transparent")
     expect(style?.textContent).not.toContain("transition:")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #183447 20%, transparent)")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-size")).toBe("10px")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-padding")).toBe("3px")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-radius")).toBe("5px")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #183447 10%, transparent)")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb-hover")).toBe("color-mix(in srgb, #183447 20%, transparent)")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-size")).toBe("14px")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-padding")).toBe("5px")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-radius")).toBe("7px")
 
     rendered.rerender(<AppearanceProvider appearance={standardAppearance} theme="dark">
       <span data-testid="content" />
     </AppearanceProvider>)
 
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #edf8fc 20%, transparent)")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #edf8fc 10%, transparent)")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb-hover")).toBe("color-mix(in srgb, #edf8fc 20%, transparent)")
 
     rendered.unmount()
 
     expect(document.head.querySelector("style[data-phreshos-scrollbars]")).toBeNull()
     expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb-hover")).toBe("")
   })
 
   it("restores the previous document Appearance when a later provider leaves", function () {
