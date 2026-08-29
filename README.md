@@ -40,6 +40,12 @@ return <AppearanceProvider appearance={appearance} theme={theme}>
 Document color-scheme negotiation belongs to the System iframe and the Client
 HTML document, not to a visual component or React hook.
 
+`AppearanceProvider` also owns the native scrollbars in its document. It adds
+no rendered container: one document stylesheet derives a thin rounded thumb
+from Appearance foreground, spacing, and radius, leaves the track transparent,
+and hides the thumb when a precise pointer leaves its scrollable area. Touch
+documents retain a visible thumb because they have no cursor hover lifecycle.
+
 ## Levels
 
 `useScale(value)` and `useColor(value)` derive semantic UI levels from one

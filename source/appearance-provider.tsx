@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react"
 import type { ReactNode } from "react"
 import type { Appearance, Theme, ThemedValue } from "@phreshos/core"
+import DocumentScrollbars from "./document-scrollbars.js"
 
 const missing = Symbol("AppearanceProvider")
 const AppearanceContext = createContext<Appearance | typeof missing>(missing)
@@ -9,7 +10,10 @@ const ThemeContext = createContext<Theme | typeof missing>(missing)
 /** Provides unresolved Appearance and one effective Theme to a React subtree. */
 export function AppearanceProvider({ appearance, children, theme }: AppearanceProviderProps) {
   return <AppearanceContext.Provider value={appearance}>
-    <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={theme}>
+      <DocumentScrollbars appearance={appearance} theme={theme} />
+      {children}
+    </ThemeContext.Provider>
   </AppearanceContext.Provider>
 }
 

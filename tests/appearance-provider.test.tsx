@@ -33,6 +33,48 @@ describe("AppearanceProvider", function () {
     expect(received).toBe(standardAppearance.spacing.light)
   })
 
+  it("owns Appearance-derived document scrollbars without rendering a container", function () {
+    const rendered = render(<AppearanceProvider appearance={standardAppearance} theme="light">
+      <span data-testid="content" />
+    </AppearanceProvider>)
+    const root = document.documentElement
+    const style = document.head.querySelector<HTMLStyleElement>("style[data-phreshos-scrollbars]")
+
+    expect(rendered.container.children).toHaveLength(1)
+    expect(style?.textContent).toContain("*:hover::-webkit-scrollbar-thumb")
+    expect(style?.textContent).toContain("scrollbar-color: transparent transparent")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #183447 28%, transparent)")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-size")).toBe("6px")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-inset")).toBe("1px")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-radius")).toBe("3px")
+
+    rendered.rerender(<AppearanceProvider appearance={standardAppearance} theme="dark">
+      <span data-testid="content" />
+    </AppearanceProvider>)
+
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #edf8fc 28%, transparent)")
+
+    rendered.unmount()
+
+    expect(document.head.querySelector("style[data-phreshos-scrollbars]")).toBeNull()
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("")
+  })
+
+  it("restores the previous document Appearance when a later provider leaves", function () {
+    const rendered = render(<>
+      <AppearanceProvider appearance={standardAppearance} theme="light"><span /></AppearanceProvider>
+      <AppearanceProvider appearance={standardAppearance} theme="dark"><span /></AppearanceProvider>
+    </>)
+    const root = document.documentElement
+
+    expect(document.head.querySelectorAll("style[data-phreshos-scrollbars]")).toHaveLength(1)
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toContain("#edf8fc")
+
+    rendered.rerender(<AppearanceProvider appearance={standardAppearance} theme="light"><span /></AppearanceProvider>)
+
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toContain("#183447")
+  })
+
   it("rejects reads outside an AppearanceProvider", function () {
     expect(() => render(<Read onRead={() => undefined} />)).toThrow("useAppearance() requires an AppearanceProvider")
   })
