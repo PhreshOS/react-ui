@@ -43,8 +43,10 @@ HTML document, not to a visual component or React hook.
 `AppearanceProvider` also owns the native scrollbars in its document. It adds
 no rendered container: one document stylesheet derives a thin rounded thumb
 from Appearance foreground, spacing, and radius, leaves the track transparent,
-and hides the thumb when a precise pointer leaves its scrollable area. Touch
-documents retain a visible thumb because they have no cursor hover lifecycle.
+and gives its container three pixels of transparent padding. The thumb uses the
+foreground at half opacity and fades smoothly when a precise pointer enters or
+leaves its scrollable area. Touch documents retain a visible thumb because they
+have no cursor hover lifecycle.
 
 ## Levels
 

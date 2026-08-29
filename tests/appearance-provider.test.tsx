@@ -43,16 +43,18 @@ describe("AppearanceProvider", function () {
     expect(rendered.container.children).toHaveLength(1)
     expect(style?.textContent).toContain("*:hover::-webkit-scrollbar-thumb")
     expect(style?.textContent).toContain("scrollbar-color: transparent transparent")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #183447 28%, transparent)")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-size")).toBe("6px")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-inset")).toBe("1px")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-radius")).toBe("3px")
+    expect(style?.textContent).toContain("transition: background-color 120ms ease-out")
+    expect(style?.textContent).toContain("prefers-reduced-motion: reduce")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #183447 50%, transparent)")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-size")).toBe("10px")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-padding")).toBe("3px")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-radius")).toBe("5px")
 
     rendered.rerender(<AppearanceProvider appearance={standardAppearance} theme="dark">
       <span data-testid="content" />
     </AppearanceProvider>)
 
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #edf8fc 28%, transparent)")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #edf8fc 50%, transparent)")
 
     rendered.unmount()
 

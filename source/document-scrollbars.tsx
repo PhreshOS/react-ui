@@ -6,7 +6,7 @@ import { scale } from "./scale.js"
 const properties = {
   thumb: "--phreshos-scrollbar-thumb",
   size: "--phreshos-scrollbar-size",
-  inset: "--phreshos-scrollbar-inset",
+  padding: "--phreshos-scrollbar-padding",
   radius: "--phreshos-scrollbar-radius"
 } as const
 
@@ -32,10 +32,11 @@ const stylesheet = `
 }
 
 *::-webkit-scrollbar-thumb {
-  border: var(${properties.inset}) solid transparent;
+  border: var(${properties.padding}) solid transparent;
   border-radius: var(${properties.radius});
   background-color: var(${properties.thumb});
   background-clip: padding-box;
+  transition: background-color 120ms ease-out;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -67,6 +68,12 @@ const stylesheet = `
     background-color: ButtonText;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *::-webkit-scrollbar-thumb {
+    transition: none;
+  }
+}
 `
 
 const documents = new WeakMap<Document, DocumentScrollbars>()
@@ -75,12 +82,14 @@ const documents = new WeakMap<Document, DocumentScrollbars>()
 export default function DocumentScrollbars({ appearance, theme }: Readonly<{ appearance: Appearance, theme: Theme }>) {
   const identity = useRef(Symbol("AppearanceProvider")).current
   const foreground = theme === "dark" ? appearance.foreground.dark : appearance.foreground.light
-  const size = Math.max(6, Math.round(scale(appearance.spacing.light, "small")))
+  const padding = 3
+  const thumbSize = Math.max(4, Math.round(scale(appearance.spacing.light, "small")) - 2)
+  const size = thumbSize + padding * 2
   const values = {
-    thumb: colorOpacity(foreground, 0.28),
+    thumb: colorOpacity(foreground, 0.5),
     size: `${size}px`,
-    inset: `${Math.max(1, Math.floor((size - 4) / 2))}px`,
-    radius: `${Math.min(appearance.radius.light, size / 2)}px`
+    padding: `${padding}px`,
+    radius: `${Math.min(appearance.radius.light, padding + thumbSize / 2)}px`
   }
 
   useInsertionEffect(function () {
@@ -90,7 +99,7 @@ export default function DocumentScrollbars({ appearance, theme }: Readonly<{ app
 
   useInsertionEffect(function () {
     if (typeof document !== "undefined") update(document, identity, values)
-  }, [values.thumb, values.size, values.inset, values.radius])
+  }, [values.thumb, values.size, values.padding, values.radius])
 
   return null
 }
@@ -144,7 +153,7 @@ function apply(state: DocumentScrollbars) {
 
   state.root.style.setProperty(properties.thumb, values.thumb)
   state.root.style.setProperty(properties.size, values.size)
-  state.root.style.setProperty(properties.inset, values.inset)
+  state.root.style.setProperty(properties.padding, values.padding)
   state.root.style.setProperty(properties.radius, values.radius)
 }
 
@@ -158,7 +167,7 @@ function restore(state: DocumentScrollbars) {
 interface ScrollbarValues {
   readonly thumb: string
   readonly size: string
-  readonly inset: string
+  readonly padding: string
   readonly radius: string
 }
 
