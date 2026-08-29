@@ -27,7 +27,7 @@ collapses Appearance into a second retained object.
 An application using the Client SDK composes the packages explicitly:
 
 ```tsx
-import { useDocumentColorScheme } from "@phreshos/react-ui"
+import { useDesktopPreferences, useDocumentColorScheme, useSystemAppearance } from "@phreshos/react"
 
 const appearance = useSystemAppearance()
 const { theme } = useDesktopPreferences()
@@ -38,10 +38,8 @@ return <AppearanceProvider appearance={appearance} theme={theme}>
 </AppearanceProvider>
 ```
 
-`useDocumentColorScheme(theme)` explicitly synchronizes the document root's
-native `color-scheme` and restores its previous value on unmount. Call it once
-at the application root; reading Theme or Desktop preferences has no document
-side effect.
+The React SDK owns `useDocumentColorScheme(theme)` because synchronizing the
+browser document is React integration, not a visual primitive.
 
 ## Levels
 
@@ -73,6 +71,5 @@ Appearance; elevation stays with the surrounding layout.
 - `Flex` and `Grid`: small layout primitives that preserve native props.
 - `AppearanceProvider`, `useAppearance`, `useTheme`, `useResolveTheme`:
   environment-neutral appearance composition.
-- `useDocumentColorScheme`: explicit browser document integration.
 - `useScale`, `useColor`, `resolveSpacing`, `resolveRadius`: explicit visual
   derivation helpers.
