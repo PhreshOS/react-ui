@@ -41,9 +41,9 @@ Document color-scheme negotiation belongs to the System iframe and the Client
 HTML document, not to a visual component or React hook.
 
 `AppearanceProvider` also owns the native scrollbars in its document. It adds
-no rendered container: one document stylesheet derives a thin rounded thumb
-from Appearance foreground, spacing, and radius, leaves the track transparent,
-and gives its container two pixels of transparent padding. With a precise
+no rendered container: one document stylesheet styles an eight-pixel rounded
+thumb from Appearance foreground and radius, leaves the track transparent, and
+gives its container five pixels of transparent padding. With a precise
 pointer, the thumb is transparent outside its scrollable area, uses foreground
 at 10% inside it, and rises to 20% directly under the pointer. Touch documents
 retain the 10% thumb. The standardized scrollbar API has no thumb-hover state,

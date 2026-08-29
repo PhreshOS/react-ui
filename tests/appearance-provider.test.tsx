@@ -51,9 +51,9 @@ describe("AppearanceProvider", function () {
     expect(style?.textContent).not.toContain("transition:")
     expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb")).toBe("color-mix(in srgb, #183447 10%, transparent)")
     expect(root.style.getPropertyValue("--phreshos-scrollbar-thumb-hover")).toBe("color-mix(in srgb, #183447 20%, transparent)")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-size")).toBe("8px")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-padding")).toBe("2px")
-    expect(root.style.getPropertyValue("--phreshos-scrollbar-radius")).toBe("4px")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-size")).toBe("18px")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-padding")).toBe("5px")
+    expect(root.style.getPropertyValue("--phreshos-scrollbar-radius")).toBe("9px")
 
     rendered.rerender(<AppearanceProvider appearance={standardAppearance} theme="dark">
       <span data-testid="content" />
