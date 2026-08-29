@@ -51,8 +51,11 @@ describe("Surface", function () {
 
     expect(surface.style.backgroundColor).toBe("")
     expect(surface.style.backgroundImage).toBe("")
-    expect(surface.style.border).toBe("")
+    expect(surface.style.borderColor).toBe("color-mix(in oklch, rgb(255, 255, 245) 94%, black)")
+    expect(surface.style.borderStyle).toBe("solid")
+    expect(surface.style.borderWidth).toBe("1px")
     expect(surface.style.borderRadius).toBe("10px")
+    expect(surface.style.boxSizing).toBe("border-box")
     expect(surface.style.color).toBe("rgb(24, 52, 71)")
     expect(surface.style.backdropFilter).toBe("")
     expect(surface.querySelector("[data-surface-backdrop]")).toBeNull()
@@ -60,13 +63,7 @@ describe("Surface", function () {
     expect(surface.style.isolation).toBe("isolate")
     expect(material.style.opacity).toBe("1")
     expect(material.style.boxSizing).toBe("border-box")
-    const border = required(surface.querySelector<HTMLElement>("[data-surface-border]"))
-    expect(border.style.borderStyle).toBe("")
-    expect(border.style.borderWidth).toBe("")
-    expect(border.style.borderColor).toBe("")
-    expect(border.style.boxShadow).toBe("inset 0 0 0 1px color-mix(in oklch, #fffff5 94%, black)")
-    expect(border.style.borderRadius).toBe("inherit")
-    expect(border.style.opacity).toBe("1")
+    expect(surface.querySelector("[data-surface-border]")).toBeNull()
     expect(base.getAttribute("fill")).toBe("#fffff5")
     expect(material.querySelector("[data-surface-grain]")).toBeNull()
     expect(material.querySelector("[data-surface-grain-tone]")).toBeNull()
@@ -164,7 +161,7 @@ describe("Surface", function () {
     const surface = screen.getByTestId("surface")
 
     expect(surface.querySelector("[data-surface-material]")).toBeNull()
-    expect(required(surface.querySelector<HTMLElement>("[data-surface-border]")).style.opacity).toBe("0")
+    expect(surface.style.borderColor).toBe("transparent")
   })
 
   it("combines only enabled distortion fields into one displacement stage", function () {

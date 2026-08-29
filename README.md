@@ -59,9 +59,10 @@ distortion, waves, ripples, saturation, and brightness. Omitted controls derive
 from the resolved Appearance. A zero-valued optional effect is omitted from the
 rendered material so disabled work costs nothing.
 
-Each Surface owns its SVG material and border. Backdrop refraction and frost
-remain separate compositor layers. Radius and foreground resolve from
-Appearance; elevation stays with the surrounding layout.
+Each Surface owns its SVG material while the Surface element itself carries
+its border. Backdrop refraction and frost remain separate compositor layers.
+Radius and foreground resolve from Appearance; elevation stays with the
+surrounding layout. Caller CSS may override the border directly.
 
 ## Components
 
