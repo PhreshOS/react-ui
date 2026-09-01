@@ -1,87 +1,78 @@
 # `@phreshos/react-ui`
 
-Environment-neutral React components and visual interpretation for PhreshOS.
-The package depends on React and Core contracts, not on either execution SDK.
+Environment-neutral React components and the visual language of PhreshOS.
 
-## Appearance composition
+React UI interprets Core Appearance and Theme contracts. It does not depend on a
+Client or Server runtime and does not own authoritative application state.
 
-React UI receives complete unresolved `Appearance` plus one effective
-`"light" | "dark"` Theme:
+## Installation
+
+| Package manager | Command |
+| --- | --- |
+| npm | `npm install @phreshos/react-ui` |
+| pnpm | `pnpm add @phreshos/react-ui` |
+| Bun | `bun add @phreshos/react-ui` |
+| Yarn | `yarn add @phreshos/react-ui` |
+
+`@phreshos/core`, React, and React DOM are peer dependencies.
+
+## Appearance
 
 ```tsx
 import { standardAppearance } from "@phreshos/core"
-import { AppearanceProvider, Button, Surface } from "@phreshos/react-ui"
+import {
+  AppearanceProvider,
+  Button,
+  Surface,
+} from "@phreshos/react-ui"
 
-export function Example() {
-  return <AppearanceProvider appearance={standardAppearance} theme="light">
-    <Surface><Button>Continue</Button></Surface>
-  </AppearanceProvider>
-}
-```
-
-`useAppearance()` returns the unresolved value. `useTheme()` returns only the
-effective mode. `useResolveTheme(themed)` resolves one property at the point
-where it is consumed. Components follow the same rule, so the provider never
-collapses Appearance into a second retained object.
-
-An application using the Client SDK composes the packages explicitly:
-
-```tsx
-import { useDesktopPreferences, useSystemAppearance } from "@phreshos/react"
-
-const appearance = useSystemAppearance()
-const { theme } = useDesktopPreferences()
-
-return <AppearanceProvider appearance={appearance} theme={theme}>
-  {children}
+<AppearanceProvider appearance={standardAppearance} theme="light">
+  <Surface>
+    <Button>Continue</Button>
+  </Surface>
 </AppearanceProvider>
 ```
 
-Document color-scheme negotiation belongs to the System iframe and the Client
-HTML document, not to a visual component or React hook.
+`AppearanceProvider` provides the unresolved Appearance and one effective
+`"light" | "dark"` Theme. `useAppearance()` reads the unresolved value,
+`useTheme()` reads the effective mode, and `useResolveTheme()` resolves one
+themed property where it is consumed.
 
-`AppearanceProvider` also owns the native scrollbars in its document. It adds
-no rendered container: one document stylesheet styles a six-pixel rounded
-thumb from Appearance foreground and radius, leaves the track transparent, and
-gives its container five pixels of transparent padding. With a precise
-pointer, the thumb is transparent outside its scrollable area, uses foreground
-at 10% inside it, and rises to 20% directly under the pointer. Touch documents
-retain the 10% thumb. The standardized scrollbar API has no thumb-hover state,
-so its fallback stops at 10%. Standard and WebKit rules are mutually exclusive
-so the standard thin width cannot override the padded geometry. WebKit hover
-also invalidates the scrollbar style to ensure Safari repaints each state.
-
-## Levels
-
-`useScale(value)` and `useColor(value)` derive semantic UI levels from one
-concrete value. They do not select an Appearance property or read an
-environment. Components resolve the property they need first and then derive
-their local level.
-
-Layout primitives accept native values without a provider. Semantic gaps and
-radii require Appearance because their concrete source is `spacing` or
-`radius`.
-
-## Surface
-
-`Surface` is the shared visual material. It accepts native `div` properties
-plus local overrides for grain, grain amount, backdrop blur, opacity,
-distortion, waves, ripples, saturation, and brightness. Omitted controls derive
-from the resolved Appearance. A zero-valued optional effect is omitted from the
-rendered material so disabled work costs nothing.
-
-Each Surface returns one plain geometry and content container. Its existing SVG
-material paints both the fill and its material-derived border; no separate
-border element is rendered. Backdrop refraction and frost remain separate
-compositor layers. Radius and foreground resolve from Appearance; elevation
-stays with the surrounding layout.
+The provider also applies the shared document scrollbar treatment without
+adding a rendered container.
 
 ## Components
 
-- `Surface`: shared material container.
-- `Button`: normalized React Aria action with pending and disabled states.
-- `Flex` and `Grid`: small layout primitives that preserve native props.
-- `AppearanceProvider`, `useAppearance`, `useTheme`, `useResolveTheme`:
-  environment-neutral appearance composition.
-- `useScale`, `useColor`, `resolveSpacing`, `resolveRadius`: explicit visual
-  derivation helpers.
+The package owns the reusable visual primitives used across the desktop and
+official Programs:
+
+- `Surface` and `SurfaceMaterial`
+- `Button`
+- `Flex` and `Grid`
+- spacing, scale, radius, color, and icon utilities
+
+These primitives form one visual language. Desktop and Program Views compose
+them rather than reimplementing their material or layout behavior.
+
+## Development
+
+```sh
+bun install --frozen-lockfile
+bun run verify
+```
+
+`verify` checks the contracts, tests the components, builds the package, and
+validates its public artifact.
+
+## Repository boundary
+
+This repository owns visual interpretation and reusable React components. Core
+owns Appearance contracts, React owns runtime-neutral state adaptation, and
+applications own composition.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the repository workflow and
+[SECURITY.md](SECURITY.md) for private vulnerability reporting.
+
+## License
+
+Licensed under the [MIT License](LICENSE). Copyright © 2026 Zohayr SLILEH.
