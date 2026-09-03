@@ -2,8 +2,19 @@
 
 Environment-neutral React components and the visual language of PhreshOS.
 
-React UI interprets Core Appearance and Theme contracts. It does not depend on a
-Client or Server runtime and does not own authoritative application state.
+[Appearance](https://docs.phreshos.com/system/appearance) ·
+[React SDK](https://docs.phreshos.com/sdks/react) ·
+[Source](https://github.com/PhreshOS/react-ui)
+
+## Role
+
+React UI interprets Core Appearance and Theme contracts as reusable visual
+primitives. The Desktop and Programs compose those primitives instead of
+reimplementing material, spacing, color, radius, or interaction behavior.
+
+The package does not depend on a Client or Server runtime and does not own
+authoritative application state. React owns runtime-neutral state adaptation;
+applications own composition.
 
 ## Installation
 
@@ -16,15 +27,9 @@ Client or Server runtime and does not own authoritative application state.
 
 `@phreshos/core`, React, and React DOM are peer dependencies.
 
-## Appearance
-
 ```tsx
 import { standardAppearance } from "@phreshos/core"
-import {
-  AppearanceProvider,
-  Button,
-  Surface,
-} from "@phreshos/react-ui"
+import { AppearanceProvider, Button, Surface } from "@phreshos/react-ui"
 
 <AppearanceProvider appearance={standardAppearance} theme="light">
   <Surface>
@@ -33,26 +38,8 @@ import {
 </AppearanceProvider>
 ```
 
-`AppearanceProvider` provides the unresolved Appearance and one effective
-`"light" | "dark"` Theme. `useAppearance()` reads the unresolved value,
-`useTheme()` reads the effective mode, and `useResolveTheme()` resolves one
-themed property where it is consumed.
-
-The provider also applies the shared document scrollbar treatment without
-adding a rendered container.
-
-## Components
-
-The package owns the reusable visual primitives used across the desktop and
-official Programs:
-
-- `Surface` and `SurfaceMaterial`
-- `Button`
-- `Flex` and `Grid`
-- spacing, scale, radius, color, and icon utilities
-
-These primitives form one visual language. Desktop and Program Views compose
-them rather than reimplementing their material or layout behavior.
+See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
+interpreted by the provider and components.
 
 ## Development
 
@@ -62,13 +49,20 @@ bun run verify
 ```
 
 `verify` checks the contracts, tests the components, builds the package, and
-validates its public artifact.
+validates its published shape.
 
-## Repository boundary
+## Related repositories
 
-This repository owns visual interpretation and reusable React components. Core
-owns Appearance contracts, React owns runtime-neutral state adaptation, and
-applications own composition.
+- [`@phreshos/core`](https://github.com/PhreshOS/core) owns Appearance, Theme,
+  and the shared values interpreted here.
+- [`@phreshos/react`](https://github.com/PhreshOS/react) owns runtime-neutral
+  React state adaptation.
+- [PhreshOS System](https://github.com/PhreshOS/system) composes the visual
+  language into the Desktop.
+- [Settings](https://github.com/PhreshOS/settings-program) presents owner-facing
+  Appearance controls.
+
+## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the repository workflow and
 [SECURITY.md](SECURITY.md) for private vulnerability reporting.
