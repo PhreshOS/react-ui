@@ -1,19 +1,23 @@
 import { Fragment, useMemo } from "react"
+import type { Theme } from "@phreshos/core"
+import { colorOpacity } from "./color.js"
 import { scale } from "./scale.js"
 
 interface SurfaceMaterialProps {
   readonly color: string
   readonly distortion: number
+  readonly foreground: string
   readonly grain: number
   readonly grainAmount: number
   readonly identity: string
   readonly opacity: number
   readonly ripples: number
+  readonly theme: Theme
   readonly waves: number
 }
 
-/** The locally owned SVG paint layer inside one Surface. */
-export function SurfaceMaterial({ color, distortion, grain, grainAmount, identity, opacity, ripples, waves }: SurfaceMaterialProps) {
+/** The locally owned fill, refraction definition, and glass rim inside one Surface. */
+export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmount, identity, opacity, ripples, theme, waves }: SurfaceMaterialProps) {
   const seed = useMemo(() => seedFrom(identity), [identity])
   const hasPaint = opacity > 0
   const hasGrain = hasPaint && grain > 0 && grainAmount > 0
@@ -22,65 +26,78 @@ export function SurfaceMaterial({ color, distortion, grain, grainAmount, identit
 
   if (!hasPaint && !hasDistortion) return null
 
-  return <svg
-    data-surface-material=""
-    data-surface-border={hasPaint ? "" : undefined}
-    aria-hidden="true"
-    focusable="false"
-    style={{
-      position: "absolute",
-      zIndex: -1,
-      inset: 0,
-      display: "block",
-      width: "100%",
-      height: "100%",
-      overflow: "hidden",
-      borderRadius: "inherit",
-      borderColor: edgeColor(color, opacity),
-      borderStyle: hasPaint ? "solid" : "none",
-      borderWidth: hasPaint ? 1 : 0,
-      boxSizing: "border-box",
-      pointerEvents: "none"
-    }}
-  >
-    {(hasGrain || hasDistortion) && <defs>
-      {hasDistortion && <DistortionFilter
-        distortion={distortion}
-        identity={identity}
-        ripples={ripples}
-        seed={seed}
-        waves={waves}
-      />}
-      {hasGrain && <pattern id={`${identity}-grain`} width={patternSize} height={patternSize} patternUnits="userSpaceOnUse">
-        {initial.map((path, tone) => <path
-          key={tone}
-          data-surface-grain-tone={tone}
-          d={path}
-          fill={grainTone(color, tone, grain)}
+  return <Fragment>
+    <svg
+      data-surface-material=""
+      aria-hidden="true"
+      focusable="false"
+      style={{
+        position: "absolute",
+        zIndex: -1,
+        inset: 0,
+        display: "block",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        borderRadius: "inherit",
+        pointerEvents: "none"
+      }}
+    >
+      {(hasGrain || hasDistortion) && <defs>
+        {hasDistortion && <DistortionFilter
+          distortion={distortion}
+          identity={identity}
+          ripples={ripples}
+          seed={seed}
+          waves={waves}
+        />}
+        {hasGrain && <pattern id={`${identity}-grain`} width={patternSize} height={patternSize} patternUnits="userSpaceOnUse">
+          {initial.map((path, tone) => <path
+            key={tone}
+            data-surface-grain-tone={tone}
+            d={path}
+            fill={grainTone(color, tone, grain)}
+            shapeRendering="crispEdges"
+          />)}
+        </pattern>}
+      </defs>}
+      {hasPaint && <g data-surface-paint="" opacity={opacity}>
+        <rect data-surface-base="" width="100%" height="100%" fill={color} />
+        {hasGrain && <rect
+          data-surface-grain=""
+          width="100%"
+          height="100%"
+          fill={`url(#${identity}-grain)`}
           shapeRendering="crispEdges"
-        />)}
-      </pattern>}
-    </defs>}
-    {hasPaint && <g data-surface-paint="" opacity={opacity}>
-      <rect data-surface-base="" width="100%" height="100%" fill={color} />
-      {hasGrain && <rect
-        data-surface-grain=""
-        width="100%"
-        height="100%"
-        fill={`url(#${identity}-grain)`}
-        shapeRendering="crispEdges"
-      />}
-    </g>}
-  </svg>
+        />}
+      </g>}
+    </svg>
+    {hasPaint && <div
+      data-surface-border=""
+      aria-hidden="true"
+      style={{
+        position: "absolute",
+        zIndex: -1,
+        inset: 0,
+        padding: 1,
+        borderRadius: "inherit",
+        pointerEvents: "none",
+        opacity: Math.min(1, scale(opacity, "large")) * (theme === "dark" ? 0.3 : 1),
+        background: glassRim(color, foreground, theme),
+        WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+        WebkitMaskComposite: "xor",
+        mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+        maskComposite: "exclude"
+      }}
+    />}
+  </Fragment>
 }
 
-function edgeColor(color: string, opacity: number) {
-  const edge = `color-mix(in oklch, ${color} 94%, black)`
-  const edgeOpacity = Math.min(1, scale(opacity, "large"))
+function glassRim(background: string, foreground: string, theme: Theme) {
+  const light = theme === "dark" ? foreground : background
+  const edge = `color-mix(in oklch, ${foreground} 20%, ${background})`
 
-  if (edgeOpacity === 1) return edge
-
-  return `color-mix(in srgb, ${edge} ${Math.round(edgeOpacity * 10_000) / 100}%, transparent)`
+  return `linear-gradient(145deg, ${colorOpacity(light, 0.92)}, ${colorOpacity(light, 0.4)} 35%, ${colorOpacity(edge, 0.18)} 55%, ${colorOpacity(light, 0.6)} 85%, ${colorOpacity(light, 0.3)})`
 }
 
 function DistortionFilter({ distortion, identity, ripples, seed, waves }: Readonly<{

@@ -61,11 +61,16 @@ describe("Surface", function () {
     expect(surface.querySelector("[data-surface-backdrop]")).toBeNull()
     expect(surface.style.position).toBe("relative")
     expect(surface.style.isolation).toBe("isolate")
-    expect(material.style.borderColor).toBe("color-mix(in oklch, rgb(255, 255, 245) 94%, black)")
-    expect(material.style.borderStyle).toBe("solid")
-    expect(material.style.borderWidth).toBe("1px")
-    expect(material.style.boxSizing).toBe("border-box")
-    expect(material.hasAttribute("data-surface-border")).toBe(true)
+    const border = required(surface.querySelector<HTMLElement>("[data-surface-border]"))
+    expect(material.style.border).toBe("")
+    expect(border.parentElement).toBe(surface)
+    expect(border.childElementCount).toBe(0)
+    expect(border.style.padding).toBe("1px")
+    expect(border.style.borderRadius).toBe("inherit")
+    expect(border.style.pointerEvents).toBe("none")
+    expect(border.style.maskComposite).toBe("exclude")
+    expect(border.style.opacity).toBe("1")
+    expect(border.style.background).toContain("linear-gradient(145deg,")
     expect(material.querySelector("[data-surface-paint]")?.getAttribute("opacity")).toBe("1")
     expect(base.getAttribute("fill")).toBe("#fffff5")
     expect(material.querySelector("[data-surface-grain]")).toBeNull()
@@ -112,7 +117,7 @@ describe("Surface", function () {
     expect(material.querySelectorAll("[data-surface-distortion-stage]")).toHaveLength(1)
     expect(material.style.opacity).toBe("")
     expect(material.querySelector("[data-surface-paint]")?.getAttribute("opacity")).toBe("0.5")
-    expect(material.style.borderColor).toBe("color-mix(in srgb, color-mix(in oklch, rgb(255, 255, 245) 94%, black) 75%, transparent)")
+    expect(surface.querySelector<HTMLElement>("[data-surface-border]")?.style.opacity).toBe("0.75")
     expect(surface.hasAttribute("grain")).toBe(false)
     expect(surface.hasAttribute("grainAmount")).toBe(false)
     expect(surface.hasAttribute("backdrop")).toBe(false)
@@ -166,6 +171,7 @@ describe("Surface", function () {
     const surface = screen.getByTestId("surface")
 
     expect(surface.querySelector("[data-surface-material]")).toBeNull()
+    expect(surface.querySelector("[data-surface-border]")).toBeNull()
     expect(surface.style.borderColor).toBe("")
   })
 
@@ -179,6 +185,44 @@ describe("Surface", function () {
     expect(material.querySelectorAll('[data-surface-distortion-stage="combined"]')).toHaveLength(1)
     expect(material.querySelector("[data-surface-distortion-combine]")).toBeNull()
     expect(material.querySelector("[data-surface-distortion-noise]")).toBeNull()
+  })
+
+  it("derives the rim from the current palette and softens it in dark mode", function () {
+    const appearance = {
+      ...standardAppearance,
+      background: { light: "#ffeecc", dark: "#112233" },
+      foreground: { light: "#443322", dark: "#ccddee" }
+    }
+    const rendered = render(<AppearanceProvider appearance={appearance} theme="light">
+      <Surface data-testid="surface" opacity={0.5} />
+    </AppearanceProvider>)
+    const border = required(screen.getByTestId("surface").querySelector<HTMLElement>("[data-surface-border]"))
+    const light = border.style.background
+
+    expect(light).toContain("rgb(255, 238, 204)")
+    expect(light).toContain("rgb(68, 51, 34)")
+    expect(light).not.toMatch(/\b(white|black)\b/)
+
+    rendered.rerender(<AppearanceProvider appearance={appearance} theme="dark">
+      <Surface data-testid="surface" opacity={0.5} />
+    </AppearanceProvider>)
+
+    expect(border.style.background).toContain("rgb(17, 34, 51)")
+    expect(border.style.background).toContain("rgb(204, 221, 238)")
+    expect(border.style.background).not.toBe(light)
+    expect(Number(border.style.opacity)).toBeCloseTo(0.225)
+  })
+
+  it("removes the rim at zero opacity while keeping active refraction", function () {
+    const rendered = renderSurface(<Surface data-testid="surface" distortion={20} />)
+    const surface = screen.getByTestId("surface")
+
+    rendered.rerender(<AppearanceProvider appearance={standardAppearance} theme="light">
+      <Surface data-testid="surface" distortion={20} opacity={0} />
+    </AppearanceProvider>)
+
+    expect(surface.querySelector("[data-surface-border]")).toBeNull()
+    expect(surface.querySelector("[data-surface-distortion]")).not.toBeNull()
   })
 
   it("keeps caller-provided position and native backdrop styles authoritative", function () {
