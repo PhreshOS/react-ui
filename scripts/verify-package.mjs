@@ -95,9 +95,9 @@ import { AppearanceProvider, Button, Flex, Grid, Surface, useColor, useScale } f
 
 function Derived() {
   const spacing = useScale(standardAppearance.spacing.light)
-  const accent = useColor(standardAppearance.accent.light)
+  const primary = useColor(standardAppearance.primary.light)
 
-  return <span style={{ color: accent.base, padding: spacing.small }}>Derived</span>
+  return <span style={{ color: primary.base, padding: spacing.small }}>Derived</span>
 }
 
 const view = (
