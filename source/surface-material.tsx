@@ -53,7 +53,7 @@ export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmo
         height: "100%",
         overflow: "hidden",
         borderRadius: "inherit",
-        boxShadow: hasPaint && colors ? `inset 0 1px 2px ${colorOpacity(colors.lighter, 0.28)}, 0 8px 24px ${colorOpacity(colors.darker, 0.04)}` : undefined,
+        boxShadow: hasPaint && colors ? `inset 0 1px 2px ${colorOpacity(colors.lighter, 0.28)}, 0 8px 24px ${colorOpacity(colors.darker, 0.16)}` : undefined,
         pointerEvents: "none"
       }}
     >
