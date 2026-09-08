@@ -7,7 +7,7 @@ import {
 } from "@phreshos/core"
 import { isScaleLevel, scale, scaleMultiplier, type ScaleLevel } from "./scale.js"
 import { SurfaceMaterial } from "./surface-material.js"
-import { useAppearance, useResolveTheme, useTheme } from "./appearance-provider.js"
+import { useAppearance, useResolveTheme } from "./appearance-provider.js"
 
 /** Native div properties plus controls for the locally owned material. */
 export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "opacity"> & Readonly<{
@@ -64,10 +64,9 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
   forwardedRef
 ) {
   const appearance = useAppearance()
-  const theme = useTheme()
   const background = useResolveTheme(appearance.background)
   const foreground = useResolveTheme(appearance.foreground)
-  const radius = useResolveTheme(appearance.radius)
+  const radius = scale(useResolveTheme(appearance.radius), "medium")
   const surface = useResolveTheme(appearance.surface)
   const identity = `phresh-surface-${useId().replaceAll(":", "")}`
   const element = useRef<HTMLDivElement | null>(null)
@@ -98,7 +97,7 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
       zIndex={-3}
     />}
     {resolved.frost && <BackdropLayer name="frost" filter={resolved.frost} zIndex={-2} />}
-    <SurfaceMaterial identity={identity} foreground={foreground} theme={theme} {...resolved.material} />
+    <SurfaceMaterial identity={identity} foreground={foreground} {...resolved.material} />
     {children}
   </div>
 })

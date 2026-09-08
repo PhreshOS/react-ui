@@ -57,6 +57,7 @@
     "react-dom": "^19.2.0"
   },
   "dependencies": {
+    "colorjs.io": "^0.7.1",
     "react-aria-components": "^1.20.0"
   },
   "devDependencies": {

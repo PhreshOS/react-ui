@@ -1,6 +1,5 @@
-import { Fragment, useMemo } from "react"
-import type { Theme } from "@phreshos/core"
-import { colorOpacity } from "./color.js"
+import { Fragment, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { colorLightness, colorOpacity, orderColors } from "./color.js"
 import { scale } from "./scale.js"
 
 interface SurfaceMaterialProps {
@@ -12,17 +11,31 @@ interface SurfaceMaterialProps {
   readonly identity: string
   readonly opacity: number
   readonly ripples: number
-  readonly theme: Theme
   readonly waves: number
 }
 
 /** The locally owned fill, refraction definition, and glass rim inside one Surface. */
-export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmount, identity, opacity, ripples, theme, waves }: SurfaceMaterialProps) {
+export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmount, identity, opacity, ripples, waves }: SurfaceMaterialProps) {
+  const element = useRef<SVGRectElement>(null)
+  const [colors, setColors] = useState<(ReturnType<typeof orderColors> & { background: string, foreground: string, lightness: number }) | null>(null)
   const seed = useMemo(() => seedFrom(identity), [identity])
   const hasPaint = opacity > 0
   const hasGrain = hasPaint && grain > 0 && grainAmount > 0
   const hasDistortion = distortion > 0 || waves > 0 || ripples > 0
   const initial = useMemo(() => hasGrain ? grainPaths(seed, grainAmount) : [], [grainAmount, hasGrain, seed])
+
+  // Resolve variables, currentColor, and CSS expressions in this Surface's
+  // own scope before comparing colors. Layout effects settle before paint.
+  useLayoutEffect(() => {
+    const material = element.current
+    const view = material?.ownerDocument.defaultView
+    if (!material || !view || !hasPaint) return
+    const computed = view.getComputedStyle(material)
+    const background = computed.fill
+    const foreground = computed.color
+    if (colors?.background === background && colors.foreground === foreground) return
+    setColors({ ...orderColors(background, foreground), background, foreground, lightness: Math.max(0, Math.min(1, colorLightness(background))) })
+  })
 
   if (!hasPaint && !hasDistortion) return null
 
@@ -40,6 +53,7 @@ export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmo
         height: "100%",
         overflow: "hidden",
         borderRadius: "inherit",
+        boxShadow: hasPaint && colors ? `inset 0 1px 2px ${colorOpacity(colors.lighter, 0.28)}, 0 8px 24px ${colorOpacity(colors.darker, 0.04)}` : undefined,
         pointerEvents: "none"
       }}
     >
@@ -62,7 +76,7 @@ export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmo
         </pattern>}
       </defs>}
       {hasPaint && <g data-surface-paint="" opacity={opacity}>
-        <rect data-surface-base="" width="100%" height="100%" fill={color} />
+        <rect ref={element} data-surface-base="" width="100%" height="100%" style={{ fill: color, color: foreground }} />
         {hasGrain && <rect
           data-surface-grain=""
           width="100%"
@@ -82,8 +96,8 @@ export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmo
         padding: 1,
         borderRadius: "inherit",
         pointerEvents: "none",
-        opacity: Math.min(1, scale(opacity, "large")) * (theme === "dark" ? 0.3 : 1),
-        background: glassRim(color, foreground, theme),
+        opacity: Math.min(1, scale(opacity, "xlarge")) * (colors?.lightness ?? 0),
+        background: colors ? glassRim(colors.lighter, colors.darker) : undefined,
         WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
         WebkitMaskComposite: "xor",
         mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
@@ -93,9 +107,8 @@ export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmo
   </Fragment>
 }
 
-function glassRim(background: string, foreground: string, theme: Theme) {
-  const light = theme === "dark" ? foreground : background
-  const edge = `color-mix(in oklch, ${foreground} 20%, ${background})`
+function glassRim(light: string, dark: string) {
+  const edge = `color-mix(in oklch, ${dark} 20%, ${light})`
 
   return `linear-gradient(145deg, ${colorOpacity(light, 0.92)}, ${colorOpacity(light, 0.4)} 35%, ${colorOpacity(edge, 0.18)} 55%, ${colorOpacity(light, 0.6)} 85%, ${colorOpacity(light, 0.3)})`
 }
