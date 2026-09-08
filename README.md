@@ -41,6 +41,19 @@ import { AppearanceProvider, Button, Surface } from "@phreshos/react-ui"
 See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
 interpreted by the provider and components.
 
+`Button` uses a flat fill with no glass, gradient, or shadow. Omit `color` for
+background and foreground, or select `primary`, `secondary`, `success`,
+`warning`, `danger`, or `info` for a palette-tinted fill. Text uses foreground.
+`size` accepts `xsmall`, `small`, `medium` (default), `large`, or `xlarge`;
+spacing and radius follow Appearance. `disabled` prevents activation and focus;
+`pending` prevents activation while retaining focus.
+
+```tsx
+<Button>Cancel</Button>
+<Button color="primary" onPress={save}>Save</Button>
+<Button color="danger" size="small">Delete</Button>
+```
+
 `Panel` composes an outer `Surface`, an optional header, and an inset content
 `Surface`. Both materials retain Surface defaults; the content inset follows
 Appearance spacing. Positioning, modality, and lifecycle belong to the caller.

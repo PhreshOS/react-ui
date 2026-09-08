@@ -6,12 +6,18 @@ import { scale, type ScaleLevel } from "./scale.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { useAppearance, useResolveTheme } from "./appearance-provider.js"
 
-type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
+type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
+
+/** A semantic color from Appearance; omission uses background and foreground. */
+export type ButtonColor = "primary" | "secondary" | "success" | "warning" | "danger" | "info"
 
 /** Properties accepted by the shared interactive button. */
 export interface ButtonProps extends NativeButtonProps, RadiusProps {
   /** Visible Button content. */
   readonly children?: ReactNode
+
+  /** Palette tint for the flat fill. Omission keeps the Button neutral. */
+  readonly color?: ButtonColor
 
   /** Native class name applied without replacing the component contract. */
   readonly className?: string
@@ -37,6 +43,7 @@ export interface ButtonProps extends NativeButtonProps, RadiusProps {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {
     children,
+    color,
     disabled = false,
     pending = false,
     onPress,
@@ -52,6 +59,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   const spacing = scale(useResolveTheme(appearance.spacing), size)
   const borderRadius = resolveRadius(radius, appearance)
   const foreground = useResolveTheme(appearance.foreground)
+  const background = useResolveTheme(appearance.background)
+  const tint = useResolveTheme(color === undefined ? appearance.foreground : appearance[color])
 
   return <AriaButton
     {...properties}
@@ -69,7 +78,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       pending,
       size,
       spacing,
+      background,
       foreground,
+      tint,
+      colored: color !== undefined,
       style
     })}
   >{children}</AriaButton>
@@ -84,7 +96,10 @@ function buttonStyle({
   pending,
   size,
   spacing,
+  background,
   foreground,
+  tint,
+  colored,
   style
 }: Readonly<{
   borderRadius: CSSProperties["borderRadius"]
@@ -95,15 +110,22 @@ function buttonStyle({
   pending: boolean
   size: ScaleLevel
   spacing: number
+  background: string
   foreground: string
+  tint: string
+  colored: boolean
   style: CSSProperties | undefined
 }>): CSSProperties {
   const fontSize = buttonFontSizes[size]
-  const height = Math.max(size === "xsmall" ? 24 : 28, 20 + spacing)
+  const height = Math.max(24, 24 + spacing)
+  const interactive = !disabled && !pending
+  const emphasis = interactive && isPressed ? 8 : interactive && isHovered ? 4 : 0
+  const fill = (colored ? 16 : 8) + emphasis
 
   return {
     ...style,
     appearance: "none",
+    boxSizing: "border-box",
     display: "inline-grid",
     gridAutoFlow: "column",
     gridAutoColumns: "max-content",
@@ -112,23 +134,19 @@ function buttonStyle({
     minWidth: 0,
     height,
     paddingBlock: 0,
-    paddingInline: Math.max(8, spacing * 2 / 3),
+    paddingInline: Math.max(8, spacing),
     gap: Math.max(4, spacing / 2),
-    border: "1px solid rgba(255, 255, 255, 0.45)",
+    border: "none",
     borderRadius,
-    outline: "none",
+    outline: isFocusVisible ? `2px solid ${foreground}` : "none",
+    outlineOffset: 2,
     color: foreground,
-    backgroundColor: `rgba(255, 255, 255, ${isPressed ? 0.42 : isHovered ? 0.5 : 0.3})`,
-    boxShadow: isFocusVisible
-      ? "0 0 0 2px rgba(255, 255, 255, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.8)"
-      : "inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+    background: `color-mix(in srgb, ${tint} ${fill}%, ${background})`,
     opacity: disabled ? 0.46 : pending ? 0.68 : 1,
-    transform: isPressed ? "scale(0.95)" : "scale(1)",
-    transition: "background-color 100ms ease, box-shadow 100ms ease, opacity 100ms ease, transform 100ms ease",
     cursor: disabled ? "not-allowed" : pending ? "progress" : "pointer",
     font: "inherit",
     fontSize,
-    fontWeight: 650,
+    fontWeight: 550,
     lineHeight: 1,
     textAlign: "center",
     textDecoration: "none",
@@ -138,9 +156,9 @@ function buttonStyle({
 }
 
 const buttonFontSizes: Readonly<Record<ScaleLevel, number>> = Object.freeze({
-  xsmall: 10,
-  small: 11,
-  medium: 12,
-  large: 13,
-  xlarge: 14
+  xsmall: 11,
+  small: 12,
+  medium: 13,
+  large: 14,
+  xlarge: 15
 })

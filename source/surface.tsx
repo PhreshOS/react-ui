@@ -68,6 +68,7 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
   const foreground = useResolveTheme(appearance.foreground)
   const radius = scale(useResolveTheme(appearance.radius), "medium")
   const surface = useResolveTheme(appearance.surface)
+  const shadow = useResolveTheme(appearance.shadow)
   const identity = `phresh-surface-${useId().replaceAll(":", "")}`
   const element = useRef<HTMLDivElement | null>(null)
   const capture = useCallback((node: HTMLDivElement | null) => {
@@ -97,7 +98,7 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
       zIndex={-3}
     />}
     {resolved.frost && <BackdropLayer name="frost" filter={resolved.frost} zIndex={-2} />}
-    <SurfaceMaterial identity={identity} foreground={foreground} {...resolved.material} />
+    <SurfaceMaterial identity={identity} foreground={foreground} shadow={shadow} {...resolved.material} />
     {children}
   </div>
 })

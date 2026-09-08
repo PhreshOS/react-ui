@@ -1,4 +1,5 @@
 import { Fragment, useLayoutEffect, useMemo, useRef, useState } from "react"
+import type { AppearanceShadow } from "@phreshos/core"
 import { colorLightness, colorOpacity, orderColors } from "./color.js"
 import { scale } from "./scale.js"
 
@@ -11,11 +12,12 @@ interface SurfaceMaterialProps {
   readonly identity: string
   readonly opacity: number
   readonly ripples: number
+  readonly shadow: AppearanceShadow
   readonly waves: number
 }
 
 /** The locally owned fill, refraction definition, and glass rim inside one Surface. */
-export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmount, identity, opacity, ripples, waves }: SurfaceMaterialProps) {
+export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmount, identity, opacity, ripples, shadow, waves }: SurfaceMaterialProps) {
   const element = useRef<SVGRectElement>(null)
   const [colors, setColors] = useState<(ReturnType<typeof orderColors> & { background: string, foreground: string, lightness: number }) | null>(null)
   const seed = useMemo(() => seedFrom(identity), [identity])
@@ -53,7 +55,7 @@ export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmo
         height: "100%",
         overflow: "hidden",
         borderRadius: "inherit",
-        boxShadow: hasPaint && colors ? `inset 0 1px 2px ${colorOpacity(colors.lighter, 0.28)}, 0 8px 24px ${colorOpacity(colors.darker, 0.16)}` : undefined,
+        boxShadow: hasPaint && colors ? `inset 0 1px 2px ${colorOpacity(colors.lighter, 0.28)}, ${shadow.x}px ${shadow.y}px ${shadow.blur}px ${shadow.spread}px ${colorOpacity(colors.darker, shadow.opacity)}` : undefined,
         pointerEvents: "none"
       }}
     >

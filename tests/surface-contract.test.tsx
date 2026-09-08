@@ -10,6 +10,26 @@ afterEach(function () {
 })
 
 describe("Surface", function () {
+  it("reads independent shadow values and follows live theme changes", function () {
+    const appearance = {
+      ...standardAppearance,
+      shadow: {
+        light: { x: -3, y: 12, blur: 30, spread: 2, opacity: 0.25 },
+        dark: { x: 2, y: 6, blur: 18, spread: -1, opacity: 0 }
+      }
+    }
+    const view = render(<AppearanceProvider appearance={appearance} theme="light">
+      <Surface data-testid="surface" />
+    </AppearanceProvider>)
+    const material = required(screen.getByTestId("surface").querySelector<SVGSVGElement>("[data-surface-material]"))
+    expect(material.style.boxShadow).toContain("-3px 12px 30px 2px color-mix(in srgb, rgb(24, 52, 71) 25%, transparent)")
+    view.rerender(<AppearanceProvider appearance={appearance} theme="dark">
+      <Surface data-testid="surface" />
+    </AppearanceProvider>)
+    expect(material.style.boxShadow).toContain("2px 6px 18px -1px color-mix(in srgb, rgb(18, 26, 33) 0%, transparent)")
+    expect(material.style.boxShadow).toContain("inset 0 1px 2px")
+  })
+
   it("requires the explicit Theme that supplies its background", function () {
     expect(() => render(<Surface />)).toThrow("useAppearance() requires an AppearanceProvider")
   })
@@ -63,7 +83,7 @@ describe("Surface", function () {
     expect(surface.style.isolation).toBe("isolate")
     const border = required(surface.querySelector<HTMLElement>("[data-surface-border]"))
     expect(material.style.border).toBe("")
-    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 255, 255) 28%, transparent), 0 8px 24px color-mix(in srgb, rgb(24, 52, 71) 16%, transparent)")
+    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 255, 255) 28%, transparent), 0px 8px 24px 0px color-mix(in srgb, rgb(24, 52, 71) 16%, transparent)")
     expect(border.parentElement).toBe(surface)
     expect(border.childElementCount).toBe(0)
     expect(border.style.padding).toBe("1px")
@@ -218,7 +238,7 @@ describe("Surface", function () {
     expect(light).toContain("rgb(255, 238, 204)")
     expect(light).toContain("rgb(68, 51, 34)")
     expect(light).not.toMatch(/\b(white|black)\b/)
-    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 238, 204) 28%, transparent), 0 8px 24px color-mix(in srgb, rgb(68, 51, 34) 16%, transparent)")
+    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 238, 204) 28%, transparent), 0px 8px 24px 0px color-mix(in srgb, rgb(68, 51, 34) 16%, transparent)")
 
     rendered.rerender(<AppearanceProvider appearance={appearance} theme="dark">
       <Surface data-testid="surface" opacity={0.5} />
@@ -228,7 +248,7 @@ describe("Surface", function () {
     expect(border.style.background).toContain("rgb(204, 221, 238)")
     expect(border.style.background).not.toBe(light)
     expect(Number(border.style.opacity)).toBeLessThan(lightOpacity)
-    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(204, 221, 238) 28%, transparent), 0 8px 24px color-mix(in srgb, rgb(17, 34, 51) 16%, transparent)")
+    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(204, 221, 238) 28%, transparent), 0px 8px 24px 0px color-mix(in srgb, rgb(17, 34, 51) 16%, transparent)")
   })
 
   it("keeps lighting colors identical but follows background lightness when palette roles are reversed", function () {
