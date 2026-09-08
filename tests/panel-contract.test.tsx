@@ -71,4 +71,23 @@ describe("Panel", () => {
     expect(screen.getByTestId("panel").querySelector("[data-surface-paint]")?.getAttribute("opacity")).toBe("0.4")
     expect(screen.getByLabelText("Body").querySelector("[data-surface-paint]")?.getAttribute("opacity")).toBe("0.1")
   })
+
+  it("keeps the content rim above an opaque iframe without compensating padding", () => {
+    render(provider(<Panel header={<span>Title</span>} contentProps={{ "aria-label": "Body" }}>
+      <iframe title="Opaque content" style={{ width: "100%", height: "100%", border: 0, background: "#123456" }} />
+    </Panel>))
+    const body = screen.getByLabelText("Body")
+    const frame = screen.getByTitle("Opaque content")
+    const material = body.querySelector<SVGSVGElement>("[data-surface-material]")!
+    const rim = body.querySelector<HTMLElement>("[data-surface-border]")!
+    expect(frame.parentElement).toBe(body)
+    expect(body.style.padding).toBe("")
+    expect(body.style.overflow).toBe("hidden")
+    expect(material.style.zIndex).toBe("-1")
+    expect(rim.style.zIndex).toBe("1")
+    expect(rim.style.borderRadius).toBe("inherit")
+    expect(rim.style.pointerEvents).toBe("none")
+    expect(frame.style.borderRadius).toBe("")
+    expect(frame.style.backgroundColor).toBe("rgb(18, 52, 86)")
+  })
 })

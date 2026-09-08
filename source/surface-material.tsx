@@ -91,7 +91,9 @@ export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmo
       aria-hidden="true"
       style={{
         position: "absolute",
-        zIndex: -1,
+        // The material belongs behind content; its rim belongs above it.
+        // Opaque children must not erase the Surface's rounded edge.
+        zIndex: 1,
         inset: 0,
         padding: 1,
         borderRadius: "inherit",

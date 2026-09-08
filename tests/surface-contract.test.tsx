@@ -69,6 +69,8 @@ describe("Surface", function () {
     expect(border.style.padding).toBe("1px")
     expect(border.style.borderRadius).toBe("inherit")
     expect(border.style.pointerEvents).toBe("none")
+    expect(material.style.zIndex).toBe("-1")
+    expect(border.style.zIndex).toBe("1")
     expect(border.style.maskComposite).toBe("exclude")
     expect(Number(border.style.opacity)).toBeCloseTo(0.4)
     expect(border.style.background).toContain("linear-gradient(145deg,")
