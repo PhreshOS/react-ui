@@ -14,6 +14,7 @@ export {
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
 export { Surface, type SurfaceProps } from "./surface.js"
+export { Panel, type PanelProps } from "./panel.js"
 export { Button, type ButtonProps } from "./button.js"
 export type { LayoutAlignment, LayoutGap, LayoutJustification } from "./layout.js"
 export { resolveRadius, type Radius, type RadiusProps } from "./radius.js"

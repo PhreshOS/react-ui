@@ -41,6 +41,21 @@ import { AppearanceProvider, Button, Surface } from "@phreshos/react-ui"
 See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
 interpreted by the provider and components.
 
+`Panel` composes an outer `Surface`, an optional header, and an inset content
+`Surface`. Both materials retain Surface defaults; the content inset follows
+Appearance spacing. Positioning, modality, and lifecycle belong to the caller.
+
+```tsx
+import { Panel } from "@phreshos/react-ui"
+
+<Panel header={<h2>Title</h2>} contentProps={{ style: { padding: 16 } }}>
+  Content
+</Panel>
+```
+
+Native properties and the forwarded ref target the outer Surface.
+`contentProps` targets the inner Surface; `children` supplies its content.
+
 ## Development
 
 ```sh

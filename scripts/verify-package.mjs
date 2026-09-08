@@ -24,6 +24,8 @@ try {
 
   assert(paths.has("dist/main.js"), "the package has no JavaScript entry point")
   assert(paths.has("dist/main.d.ts"), "the package has no declaration entry point")
+  assert(paths.has("dist/panel.js"), "the package has no Panel implementation")
+  assert(paths.has("dist/panel.d.ts"), "the package has no Panel contract")
   assert(paths.has("dist/icons/main.js"), "the package has no JavaScript icons entry point")
   assert(paths.has("dist/icons/main.d.ts"), "the package has no declaration icons entry point")
   assert(paths.has("LICENSE"), "the package has no license")
@@ -72,6 +74,7 @@ import {
   Button,
   Flex,
   Grid,
+  Panel,
   Surface,
   AppearanceProvider,
   resolveRadius,
@@ -80,7 +83,7 @@ import {
   useScale
 } from "@phreshos/react-ui"
 
-for (const exported of [AppearanceProvider, Button, Flex, Grid, Surface, resolveRadius, resolveSpacing, useColor, useScale]) {
+for (const exported of [AppearanceProvider, Button, Flex, Grid, Panel, Surface, resolveRadius, resolveSpacing, useColor, useScale]) {
   assert.notEqual(exported, undefined)
 }
 assert.deepEqual(Object.keys(icons), [])
@@ -91,7 +94,7 @@ assert.deepEqual(Object.keys(icons), [])
   writeFileSync(
     join(consumer, "consumer.tsx"),
     `import { standardAppearance } from "@phreshos/core"
-import { AppearanceProvider, Button, Flex, Grid, Surface, useColor, useScale } from "@phreshos/react-ui"
+import { AppearanceProvider, Button, Flex, Grid, Panel, useColor, useScale } from "@phreshos/react-ui"
 
 function Derived() {
   const spacing = useScale(standardAppearance.spacing.light)
@@ -102,14 +105,14 @@ function Derived() {
 
 const view = (
   <AppearanceProvider appearance={standardAppearance} theme="light">
-    <Surface>
+    <Panel header={<h2>Example</h2>} contentProps={{ style: { padding: 12 } }}>
       <Grid columns={2} gap="small">
         <Flex align="center" justify="between">
           <Button onPress={() => undefined}>Save</Button>
           <Derived />
         </Flex>
       </Grid>
-    </Surface>
+    </Panel>
   </AppearanceProvider>
 )
 
