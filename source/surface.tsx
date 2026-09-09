@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useId, useLayoutEffect, useRef } from "react"
+import { forwardRef, useCallback, useId, useLayoutEffect, useRef, useState } from "react"
 import type { ComponentPropsWithoutRef, CSSProperties } from "react"
 import {
   appearanceLimits,
@@ -8,6 +8,7 @@ import {
 import { isScaleLevel, scale, scaleMultiplier, type ScaleLevel } from "./scale.js"
 import { SurfaceMaterial } from "./surface-material.js"
 import { useAppearance, useResolveTheme } from "./appearance-provider.js"
+import { colorLightness, colorOpacity, orderColors } from "./color.js"
 
 /** Native div properties plus controls for the locally owned material. */
 export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, "opacity"> & Readonly<{
@@ -71,12 +72,27 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
   const shadow = useResolveTheme(appearance.shadow)
   const identity = `phresh-surface-${useId().replaceAll(":", "")}`
   const element = useRef<HTMLDivElement | null>(null)
+  const base = useRef<SVGRectElement>(null)
+  const [colors, setColors] = useState<(ReturnType<typeof orderColors> & { background: string, foreground: string, lightness: number }) | null>(null)
   const capture = useCallback((node: HTMLDivElement | null) => {
     element.current = node
     if (typeof forwardedRef === "function") forwardedRef(node)
     else if (forwardedRef) forwardedRef.current = node
   }, [forwardedRef])
   const resolved = resolveSurface({ backdrop, brightness, distortion, grain, grainAmount, opacity, ripples, saturation, waves }, background, surface)
+
+  // Resolve the palette once in the material's scope for both the outer
+  // shadow and inner glass. Theme names never determine color lightness.
+  useLayoutEffect(() => {
+    const material = base.current
+    const view = material?.ownerDocument.defaultView
+    if (!material || !view) return
+    const computed = view.getComputedStyle(material)
+    const background = computed.fill
+    const foreground = computed.color
+    if (colors?.background === background && colors.foreground === foreground) return
+    setColors({ ...orderColors(background, foreground), background, foreground, lightness: Math.max(0, Math.min(1, colorLightness(background))) })
+  })
 
   useLayoutEffect(() => {
     const surface = element.current
@@ -89,6 +105,7 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
     style={{
       borderRadius: radius,
       color: foreground,
+      boxShadow: resolved.material.opacity > 0 && colors ? `${shadow.x}px ${shadow.y}px ${shadow.blur}px ${shadow.spread}px ${colorOpacity(colors.darker, shadow.opacity)}` : undefined,
       ...style
     }}
   >
@@ -98,7 +115,7 @@ export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface
       zIndex={-3}
     />}
     {resolved.frost && <BackdropLayer name="frost" filter={resolved.frost} zIndex={-2} />}
-    <SurfaceMaterial identity={identity} foreground={foreground} shadow={shadow} {...resolved.material} />
+    <SurfaceMaterial identity={identity} foreground={foreground} baseRef={base} colors={colors} {...resolved.material} />
     {children}
   </div>
 })

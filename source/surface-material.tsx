@@ -1,9 +1,10 @@
-import { Fragment, useLayoutEffect, useMemo, useRef, useState } from "react"
-import type { AppearanceShadow } from "@phreshos/core"
-import { colorLightness, colorOpacity, orderColors } from "./color.js"
+import { Fragment, useMemo, type Ref } from "react"
+import { colorOpacity } from "./color.js"
 import { scale } from "./scale.js"
 
 interface SurfaceMaterialProps {
+  readonly baseRef: Ref<SVGRectElement>
+  readonly colors: Readonly<{ lighter: string, darker: string, lightness: number }> | null
   readonly color: string
   readonly distortion: number
   readonly foreground: string
@@ -12,32 +13,16 @@ interface SurfaceMaterialProps {
   readonly identity: string
   readonly opacity: number
   readonly ripples: number
-  readonly shadow: AppearanceShadow
   readonly waves: number
 }
 
 /** The locally owned fill, refraction definition, and glass rim inside one Surface. */
-export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmount, identity, opacity, ripples, shadow, waves }: SurfaceMaterialProps) {
-  const element = useRef<SVGRectElement>(null)
-  const [colors, setColors] = useState<(ReturnType<typeof orderColors> & { background: string, foreground: string, lightness: number }) | null>(null)
+export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground, grain, grainAmount, identity, opacity, ripples, waves }: SurfaceMaterialProps) {
   const seed = useMemo(() => seedFrom(identity), [identity])
   const hasPaint = opacity > 0
   const hasGrain = hasPaint && grain > 0 && grainAmount > 0
   const hasDistortion = distortion > 0 || waves > 0 || ripples > 0
   const initial = useMemo(() => hasGrain ? grainPaths(seed, grainAmount) : [], [grainAmount, hasGrain, seed])
-
-  // Resolve variables, currentColor, and CSS expressions in this Surface's
-  // own scope before comparing colors. Layout effects settle before paint.
-  useLayoutEffect(() => {
-    const material = element.current
-    const view = material?.ownerDocument.defaultView
-    if (!material || !view || !hasPaint) return
-    const computed = view.getComputedStyle(material)
-    const background = computed.fill
-    const foreground = computed.color
-    if (colors?.background === background && colors.foreground === foreground) return
-    setColors({ ...orderColors(background, foreground), background, foreground, lightness: Math.max(0, Math.min(1, colorLightness(background))) })
-  })
 
   if (!hasPaint && !hasDistortion) return null
 
@@ -55,7 +40,7 @@ export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmo
         height: "100%",
         overflow: "hidden",
         borderRadius: "inherit",
-        boxShadow: hasPaint && colors ? `inset 0 1px 2px ${colorOpacity(colors.lighter, 0.28)}, ${shadow.x}px ${shadow.y}px ${shadow.blur}px ${shadow.spread}px ${colorOpacity(colors.darker, shadow.opacity)}` : undefined,
+        boxShadow: hasPaint && colors ? `inset 0 1px 2px ${colorOpacity(colors.lighter, 0.28)}` : undefined,
         pointerEvents: "none"
       }}
     >
@@ -78,7 +63,7 @@ export function SurfaceMaterial({ color, distortion, foreground, grain, grainAmo
         </pattern>}
       </defs>}
       {hasPaint && <g data-surface-paint="" opacity={opacity}>
-        <rect ref={element} data-surface-base="" width="100%" height="100%" style={{ fill: color, color: foreground }} />
+        <rect ref={baseRef} data-surface-base="" width="100%" height="100%" style={{ fill: color, color: foreground }} />
         {hasGrain && <rect
           data-surface-grain=""
           width="100%"
