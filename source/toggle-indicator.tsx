@@ -2,10 +2,10 @@ import { motion, useReducedMotion } from "motion/react"
 import type { CSSProperties } from "react"
 import { useLocale } from "react-aria-components"
 import { controlSpring, type ControlTheme } from "./control.js"
-import { useSurfaceTreatment } from "./surface-treatment.js"
+import { useSurface, type SurfaceOptions } from "./use-surface.js"
 
 /** Shared paint only. Selection, focus, validation, and native input behavior belong to React Aria. */
-export function ToggleIndicator({ kind, selected, indeterminate = false, focused, invalid = false, hovered = false, pressed = false, theme }: Readonly<{
+export function ToggleIndicator({ kind, selected, indeterminate = false, focused, invalid = false, hovered = false, pressed = false, theme, surface: options }: Readonly<{
     kind: "checkbox" | "radio" | "switch"
     selected: boolean
     indeterminate?: boolean
@@ -14,6 +14,7 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
     hovered?: boolean
     pressed?: boolean
     theme: ControlTheme
+    surface?: SurfaceOptions
 }>) {
 
     const reduced = useReducedMotion()
@@ -22,15 +23,20 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
     const active = selected || indeterminate
     const paints = invalid ? theme.paints.danger : active ? theme.paints.palette : theme.paints.neutral
     const paint = pressed ? paints.pressed : hovered ? paints.hover : paints.rest
-    const treatment = useSurfaceTreatment<HTMLSpanElement>(paint.background, paint.color)
+    const surface = useSurface<HTMLSpanElement>({
+        ...options,
+        color: options?.color ?? paint.background,
+        radius: options?.radius ?? (kind === "checkbox" ? Math.min(diameter / 4, typeof theme.radius === "number" ? theme.radius : diameter / 4) : diameter)
+    })
     const switching = kind === "switch"
     const thumbWidth = diameter - 6 + (pressed && !reduced ? 3 : 0)
     const travel = (diameter * 2 - thumbWidth) / 2 - 3
 
-    return <motion.span ref={treatment.ref} aria-hidden="true" initial={false}
+    return <motion.span ref={surface.ref} aria-hidden="true" initial={false}
         animate={{ scale: reduced || switching ? 1 : pressed ? 0.94 : hovered ? 1.03 : 1 }}
         transition={reduced ? { duration: 0 } : controlSpring} style={{
-        ...treatment.style,
+        ...surface.style,
+        color: paint.color,
         display: "inline-grid",
         placeItems: "center",
         position: "relative",
@@ -38,13 +44,11 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
         flexShrink: 0,
         width: switching ? diameter * 2 : diameter,
         height: diameter,
-        borderRadius: kind === "checkbox" ? Math.min(diameter / 4, typeof theme.radius === "number" ? theme.radius : diameter / 4) : diameter,
         border: "none",
-        background: "transparent",
         outline: focused ? `2px solid ${theme.foreground}` : "none",
         outlineOffset: 2,
     }}>
-        {treatment.material}
+        {surface.material}
         {switching ? <motion.span initial={false} animate={{ width: thumbWidth, x: (selected ? travel : -travel) * (direction === "rtl" ? -1 : 1) }}
             transition={reduced ? { duration: 0 } : controlSpring} style={{
                 height: diameter - 6, borderRadius: diameter,

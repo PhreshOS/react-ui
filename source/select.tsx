@@ -7,6 +7,7 @@ import { SurfaceButton } from "./control-material.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import type { RadiusProps } from "./radius.js"
 import { Surface } from "./surface.js"
+import type { SurfaceOverrides } from "./use-surface.js"
 
 export interface SelectOption {
     readonly value: string
@@ -14,7 +15,7 @@ export interface SelectOption {
     readonly disabled?: boolean
 }
 
-export interface SelectProps extends Omit<AriaSelectProps<SelectOption>, ControlOverrides | "value" | "defaultValue" | "onChange" | "selectedKey" | "defaultSelectedKey" | "onSelectionChange" | "disabledKeys" | "selectionMode">, ControlProps, FieldProps, RadiusProps {
+export interface SelectProps extends Omit<AriaSelectProps<SelectOption>, ControlOverrides | "value" | "defaultValue" | "onChange" | "selectedKey" | "defaultSelectedKey" | "onSelectionChange" | "disabledKeys" | "selectionMode">, ControlProps, FieldProps, RadiusProps, SurfaceOverrides {
     readonly options: readonly SelectOption[]
     readonly value?: string | null
     readonly defaultValue?: string | null
@@ -24,7 +25,7 @@ export interface SelectProps extends Omit<AriaSelectProps<SelectOption>, Control
 /** Single selection from string-valued options; keyboard navigation and typeahead stay native to React Aria. */
 export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
     label, description, errorMessage, disabled, required, invalid, options, value, defaultValue, onChange,
-    size, color, radius, style, ...properties
+    size, color, radius, style, surface, ...properties
 }, ref) {
 
     const theme = useControlTheme({ size, color, radius })
@@ -36,7 +37,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
         isDisabled={disabled} isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
         {state => <>
             <FieldLabel label={label} />
-            <Button render={(native, button) => <SurfaceButton native={native} paint={controlPaint(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered)} />}
+            <Button render={(native, button) => <SurfaceButton native={native} options={surface} paint={controlPaint(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered)} />}
                 style={button => ({
                 ...controlStyle(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered, button.isFocusVisible),
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,

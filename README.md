@@ -41,9 +41,8 @@ import { AppearanceProvider, Button, Surface } from "@phreshos/react-ui"
 See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
 interpreted by the provider and components.
 
-The current local experiment gives `Button`, `Input`, `Textarea`, `Select`,
-`Checkbox`, `Switch`, and `Radio`
-the shared Surface material while retaining their own colors. Omit `color` for
+`Button`, `Input`, `Textarea`, `Select`, `Checkbox`, `Switch`, and `Radio`
+use the shared Surface material while retaining their own colors. Omit `color` for
 a neutral shade of Appearance's background, or select `primary`, `secondary`,
 `success`, `warning`, `danger`, or `info` for a semantic color.
 Hover and press derive shades of the same base color. Each fill chooses the
@@ -67,6 +66,49 @@ can provide a caller-owned shadow when needed.
 ```tsx
 <Surface color="soft" radius="large">Derived values</Surface>
 <Surface color="#345678" radius={18}>Direct values</Surface>
+```
+
+`useSurface(options?, forwardedRef?)` is the public mechanism behind every
+Surface material. It returns `ref`, `style`, and `material` (rendered content,
+not a component type). Apply the ref and styles to the same native element and
+render the material inside it. It requires an `AppearanceProvider` and adds no
+container, padding, layout, interaction behavior, or outer shadow.
+
+```tsx
+import { useSurface, type SurfaceOptions } from "@phreshos/react-ui"
+
+function CustomSurface({ options }: { options?: SurfaceOptions }) {
+  const surface = useSurface<HTMLDivElement>(options)
+
+  return <div ref={surface.ref} style={surface.style}>
+    {surface.material}
+    Content
+  </div>
+}
+```
+
+`SurfaceOptions` uses the shared `AppearanceOptions` contract: `color`, `radius`,
+`opacity`, `backdrop`, `grain`, `grainAmount`, `distortion`, `waves`, `ripples`,
+`saturation`, and `brightness`. These are Appearance values consumed by Surface,
+not concepts owned by it. Omitted values follow the current Appearance. Effect
+options accept a scale level or a direct number; opacity affects material only,
+never the host's children. The glass edge reads the host's actual foreground.
+
+The host must support decorative children. For inputs, textareas, or other
+elements that cannot host those layers, compose an explicit material container;
+the hook never creates a hidden wrapper. An optional second argument forwards
+the native ref, including React ref cleanup.
+
+Material-bearing controls accept `surface?: SurfaceOptions`. Explicit options
+override their material defaults without changing their native behavior or
+content color. Unspecified values preserve the control's own color and radius.
+For text fields and Select, the options target the field/trigger material; for
+Checkbox, Switch, and Radio, they target the indicator. RadioGroup supplies
+defaults to its options, and a Radio can provide its own `surface` value.
+
+```tsx
+<Button color="primary" surface={{ opacity: 0.6, backdrop: 0 }}>Save</Button>
+<Input label="Name" surface={{ radius: "large" }} />
 ```
 
 `Panel` composes an outer `Surface`, an optional header, and an inset content

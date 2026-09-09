@@ -26,6 +26,8 @@ try {
   assert(paths.has("dist/main.d.ts"), "the package has no declaration entry point")
   assert(paths.has("dist/panel.js"), "the package has no Panel implementation")
   assert(paths.has("dist/panel.d.ts"), "the package has no Panel contract")
+  assert(paths.has("dist/use-surface.js"), "the package has no useSurface implementation")
+  assert(paths.has("dist/use-surface.d.ts"), "the package has no useSurface contract")
   for (const name of ["input", "textarea", "checkbox", "radio", "switch", "select", "slider"]) {
     assert(paths.has(`dist/${name}.js`), `the package has no ${name} implementation`)
     assert(paths.has(`dist/${name}.d.ts`), `the package has no ${name} contract`)
@@ -85,10 +87,11 @@ import {
   resolveRadius,
   resolveSpacing,
   useColor,
-  useScale
+  useScale,
+  useSurface
 } from "@phreshos/react-ui"
 
-for (const exported of [AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useColor, useScale]) {
+for (const exported of [AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useColor, useScale, useSurface]) {
   assert.notEqual(exported, undefined)
 }
 assert.deepEqual(Object.keys(icons), [])
@@ -99,7 +102,12 @@ assert.deepEqual(Object.keys(icons), [])
   writeFileSync(
     join(consumer, "consumer.tsx"),
     `import { standardAppearance } from "@phreshos/core"
-import { AppearanceProvider, Button, Flex, Grid, Panel, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, useColor, useScale } from "@phreshos/react-ui"
+import { AppearanceProvider, Button, Flex, Grid, Panel, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, useColor, useScale, useSurface, type SurfaceOptions } from "@phreshos/react-ui"
+
+function Material({ options }: { options?: SurfaceOptions }) {
+  const surface = useSurface<HTMLDivElement>(options)
+  return <div ref={surface.ref} style={surface.style}>{surface.material}Material</div>
+}
 
 function Derived() {
   const spacing = useScale(standardAppearance.spacing.light)
@@ -113,7 +121,8 @@ const view = (
     <Panel header={<h2>Example</h2>} contentProps={{ style: { padding: 12 } }}>
       <Grid columns={2} gap="small">
         <Flex align="center" justify="between">
-          <Button onPress={() => undefined}>Save</Button>
+          <Button onPress={() => undefined} surface={{ opacity: "large" }}>Save</Button>
+          <Material options={{ color: "soft", radius: 12, backdrop: 8 }} />
           <Derived />
           <Input label="Name" onChange={value => value.toUpperCase()} />
           <Textarea label="Notes" rows={3} />

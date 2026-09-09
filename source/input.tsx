@@ -5,8 +5,9 @@ import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useC
 import { SurfaceField } from "./control-material.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import type { RadiusProps } from "./radius.js"
+import type { SurfaceOverrides } from "./use-surface.js"
 
-export interface InputProps extends Omit<TextFieldProps, ControlOverrides | "isReadOnly">, ControlProps, FieldProps, RadiusProps {
+export interface InputProps extends Omit<TextFieldProps, ControlOverrides | "isReadOnly">, ControlProps, FieldProps, RadiusProps, SurfaceOverrides {
     readonly placeholder?: string
     readonly readOnly?: boolean
 }
@@ -14,7 +15,7 @@ export interface InputProps extends Omit<TextFieldProps, ControlOverrides | "isR
 /** A labeled single-line text control. onChange receives the string value. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
     label, description, errorMessage, disabled, readOnly, required, invalid,
-    size, color, radius, style, className, placeholder, ...properties
+    size, color, radius, style, className, placeholder, surface, ...properties
 }, ref) {
 
     const theme = useControlTheme({ size, color, radius })
@@ -23,8 +24,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
         isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
         <FieldLabel label={label} />
         <AriaInput ref={ref} placeholder={placeholder}
-            render={(native, state) => <SurfaceField radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
-                <input {...native} style={{ ...native.style, background: "transparent" }} />
+            render={(native, state) => <SurfaceField options={surface} radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
+                <input {...native} style={{ ...native.style, borderRadius: "inherit", background: "transparent" }} />
             </SurfaceField>}
             style={state => controlStyle(theme, state.isFocused, state.isInvalid, state.isHovered, state.isFocusVisible)} />
         <FieldFeedback theme={theme} description={description} errorMessage={errorMessage} />

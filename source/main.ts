@@ -14,6 +14,8 @@ export {
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
 export { Surface, type SurfaceProps } from "./surface.js"
+export { useSurface, type SurfaceOptions, type SurfaceResult, type SurfaceOverrides } from "./use-surface.js"
+export type { AppearanceOptions } from "./appearance-options.js"
 export { Panel, type PanelProps } from "./panel.js"
 export { Button, type ButtonColor, type ButtonProps } from "./button.js"
 export { Input, type InputProps } from "./input.js"
