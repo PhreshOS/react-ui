@@ -58,6 +58,7 @@
   },
   "dependencies": {
     "colorjs.io": "^0.7.1",
+    "motion": "^13.2.0",
     "react-aria-components": "^1.20.0"
   },
   "devDependencies": {

@@ -73,7 +73,7 @@ export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground
         />}
       </g>}
     </svg>
-    {hasPaint && <div
+    {hasPaint && <span
       data-surface-border=""
       aria-hidden="true"
       style={{

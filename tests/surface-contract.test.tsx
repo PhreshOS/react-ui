@@ -3,6 +3,7 @@ import { createRef, type ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { standardAppearance } from "@phreshos/core"
 import { AppearanceProvider, Surface } from "../source/main.js"
+import { color as colorScale, type ColorLevel } from "../source/color.js"
 
 afterEach(function () {
   cleanup()
@@ -10,7 +11,45 @@ afterEach(function () {
 })
 
 describe("Surface", function () {
-  it("reads independent shadow values and follows live theme changes", function () {
+  it.each<ColorLevel>(["subtle", "soft", "base", "strong", "intense"])("derives the %s background level from the active Appearance", function (level) {
+    const appearance = { ...standardAppearance, background: { light: "#abcdef", dark: "#123456" } }
+    const view = render(<AppearanceProvider appearance={appearance} theme="light">
+      <Surface data-testid="surface" color={level} />
+    </AppearanceProvider>)
+    const base = required(screen.getByTestId("surface").querySelector<SVGRectElement>("[data-surface-base]"))
+    expect(base.style.fill).toBe(cssFill(colorScale(appearance.background.light)[level]))
+    view.rerender(<AppearanceProvider appearance={appearance} theme="dark">
+      <Surface data-testid="surface" color={level} />
+    </AppearanceProvider>)
+    expect(base.style.fill).toBe(cssFill(colorScale(appearance.background.dark)[level]))
+    expect(screen.getByTestId("surface").hasAttribute("color")).toBe(false)
+  })
+
+  it.each(["#8b5cf6", "rgb(20 80 120)", "color-mix(in srgb, #ffffff 80%, #000000)"])("accepts the direct background color %s", function (color) {
+    renderSurface(<Surface data-testid="surface" color={color} />)
+    const base = required(screen.getByTestId("surface").querySelector<SVGRectElement>("[data-surface-base]"))
+    expect(base.style.fill).toBe(cssFill(color))
+  })
+
+  it.each([
+    ["xsmall", "2.5px"], ["small", "5px"], ["medium", "10px"], ["large", "15px"], ["xlarge", "20px"],
+    [0, "0px"], [18, "18px"], ["50%", "50%"], ["1rem 2rem", "1rem 2rem"]
+  ] as const)("accepts radius %s without forwarding it to the DOM", function (radius, expected) {
+    renderSurface(<Surface data-testid="surface" radius={radius} />)
+    const surface = screen.getByTestId("surface")
+    expect(surface.style.borderRadius).toBe(expected)
+    expect(surface.hasAttribute("radius")).toBe(false)
+  })
+
+  it("derives radius levels from the current theme", function () {
+    const appearance = { ...standardAppearance, radius: { light: 8, dark: 16 } }
+    const view = render(<AppearanceProvider appearance={appearance} theme="light"><Surface data-testid="surface" radius="large" /></AppearanceProvider>)
+    expect(screen.getByTestId("surface").style.borderRadius).toBe("12px")
+    view.rerender(<AppearanceProvider appearance={appearance} theme="dark"><Surface data-testid="surface" radius="large" /></AppearanceProvider>)
+    expect(screen.getByTestId("surface").style.borderRadius).toBe("24px")
+  })
+
+  it("does not consume Appearance shadow values across theme changes", function () {
     const appearance = {
       ...standardAppearance,
       shadow: {
@@ -22,11 +61,11 @@ describe("Surface", function () {
       <Surface data-testid="surface" />
     </AppearanceProvider>)
     const material = required(screen.getByTestId("surface").querySelector<SVGSVGElement>("[data-surface-material]"))
-    expect(screen.getByTestId("surface").style.boxShadow).toBe("-3px 12px 30px 2px color-mix(in srgb, rgb(24, 52, 71) 25%, transparent)")
+    expect(screen.getByTestId("surface").style.boxShadow).toBe("")
     view.rerender(<AppearanceProvider appearance={appearance} theme="dark">
       <Surface data-testid="surface" />
     </AppearanceProvider>)
-    expect(screen.getByTestId("surface").style.boxShadow).toBe("2px 6px 18px -1px color-mix(in srgb, rgb(18, 26, 33) 0%, transparent)")
+    expect(screen.getByTestId("surface").style.boxShadow).toBe("")
     expect(material.style.boxShadow).toContain("inset 0 1px 2px")
   })
 
@@ -34,24 +73,24 @@ describe("Surface", function () {
     expect(() => render(<Surface />)).toThrow("useAppearance() requires an AppearanceProvider")
   })
 
-  it.each(["hidden", "clip"] as const)("keeps the outer shadow on the Surface when content overflow is %s", function (overflow) {
+  it.each(["hidden", "clip"] as const)("keeps the glass edge without adding a shadow when content overflow is %s", function (overflow) {
     renderSurface(<Surface data-testid="surface" style={{ overflow }}><span>Content</span></Surface>)
 
     const surface = screen.getByTestId("surface")
     const material = required(surface.querySelector<SVGSVGElement>("[data-surface-material]"))
 
     expect(surface.style.overflow).toBe(overflow)
-    expect(surface.style.boxShadow).toBe("0px 8px 24px 0px color-mix(in srgb, rgb(24, 52, 71) 16%, transparent)")
+    expect(surface.style.boxShadow).toBe("")
     expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 255, 255) 28%, transparent)")
   })
 
-  it("preserves a caller's native shadow override without leaving a second outer shadow", function () {
-    renderSurface(<Surface data-testid="surface" style={{ boxShadow: "none" }} />)
+  it("preserves a caller-owned native shadow without adding another outer shadow", function () {
+    renderSurface(<Surface data-testid="surface" style={{ boxShadow: "0 2px 8px #123456" }} />)
 
     const surface = screen.getByTestId("surface")
     const material = required(surface.querySelector<SVGSVGElement>("[data-surface-material]"))
 
-    expect(surface.style.boxShadow).toBe("none")
+    expect(surface.style.boxShadow).toBe("0 2px 8px #123456")
     expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 255, 255) 28%, transparent)")
   })
 
@@ -73,13 +112,13 @@ describe("Surface", function () {
 
     expect(ref.current).toBe(surface)
     expect(surface.className).toBe("custom")
-    expect(surface.getAttribute("color")).toBe("#123456")
+    expect(surface.hasAttribute("color")).toBe(false)
     expect(surface.getAttribute("aria-label")).toBe("Workspace")
     expect(surface.style.borderRadius).toBe("18px")
     expect(surface.style.padding).toBe("12px")
-    expect(surface.querySelector("span")?.textContent).toBe("Content")
+    expect(screen.getByText("Content").parentElement).toBe(surface)
     expect(surface.querySelector("[data-surface-material]")).toBeInstanceOf(SVGSVGElement)
-    expect(baseColor("surface")).toBe("rgb(255, 255, 255)")
+    expect(baseColor("surface")).toBe("rgb(18, 52, 86)")
     expect(surface.querySelector("canvas")).toBeNull()
   })
 
@@ -105,7 +144,7 @@ describe("Surface", function () {
     const border = required(surface.querySelector<HTMLElement>("[data-surface-border]"))
     expect(material.style.border).toBe("")
     expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 255, 255) 28%, transparent)")
-    expect(surface.style.boxShadow).toBe("0px 8px 24px 0px color-mix(in srgb, rgb(24, 52, 71) 16%, transparent)")
+    expect(surface.style.boxShadow).toBe("")
     expect(border.parentElement).toBe(surface)
     expect(border.childElementCount).toBe(0)
     expect(border.style.padding).toBe("1px")
@@ -243,7 +282,7 @@ describe("Surface", function () {
     expect(material.querySelector("[data-surface-distortion-noise]")).toBeNull()
   })
 
-  it("derives the rim and shadow colors from the current palette", function () {
+  it("derives the rim colors from the current palette", function () {
     const appearance = {
       ...standardAppearance,
       background: { light: "#ffeecc", dark: "#112233" },
@@ -261,7 +300,7 @@ describe("Surface", function () {
     expect(light).toContain("rgb(68, 51, 34)")
     expect(light).not.toMatch(/\b(white|black)\b/)
     expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 238, 204) 28%, transparent)")
-    expect(screen.getByTestId("surface").style.boxShadow).toBe("0px 8px 24px 0px color-mix(in srgb, rgb(68, 51, 34) 16%, transparent)")
+    expect(screen.getByTestId("surface").style.boxShadow).toBe("")
 
     rendered.rerender(<AppearanceProvider appearance={appearance} theme="dark">
       <Surface data-testid="surface" opacity={0.5} />
@@ -272,7 +311,7 @@ describe("Surface", function () {
     expect(border.style.background).not.toBe(light)
     expect(Number(border.style.opacity)).toBeLessThan(lightOpacity)
     expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(204, 221, 238) 28%, transparent)")
-    expect(screen.getByTestId("surface").style.boxShadow).toBe("0px 8px 24px 0px color-mix(in srgb, rgb(17, 34, 51) 16%, transparent)")
+    expect(screen.getByTestId("surface").style.boxShadow).toBe("")
   })
 
   it("keeps lighting colors identical but follows background lightness when palette roles are reversed", function () {
@@ -308,7 +347,7 @@ describe("Surface", function () {
     }} theme="light"><Surface data-testid="surface" /></AppearanceProvider>)
     const material = required(screen.getByTestId("surface").querySelector<SVGSVGElement>("[data-surface-material]"))
     expect(material.style.boxShadow).toContain("color(srgb 0.8 0.8 0.8) 28%")
-    expect(screen.getByTestId("surface").style.boxShadow).toContain("rgb(20, 30, 40) 16%")
+    expect(screen.getByTestId("surface").style.boxShadow).toBe("")
   })
 
   it.each(["light", "dark"] as const)("scales the %s rim by background lightness after capping xlarge opacity", function (theme) {
@@ -374,6 +413,12 @@ function renderSurface(surface: ReactNode) {
 
 function baseColor(testId: string) {
   return required(screen.getByTestId(testId).querySelector<SVGRectElement>("[data-surface-base]")).style.fill
+}
+
+function cssFill(value: string) {
+  const element = document.createElementNS("http://www.w3.org/2000/svg", "rect")
+  element.style.fill = value
+  return element.style.fill
 }
 
 function required<T>(value: T | null): T {

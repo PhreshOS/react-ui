@@ -26,6 +26,10 @@ try {
   assert(paths.has("dist/main.d.ts"), "the package has no declaration entry point")
   assert(paths.has("dist/panel.js"), "the package has no Panel implementation")
   assert(paths.has("dist/panel.d.ts"), "the package has no Panel contract")
+  for (const name of ["input", "textarea", "checkbox", "radio", "switch", "select", "slider"]) {
+    assert(paths.has(`dist/${name}.js`), `the package has no ${name} implementation`)
+    assert(paths.has(`dist/${name}.d.ts`), `the package has no ${name} contract`)
+  }
   assert(paths.has("dist/icons/main.js"), "the package has no JavaScript icons entry point")
   assert(paths.has("dist/icons/main.d.ts"), "the package has no declaration icons entry point")
   assert(paths.has("LICENSE"), "the package has no license")
@@ -76,6 +80,7 @@ import {
   Grid,
   Panel,
   Surface,
+  Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider,
   AppearanceProvider,
   resolveRadius,
   resolveSpacing,
@@ -83,7 +88,7 @@ import {
   useScale
 } from "@phreshos/react-ui"
 
-for (const exported of [AppearanceProvider, Button, Flex, Grid, Panel, Surface, resolveRadius, resolveSpacing, useColor, useScale]) {
+for (const exported of [AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useColor, useScale]) {
   assert.notEqual(exported, undefined)
 }
 assert.deepEqual(Object.keys(icons), [])
@@ -94,7 +99,7 @@ assert.deepEqual(Object.keys(icons), [])
   writeFileSync(
     join(consumer, "consumer.tsx"),
     `import { standardAppearance } from "@phreshos/core"
-import { AppearanceProvider, Button, Flex, Grid, Panel, useColor, useScale } from "@phreshos/react-ui"
+import { AppearanceProvider, Button, Flex, Grid, Panel, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, useColor, useScale } from "@phreshos/react-ui"
 
 function Derived() {
   const spacing = useScale(standardAppearance.spacing.light)
@@ -110,6 +115,13 @@ const view = (
         <Flex align="center" justify="between">
           <Button onPress={() => undefined}>Save</Button>
           <Derived />
+          <Input label="Name" onChange={value => value.toUpperCase()} />
+          <Textarea label="Notes" rows={3} />
+          <Checkbox label="Remember" onChange={value => !value} />
+          <Switch label="Enabled" defaultChecked />
+          <RadioGroup label="Mode" defaultValue="one"><Radio label="One" value="one" /></RadioGroup>
+          <Select label="Choice" options={[{value: "one", label: "One"}]} onChange={value => value?.toUpperCase()} />
+          <Slider label="Volume" onChange={value => value.toFixed(0)} />
         </Flex>
       </Grid>
     </Panel>

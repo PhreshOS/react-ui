@@ -2,21 +2,22 @@ import { forwardRef } from "react"
 import type { CSSProperties, ReactNode } from "react"
 import { Button as AriaButton } from "react-aria-components"
 import type { ButtonProps as AriaButtonProps } from "react-aria-components"
-import { scale, type ScaleLevel } from "./scale.js"
-import { resolveRadius, type RadiusProps } from "./radius.js"
-import { useAppearance, useResolveTheme } from "./appearance-provider.js"
+import type { ScaleLevel } from "./scale.js"
+import type { RadiusProps } from "./radius.js"
+import { controlFontSizes, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
+import { SurfaceButton } from "./control-material.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
 
 /** A semantic color from Appearance; omission uses background and foreground. */
-export type ButtonColor = "primary" | "secondary" | "success" | "warning" | "danger" | "info"
+export type ButtonColor = ControlColor
 
 /** Properties accepted by the shared interactive button. */
 export interface ButtonProps extends NativeButtonProps, RadiusProps {
   /** Visible Button content. */
   readonly children?: ReactNode
 
-  /** Palette tint for the flat fill. Omission keeps the Button neutral. */
+  /** Base color for the material. Omission keeps the Button neutral. */
   readonly color?: ButtonColor
 
   /** Native class name applied without replacing the component contract. */
@@ -55,12 +56,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   },
   ref
 ) {
-  const appearance = useAppearance()
-  const spacing = scale(useResolveTheme(appearance.spacing), size)
-  const borderRadius = resolveRadius(radius, appearance)
-  const foreground = useResolveTheme(appearance.foreground)
-  const background = useResolveTheme(appearance.background)
-  const tint = useResolveTheme(color === undefined ? appearance.foreground : appearance[color])
+  const theme = useControlTheme({ color, radius, size })
 
   return <AriaButton
     {...properties}
@@ -69,58 +65,44 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     isDisabled={disabled}
     isPending={pending}
     onPress={onPress}
+    render={(native, state) => <SurfaceButton native={native} paint={buttonPaint(theme, !disabled && !pending, state.isHovered, state.isPressed)} />}
     style={({ isFocusVisible, isHovered, isPressed }) => buttonStyle({
-      borderRadius,
+      theme,
       disabled,
       isFocusVisible,
       isHovered,
       isPressed,
       pending,
       size,
-      spacing,
-      background,
-      foreground,
-      tint,
-      colored: color !== undefined,
       style
     })}
   >{children}</AriaButton>
 })
 
 function buttonStyle({
-  borderRadius,
+  theme,
   disabled,
   isFocusVisible,
   isHovered,
   isPressed,
   pending,
   size,
-  spacing,
-  background,
-  foreground,
-  tint,
-  colored,
   style
 }: Readonly<{
-  borderRadius: CSSProperties["borderRadius"]
+  theme: ControlTheme
   disabled: boolean
   isFocusVisible: boolean
   isHovered: boolean
   isPressed: boolean
   pending: boolean
   size: ScaleLevel
-  spacing: number
-  background: string
-  foreground: string
-  tint: string
-  colored: boolean
   style: CSSProperties | undefined
 }>): CSSProperties {
-  const fontSize = buttonFontSizes[size]
+  const fontSize = controlFontSizes[size]
+  const { spacing, foreground } = theme
   const height = Math.max(24, 24 + spacing)
   const interactive = !disabled && !pending
-  const emphasis = interactive && isPressed ? 8 : interactive && isHovered ? 4 : 0
-  const fill = (colored ? 16 : 8) + emphasis
+  const paint = buttonPaint(theme, interactive, isHovered, isPressed)
 
   return {
     ...style,
@@ -137,11 +119,10 @@ function buttonStyle({
     paddingInline: Math.max(8, spacing),
     gap: Math.max(4, spacing / 2),
     border: "none",
-    borderRadius,
+    borderRadius: theme.radius,
     outline: isFocusVisible ? `2px solid ${foreground}` : "none",
     outlineOffset: 2,
-    color: colored ? tint : foreground,
-    background: `color-mix(in srgb, ${tint} ${fill}%, ${background})`,
+    ...paint,
     opacity: disabled ? 0.46 : pending ? 0.68 : 1,
     cursor: disabled ? "not-allowed" : pending ? "progress" : "pointer",
     font: "inherit",
@@ -155,10 +136,7 @@ function buttonStyle({
   }
 }
 
-const buttonFontSizes: Readonly<Record<ScaleLevel, number>> = Object.freeze({
-  xsmall: 11,
-  small: 12,
-  medium: 13,
-  large: 14,
-  xlarge: 15
-})
+function buttonPaint(theme: ControlTheme, interactive: boolean, hovered: boolean, pressed: boolean) {
+  const paints = theme.colored ? theme.paints.palette : theme.paints.neutral
+  return interactive && pressed ? paints.pressed : interactive && hovered ? paints.hover : paints.rest
+}
