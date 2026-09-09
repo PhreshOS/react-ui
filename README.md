@@ -43,7 +43,8 @@ interpreted by the provider and components.
 
 `Button` uses a flat fill with no glass, gradient, or shadow. Omit `color` for
 background and foreground, or select `primary`, `secondary`, `success`,
-`warning`, `danger`, or `info` for a palette-tinted fill. Text uses foreground.
+`warning`, `danger`, or `info` for palette-colored text and a tinted fill.
+Neutral buttons use foreground text.
 `size` accepts `xsmall`, `small`, `medium` (default), `large`, or `xlarge`;
 spacing and radius follow Appearance. `disabled` prevents activation and focus;
 `pending` prevents activation while retaining focus.

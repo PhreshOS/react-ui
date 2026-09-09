@@ -140,7 +140,7 @@ function buttonStyle({
     borderRadius,
     outline: isFocusVisible ? `2px solid ${foreground}` : "none",
     outlineOffset: 2,
-    color: foreground,
+    color: colored ? tint : foreground,
     background: `color-mix(in srgb, ${tint} ${fill}%, ${background})`,
     opacity: disabled ? 0.46 : pending ? 0.68 : 1,
     cursor: disabled ? "not-allowed" : pending ? "progress" : "pointer",

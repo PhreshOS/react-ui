@@ -84,6 +84,9 @@ describe("Button", function () {
     renderButton(<Button color={color}>Continue</Button>)
     const button = screen.getByRole("button")
     expect(button.style.background).toBe(cssBackground(`color-mix(in srgb, ${standardAppearance[color].light} 16%, ${standardAppearance.background.light})`))
+    const expected = document.createElement("span")
+    expected.style.color = standardAppearance[color].light
+    expect(button.style.color).toBe(expected.style.color)
     expect(button.hasAttribute("color")).toBe(false)
   })
 
@@ -144,7 +147,7 @@ describe("Button", function () {
       <AppearanceProvider appearance={appearance} theme="dark"><Button color="primary">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
     expect(screen.getByRole("button").style.background).toBe(cssBackground("color-mix(in srgb, #334455 16%, #faf0e0)"))
-    expect(screen.getByRole("button").style.color).toBe("rgb(16, 24, 32)")
+    expect(screen.getByRole("button").style.color).toBe("rgb(51, 68, 85)")
   })
 
   it("forwards its native button reference", function () {
