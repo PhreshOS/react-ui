@@ -40,6 +40,8 @@ import { Button, Surface } from "@phreshos/react-ui"
 Without a provider, components use Core's `defaultAppearance` and reactively
 follow the browser color scheme. `AppearanceProvider` independently overrides
 either value for a subtree; omitted values inherit from the nearest provider.
+React UI also exports that same canonical `defaultAppearance` value for callers
+that need it explicitly.
 See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
 interpreted by the provider and components.
 

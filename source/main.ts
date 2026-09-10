@@ -4,6 +4,7 @@
  * Components enter this surface only after their implementation-independent
  * behavior contract has been established by the package's tests.
  */
+export { defaultAppearance } from "@phreshos/core"
 export {
   AppearanceProvider,
   useAppearance,

@@ -81,6 +81,7 @@ try {
   writeFileSync(
     join(consumer, "runtime.mjs"),
     `import assert from "node:assert/strict"
+import { defaultAppearance as coreDefaultAppearance } from "@phreshos/core"
 import * as icons from "@phreshos/react-ui/icons"
 import {
   Button,
@@ -91,6 +92,7 @@ import {
   Surface,
   Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider,
   AppearanceProvider,
+  defaultAppearance,
   resolveRadius,
   resolveSpacing,
   useColor,
@@ -100,6 +102,7 @@ import {
 for (const exported of [AppearanceProvider, Button, Flex, Grid, Material, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useColor, useScale]) {
   assert.notEqual(exported, undefined)
 }
+assert.equal(defaultAppearance, coreDefaultAppearance)
 assert.deepEqual(Object.keys(icons), [])
 `
   )
@@ -107,8 +110,7 @@ assert.deepEqual(Object.keys(icons), [])
 
   writeFileSync(
     join(consumer, "consumer.tsx"),
-    `import { defaultAppearance } from "@phreshos/core"
-import { AppearanceProvider, Button, Flex, Grid, Material, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, useColor, useScale } from "@phreshos/react-ui"
+    `import { AppearanceProvider, Button, Flex, Grid, Material, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useColor, useScale } from "@phreshos/react-ui"
 
 const material = <div style={{ position: "relative", isolation: "isolate", width: 80, height: 40 }}><Material color="soft" /></div>
 const standalone = <Button>Default Appearance and browser Theme</Button>
