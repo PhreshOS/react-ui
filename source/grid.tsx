@@ -2,7 +2,7 @@ import { forwardRef } from "react"
 import type { ComponentPropsWithoutRef, CSSProperties } from "react"
 import { alignment, justification, resolveGap, tracks } from "./layout.js"
 import type { LayoutAlignment, LayoutGap, LayoutJustification } from "./layout.js"
-import { useAppearanceIfAvailable } from "./appearance-provider.js"
+import { useAppearance } from "./appearance-provider.js"
 
 /** Properties accepted by the Grid layout primitive. */
 export interface GridProps extends ComponentPropsWithoutRef<"div"> {
@@ -33,7 +33,7 @@ export const Grid = forwardRef<HTMLDivElement, GridProps>(function Grid(
   { align, columns, flow, gap, inline = false, justify, rows, style, ...properties },
   ref
 ) {
-  const appearance = useAppearanceIfAvailable()
+  const appearance = useAppearance()
 
   return <div
     {...properties}

@@ -1,22 +1,17 @@
-import { Fragment, useMemo, type Ref } from "react"
-import { colorOpacity } from "./color.js"
-import { scale } from "./scale.js"
+import { useMemo } from "react"
 import { paintTransition } from "./motion-style.js"
 
-interface SurfaceMaterialProps {
-  readonly baseRef: Ref<SVGRectElement>
-  readonly colors: Readonly<{ lighter: string, darker: string, lightness: number }> | null
+interface MaterialPaintProps {
   readonly color: string
   readonly distortion: number
-  readonly foreground: string
   readonly grain: number
   readonly grainAmount: number
   readonly identity: string
   readonly opacity: number
 }
 
-/** The locally owned fill, refraction definition, and glass rim inside one Surface. */
-export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground, grain, grainAmount, identity, opacity }: SurfaceMaterialProps) {
+/** The fill, refraction definition, and grain of one Material. */
+export function MaterialPaint({ color, distortion, grain, grainAmount, identity, opacity }: MaterialPaintProps) {
   const seed = useMemo(() => seedFrom(identity), [identity])
   const hasPaint = opacity > 0
   const hasGrain = hasPaint && grain > 0 && grainAmount > 0
@@ -25,9 +20,8 @@ export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground
 
   if (!hasPaint && !hasDistortion) return null
 
-  return <Fragment>
-    <svg
-      data-surface-material=""
+  return <svg
+      data-material-paint=""
       aria-hidden="true"
       focusable="false"
       style={{
@@ -47,17 +41,17 @@ export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground
         {hasGrain && <pattern id={`${identity}-grain`} width={patternSize} height={patternSize} patternUnits="userSpaceOnUse">
           {initial.map((path, tone) => <path
             key={tone}
-            data-surface-grain-tone={tone}
+            data-material-grain-tone={tone}
             d={path}
             fill={grainTone(color, tone, grain)}
             shapeRendering="crispEdges"
           />)}
         </pattern>}
       </defs>}
-      {hasPaint && <g data-surface-paint="" opacity={opacity} style={paintTransition}>
-        <rect ref={baseRef} data-surface-base="" width="100%" height="100%" style={{ ...paintTransition, fill: color, color: foreground }} />
+      {hasPaint && <g data-material-fill="" opacity={opacity} style={paintTransition}>
+        <rect data-material-base="" width="100%" height="100%" style={{ ...paintTransition, fill: color }} />
         {hasGrain && <rect
-          data-surface-grain=""
+          data-material-grain=""
           width="100%"
           height="100%"
           fill={`url(#${identity}-grain)`}
@@ -65,34 +59,6 @@ export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground
         />}
       </g>}
     </svg>
-    {hasPaint && <span
-      data-surface-border=""
-      aria-hidden="true"
-      style={{
-        ...paintTransition,
-        position: "absolute",
-        // The material belongs behind content; its rim belongs above it.
-        // Opaque children must not erase the Surface's rounded edge.
-        zIndex: 1,
-        inset: 0,
-        padding: 1,
-        borderRadius: "inherit",
-        pointerEvents: "none",
-        opacity: Math.min(1, scale(opacity, "xlarge")) * (colors?.lightness ?? 0),
-        background: colors ? glassRim(colors.lighter, colors.darker) : undefined,
-        WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
-        WebkitMaskComposite: "xor",
-        mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
-        maskComposite: "exclude"
-      }}
-    />}
-  </Fragment>
-}
-
-function glassRim(light: string, dark: string) {
-  const edge = `color-mix(in oklch, ${dark} 20%, ${light})`
-
-  return `linear-gradient(145deg, ${colorOpacity(light, 0.92)}, ${colorOpacity(light, 0.4)} 35%, ${colorOpacity(edge, 0.18)} 55%, ${colorOpacity(light, 0.6)} 85%, ${colorOpacity(light, 0.3)})`
 }
 
 function DistortionFilter({ distortion, identity }: Readonly<{
@@ -101,7 +67,7 @@ function DistortionFilter({ distortion, identity }: Readonly<{
 }>) {
   return <filter
     id={`${identity}-distortion`}
-    data-surface-distortion=""
+    data-material-distortion=""
     x="-20%"
     y="-20%"
     width="140%"
@@ -109,8 +75,8 @@ function DistortionFilter({ distortion, identity }: Readonly<{
     colorInterpolationFilters="sRGB"
   >
     <feTurbulence
-      data-surface-distortion-noise=""
-      data-surface-distortion-field="organic"
+      data-material-distortion-noise=""
+      data-material-distortion-field="organic"
       type="fractalNoise"
       baseFrequency="0.008 0.008"
       numOctaves={2}
@@ -123,7 +89,7 @@ function DistortionFilter({ distortion, identity }: Readonly<{
       result={`${identity}-organic-noise-blurred`}
     />
     <feDisplacementMap
-      data-surface-distortion-stage="organic"
+      data-material-distortion-stage="organic"
       in="SourceGraphic"
       in2={`${identity}-organic-noise-blurred`}
       scale={distortion}

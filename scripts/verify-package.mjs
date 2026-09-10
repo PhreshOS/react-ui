@@ -4,10 +4,15 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
+import manifest from "../package.json" with { type: "json" }
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..")
 const temporary = mkdtempSync(join(tmpdir(), "phreshos-react-ui-package-"))
 const cache = join(temporary, "npm-cache")
+const corePackage = process.env.PHRESHOS_CORE_PACKAGE ?? `@phreshos/core@${manifest.dependencies["@phreshos/core"]}`
+
+assert.equal(typeof manifest.dependencies["@phreshos/core"], "string")
+assert.equal(manifest.peerDependencies["@phreshos/core"], undefined)
 
 try {
   const output = execFileSync(
@@ -26,8 +31,8 @@ try {
   assert(paths.has("dist/main.d.ts"), "the package has no declaration entry point")
   assert(paths.has("dist/panel.js"), "the package has no Panel implementation")
   assert(paths.has("dist/panel.d.ts"), "the package has no Panel contract")
-  assert(paths.has("dist/use-surface.js"), "the package has no useSurface implementation")
-  assert(paths.has("dist/use-surface.d.ts"), "the package has no useSurface contract")
+  assert(paths.has("dist/material.js"), "the package has no Material implementation")
+  assert(paths.has("dist/material.d.ts"), "the package has no Material contract")
   for (const name of ["input", "textarea", "checkbox", "radio", "switch", "select", "slider"]) {
     assert(paths.has(`dist/${name}.js`), `the package has no ${name} implementation`)
     assert(paths.has(`dist/${name}.d.ts`), `the package has no ${name} contract`)
@@ -62,6 +67,7 @@ try {
       "--no-fund",
       "--no-package-lock",
       archive,
+      corePackage,
       "@types/react@^19.2.18",
       "@types/react-dom@^19.2.4"
     ],
@@ -80,6 +86,7 @@ import {
   Button,
   Flex,
   Grid,
+  Material,
   Panel,
   Surface,
   Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider,
@@ -87,11 +94,10 @@ import {
   resolveRadius,
   resolveSpacing,
   useColor,
-  useScale,
-  useSurface
+  useScale
 } from "@phreshos/react-ui"
 
-for (const exported of [AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useColor, useScale, useSurface]) {
+for (const exported of [AppearanceProvider, Button, Flex, Grid, Material, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useColor, useScale]) {
   assert.notEqual(exported, undefined)
 }
 assert.deepEqual(Object.keys(icons), [])
@@ -101,28 +107,28 @@ assert.deepEqual(Object.keys(icons), [])
 
   writeFileSync(
     join(consumer, "consumer.tsx"),
-    `import { standardAppearance } from "@phreshos/core"
-import { AppearanceProvider, Button, Flex, Grid, Panel, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, useColor, useScale, useSurface, type SurfaceOptions } from "@phreshos/react-ui"
+    `import { defaultAppearance } from "@phreshos/core"
+import { AppearanceProvider, Button, Flex, Grid, Material, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, useColor, useScale } from "@phreshos/react-ui"
 
-function Material({ options }: { options?: SurfaceOptions }) {
-  const surface = useSurface<HTMLDivElement>(options)
-  return <div ref={surface.ref} style={surface.style}>{surface.material}Material</div>
-}
+const material = <div style={{ position: "relative", isolation: "isolate", width: 80, height: 40 }}><Material color="soft" /></div>
+const standalone = <Button>Default Appearance and browser Theme</Button>
+const themed = <AppearanceProvider theme="dark"><Surface>Dark subtree</Surface></AppearanceProvider>
 
 function Derived() {
-  const spacing = useScale(standardAppearance.spacing.light)
-  const primary = useColor(standardAppearance.primary.light)
+  const spacing = useScale(defaultAppearance.spacing.light)
+  const primary = useColor(defaultAppearance.primary.light)
 
   return <span style={{ color: primary.base, padding: spacing.small }}>Derived</span>
 }
 
 const view = (
-  <AppearanceProvider appearance={standardAppearance} theme="light">
+  <AppearanceProvider appearance={defaultAppearance} theme="light">
     <Panel header={<h2>Example</h2>} contentProps={{ style: { padding: 12 } }}>
       <Grid columns={2} gap="small">
         <Flex align="center" justify="between">
           <Button onPress={() => undefined} surface={{ opacity: "large" }}>Save</Button>
-          <Material options={{ color: "soft", radius: 12, backdrop: 8 }} />
+          {material}
+          <Surface as="button" type="button" color="soft" radius={12} backdrop={8}>Native Surface</Surface>
           <Derived />
           <Input label="Name" onChange={value => value.toUpperCase()} />
           <Textarea label="Notes" rows={3} />
@@ -138,6 +144,8 @@ const view = (
 )
 
 void view
+void standalone
+void themed
 `
   )
   writeFileSync(

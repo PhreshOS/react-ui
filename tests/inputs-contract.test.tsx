@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import userEvent from "@testing-library/user-event"
 import { createRef, useState, type ReactNode } from "react"
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
-import { standardAppearance } from "@phreshos/core"
+import { defaultAppearance } from "@phreshos/core"
 import { resolveColorLevel, solidColors } from "../source/color.js"
 import {
     AppearanceProvider, Button, Input, Textarea, Checkbox, Switch, Radio, RadioGroup, Select, Slider,
@@ -12,27 +12,27 @@ import {
 
 afterEach(cleanup)
 
-it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on the %s indicator while retaining selection colors", async kind => {
+it.each(["checkbox", "switch", "radio"] as const)("shares Material through Surface on the %s indicator while retaining selection colors", async kind => {
     const sample = kind === "checkbox" ? <Checkbox label="Choice" color="secondary" />
         : kind === "switch" ? <Switch label="Choice" color="secondary" />
         : <RadioGroup label="Choices" color="secondary"><Radio value="one" label="Choice" /></RadioGroup>
     const { container } = renderUI(sample)
-    const base = container.querySelector<SVGRectElement>("[data-surface-base]")
-    const material = container.querySelector("[data-surface-paint]")
-    const border = container.querySelector<HTMLElement>("[data-surface-border]")
+    const base = container.querySelector<SVGRectElement>("[data-material-base]")
+    const material = container.querySelector("[data-material-fill]")
+    const border = container.querySelector<HTMLElement>("[data-surface-edge]")
     const indicator = border?.parentElement
     expect(base).not.toBeNull()
     expect(indicator?.tagName).toBe("SPAN")
     expect(indicator?.style.background).toBe("transparent")
     expect(indicator?.style.boxShadow).toBe("")
-    expect(material?.getAttribute("opacity")).toBe(String(standardAppearance.surface.light.opacity))
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(standardAppearance.background.light, "base")))
+    expect(material?.getAttribute("opacity")).toBe(String(defaultAppearance.material.light.opacity))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.background.light, "base")))
 
     const user = userEvent.setup()
     await user.click(screen.getByRole(kind, { name: "Choice" }))
     await user.unhover(screen.getByRole(kind, { name: "Choice" }))
     expect((screen.getByRole(kind) as HTMLInputElement).checked).toBe(true)
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(standardAppearance.secondary.light, "base")))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.secondary.light, "base")))
     expect(indicator?.style.borderRadius).toBe(kind === "checkbox" ? "4.75px" : "19px")
 })
 
@@ -110,7 +110,7 @@ describe.each([["Input", Input], ["Textarea", Textarea]] as const)("%s", (_, Con
         renderUI(<Control label="Name" color="secondary" defaultValue="Example" />)
         const field = screen.getByRole("textbox") as HTMLInputElement
         const height = field.style.height
-        const paints = solidColors(standardAppearance.secondary.light, standardAppearance.background.light, standardAppearance.foreground.light)
+        const paints = solidColors(defaultAppearance.secondary.light, defaultAppearance.background.light, defaultAppearance.foreground.light)
 
         await user.hover(field)
         expect(materialColor(field)).toBe(css(paints.hover.background))
@@ -132,9 +132,9 @@ it.each(["primary", "secondary", "success", "warning", "danger", "info"] as cons
     const view = renderUI(sample)
 
     for (const theme of ["light", "dark"] as const) {
-        view.rerender(<AppearanceProvider appearance={standardAppearance} theme={theme}>{sample}</AppearanceProvider>)
-        const tint = standardAppearance[color][theme]
-        const paint = solidColors(tint, standardAppearance.background[theme], standardAppearance.foreground[theme]).rest
+        view.rerender(<AppearanceProvider appearance={defaultAppearance} theme={theme}>{sample}</AppearanceProvider>)
+        const tint = defaultAppearance[color][theme]
+        const paint = solidColors(tint, defaultAppearance.background[theme], defaultAppearance.foreground[theme]).rest
 
         for (const field of [...screen.getAllByRole("textbox"), screen.getByRole("button")]) {
             expect(materialColor(field)).toBe(css(paint.background))
@@ -147,7 +147,7 @@ it.each(["primary", "secondary", "success", "warning", "danger", "info"] as cons
 
 it("gives invalid fields danger precedence over their chosen color", () => {
     renderUI(<Input label="Name" color="success" invalid />)
-    expect(materialColor(screen.getByRole("textbox"))).toBe(css(resolveColorLevel(standardAppearance.danger.light, "base")))
+    expect(materialColor(screen.getByRole("textbox"))).toBe(css(resolveColorLevel(defaultAppearance.danger.light, "base")))
 })
 
 it("forwards native text-control refs and preserves textarea rows", () => {
@@ -159,7 +159,7 @@ it("forwards native text-control refs and preserves textarea rows", () => {
 })
 
 it("shares Button height and responds to the nearest concrete theme colors", () => {
-    const appearance = { ...standardAppearance, background: { light: "#111111", dark: "#eeeeee" }, foreground: { light: "#eeeeee", dark: "#111111" } }
+    const appearance = { ...defaultAppearance, background: { light: "#111111", dark: "#eeeeee" }, foreground: { light: "#eeeeee", dark: "#111111" } }
     const sample = <><Input aria-label="Name" size="large" /><Button size="large">Save</Button></>
     const view = render(<AppearanceProvider appearance={appearance} theme="light">{sample}</AppearanceProvider>)
     const field = screen.getByRole("textbox")
@@ -399,7 +399,7 @@ it("Slider reports committed values and resets to the default without changing i
 })
 
 function wrap(children: ReactNode) {
-    return <AppearanceProvider appearance={standardAppearance} theme="light">{children}</AppearanceProvider>
+    return <AppearanceProvider appearance={defaultAppearance} theme="light">{children}</AppearanceProvider>
 }
 
 function renderUI(children: ReactNode) {
@@ -418,7 +418,7 @@ function css(value: string) {
 
 function materialColor(control: HTMLElement) {
     const host = control instanceof HTMLButtonElement ? control : control.parentElement
-    const base = host?.querySelector<SVGRectElement>("[data-surface-base]")
+    const base = host?.querySelector<SVGRectElement>("[data-material-base]")
     expect(base).not.toBeNull()
     if (!(control instanceof HTMLButtonElement)) {
         expect(host?.tagName).toBe("SPAN")

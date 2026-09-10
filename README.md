@@ -25,24 +25,34 @@ applications own composition.
 | Bun | `bun add @phreshos/react-ui` |
 | Yarn | `yarn add @phreshos/react-ui` |
 
-`@phreshos/core`, React, and React DOM are peer dependencies.
+Core is a built-in runtime dependency. React and React DOM remain peer
+dependencies because the application and React UI must share one React
+runtime.
 
 ```tsx
-import { standardAppearance } from "@phreshos/core"
-import { AppearanceProvider, Button, Surface } from "@phreshos/react-ui"
+import { Button, Surface } from "@phreshos/react-ui"
 
-<AppearanceProvider appearance={standardAppearance} theme="light">
-  <Surface>
-    <Button>Continue</Button>
-  </Surface>
-</AppearanceProvider>
+<Surface>
+  <Button>Continue</Button>
+</Surface>
 ```
 
+Without a provider, components use Core's `defaultAppearance` and reactively
+follow the browser color scheme. `AppearanceProvider` independently overrides
+either value for a subtree; omitted values inherit from the nearest provider.
 See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
 interpreted by the provider and components.
 
+```tsx
+import { AppearanceProvider, Button } from "@phreshos/react-ui"
+
+<AppearanceProvider theme="dark">
+  <Button>Dark subtree</Button>
+</AppearanceProvider>
+```
+
 `Button`, `Input`, `Textarea`, `Select`, `Checkbox`, `Switch`, and `Radio`
-use the shared Surface material while retaining their own colors. Omit `color` for
+use the shared Material through Surface while retaining their own colors. Omit `color` for
 a neutral shade of Appearance's background, or select `primary`, `secondary`,
 `success`, `warning`, `danger`, or `info` for a semantic color.
 Solid controls use the `base` color level, without mixing it with white or black.
@@ -59,8 +69,21 @@ spacing and radius follow Appearance. `disabled` prevents activation and focus;
 <Button color="danger" size="small">Delete</Button>
 ```
 
-`Surface` never creates or consumes a shadow. Shadow is an independent visual
-concern owned outside the material contract. `color` accepts a background level
+`Material` is the raw visual substance: paint, opacity, frost, refraction, and
+grain. It fills the geometry of its nearest positioned container,
+inherits that container's radius, and adds no content, layout, interaction, or
+shadow. The container must establish its own geometry and isolation.
+
+```tsx
+<div style={{ position: "relative", isolation: "isolate", width: 240, height: 120, borderRadius: 18 }}>
+  <Material color="soft" />
+</div>
+```
+
+`Surface` is the standard geometric host for a `Material`. It establishes the
+required positioning and isolation, resolves radius, renders the Material, and
+then renders its content. It never creates or consumes a shadow. Shadow remains
+an independent visual concern. `color` accepts a background level
 (`subtle`, `soft`, `base`, `strong`, `intense`) derived from Appearance's background,
 or a direct CSS color. `radius` accepts a size level, a number in pixels, or a
 CSS radius. Defaults are `color="base"` and `radius="medium"`.
@@ -68,38 +91,26 @@ CSS radius. Defaults are `color="base"` and `radius="medium"`.
 ```tsx
 <Surface color="soft" radius="large">Derived values</Surface>
 <Surface color="#345678" radius={18}>Direct values</Surface>
+<Surface as="button" type="button">Native button Surface</Surface>
 ```
 
-`useSurface(options?, forwardedRef?)` is the public mechanism behind every
-Surface material. It returns `ref`, `style`, and `material` (rendered content,
-not a component type). Apply the ref and styles to the same native element and
-render the material inside it. It requires an `AppearanceProvider` and adds no
-container, padding, layout, interaction behavior, or shadow.
-
-```tsx
-import { useSurface, type SurfaceOptions } from "@phreshos/react-ui"
-
-function CustomSurface({ options }: { options?: SurfaceOptions }) {
-  const surface = useSurface<HTMLDivElement>(options)
-
-  return <div ref={surface.ref} style={surface.style}>
-    {surface.material}
-    Content
-  </div>
-}
-```
-
-`SurfaceOptions` uses the shared `AppearanceOptions` contract: `color`, `radius`,
-`opacity`, `backdrop`, `grain`, `grainAmount`, `distortion`, and `saturation`.
-These are Appearance values consumed by Surface,
-not concepts owned by it. Omitted values follow the current Appearance. Effect
+`MaterialProps` defines `color`, `opacity`, `backdrop`, `grain`, `grainAmount`,
+`distortion`, and `saturation`. `SurfaceOptions` composes that complete contract
+with `radius`; Material never depends on Surface or host geometry. Omitted values
+follow the current Appearance. Effect
 options accept a scale level or a direct number; opacity affects material only,
-never the host's children. The glass edge reads the host's actual foreground.
+never the host's children. Surface's glass edge reads the resolved material and
+foreground colors.
 
-The host must support decorative children. For inputs, textareas, or other
-elements that cannot host those layers, compose an explicit material container;
-the hook never creates a hidden wrapper. An optional second argument forwards
-the native ref, including React ref cleanup.
+`as` selects the native non-void HTML host and preserves its correlated native
+properties and ref type. For example, `as="button"` accepts button properties
+and targets an `HTMLButtonElement` ref. Void elements cannot be Surface hosts
+because they cannot contain Material and content. Inputs therefore use a
+Surface container around the native input.
+
+Radius belongs to host geometry, while Surface's border belongs to its geometric
+boundary. Material may determine the border treatment, but it neither owns nor
+renders that border.
 
 Material-bearing controls accept `surface?: SurfaceOptions`. Explicit options
 override their material defaults without changing their native behavior or

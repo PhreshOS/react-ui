@@ -7,7 +7,7 @@ import { SurfaceButton } from "./control-material.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import type { RadiusProps } from "./radius.js"
 import { Surface } from "./surface.js"
-import type { SurfaceOverrides } from "./use-surface.js"
+import type { SurfaceOverrides } from "./surface.js"
 import { controlTransition, overlayMotionClass, visualTransition } from "./motion-style.js"
 
 export interface SelectOption {

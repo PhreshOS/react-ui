@@ -1,13 +1,13 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { createRef, type ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { standardAppearance } from "@phreshos/core"
+import { defaultAppearance } from "@phreshos/core"
 import { AppearanceProvider, Panel, Surface } from "../source/main.js"
 
 afterEach(cleanup)
 
 function provider(children: ReactNode, spacing = 12) {
-  return <AppearanceProvider appearance={{ ...standardAppearance, spacing: { light: spacing } }} theme="light">{children}</AppearanceProvider>
+  return <AppearanceProvider appearance={{ ...defaultAppearance, spacing: { light: spacing } }} theme="light">{children}</AppearanceProvider>
 }
 
 describe("Panel", () => {
@@ -27,13 +27,13 @@ describe("Panel", () => {
     expect(header.nextElementSibling).toBe(body)
     expect(body.parentElement).toBe(panel)
     expect(screen.getByTestId("content").parentElement).toBe(body)
-    expect(panel.querySelectorAll("[data-surface-material]")).toHaveLength(2)
+    expect(panel.querySelectorAll("[data-material-paint]")).toHaveLength(2)
     expect(panel.style.gridTemplateRows).toBe("auto minmax(0, 1fr)")
     expect(body.style.margin).toBe("0px 6px 6px")
     for (const surface of [panel, body]) {
       expect(surface.style.borderRadius).toBe(reference.style.borderRadius)
-      expect(surface.querySelector("[data-surface-border]")?.getAttribute("style")).toBe(reference.querySelector("[data-surface-border]")?.getAttribute("style"))
-      expect(surface.querySelector("[data-surface-paint]")?.getAttribute("opacity")).toBe("0.2")
+      expect(surface.querySelector("[data-surface-edge]")?.getAttribute("style")).toBe(reference.querySelector("[data-surface-edge]")?.getAttribute("style"))
+      expect(surface.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.2")
     }
   })
 
@@ -68,8 +68,8 @@ describe("Panel", () => {
 
   it("applies material controls independently to the outer and content Surfaces", () => {
     render(provider(<Panel data-testid="panel" opacity={0.4} contentProps={{ opacity: 0.1, "aria-label": "Body" }}>Content</Panel>))
-    expect(screen.getByTestId("panel").querySelector("[data-surface-paint]")?.getAttribute("opacity")).toBe("0.4")
-    expect(screen.getByLabelText("Body").querySelector("[data-surface-paint]")?.getAttribute("opacity")).toBe("0.1")
+    expect(screen.getByTestId("panel").querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.4")
+    expect(screen.getByLabelText("Body").querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.1")
   })
 
   it("keeps the content rim above an opaque iframe without compensating padding", () => {
@@ -78,8 +78,8 @@ describe("Panel", () => {
     </Panel>))
     const body = screen.getByLabelText("Body")
     const frame = screen.getByTitle("Opaque content")
-    const material = body.querySelector<SVGSVGElement>("[data-surface-material]")!
-    const rim = body.querySelector<HTMLElement>("[data-surface-border]")!
+    const material = body.querySelector<SVGSVGElement>("[data-material-paint]")!
+    const rim = body.querySelector<HTMLElement>("[data-surface-edge]")!
     expect(frame.parentElement).toBe(body)
     expect(body.style.padding).toBe("")
     expect(body.style.overflow).toBe("hidden")

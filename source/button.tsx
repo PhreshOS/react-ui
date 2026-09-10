@@ -6,7 +6,7 @@ import type { ScaleLevel } from "./scale.js"
 import type { RadiusProps } from "./radius.js"
 import { controlFontSizes, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
 import { SurfaceButton } from "./control-material.js"
-import type { SurfaceOverrides } from "./use-surface.js"
+import type { SurfaceOverrides } from "./surface.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
 

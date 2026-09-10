@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { createRef } from "react"
 import { afterEach, describe, expect, it } from "vitest"
-import { standardAppearance } from "@phreshos/core"
+import { defaultAppearance } from "@phreshos/core"
 import { AppearanceProvider, Flex, Grid } from "../source/main.js"
 
 afterEach(cleanup)
@@ -48,7 +48,7 @@ describe("Flex", function () {
   })
 
   it("resolves semantic gaps from the nearest AppearanceProvider", function () {
-    render(<AppearanceProvider appearance={standardAppearance} theme="light">
+    render(<AppearanceProvider appearance={defaultAppearance} theme="light">
       <Flex data-testid="xsmall" gap="xsmall" />
       <Flex data-testid="small" gap="small" />
       <Flex data-testid="medium" gap="medium" />

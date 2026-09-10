@@ -38,7 +38,27 @@ export const controlFontSizes: Readonly<Record<ScaleLevel, number>> = Object.fre
     xlarge: 15
 })
 
-export function useControlTheme({ size = "medium", color, radius = "medium" }: ControlProps & RadiusProps) {
+type SolidColors = ReturnType<typeof solidColors>
+
+export interface ControlTheme {
+    readonly spacing: number
+    readonly foreground: string
+    readonly background: string
+    readonly tint: string
+    readonly colored: boolean
+    readonly danger: string
+    readonly paints: {
+        readonly palette: SolidColors
+        readonly neutral: SolidColors
+        readonly danger: SolidColors
+    }
+    readonly radius: CSSProperties["borderRadius"]
+    readonly fontSize: number
+    readonly height: number
+    readonly gap: number
+}
+
+export function useControlTheme({ size = "medium", color, radius = "medium" }: ControlProps & RadiusProps): ControlTheme {
 
     const appearance = useAppearance()
     const spacing = scale(useResolveTheme(appearance.spacing), size)
@@ -66,8 +86,6 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
         gap: Math.max(4, spacing / 2)
     }
 }
-
-export type ControlTheme = ReturnType<typeof useControlTheme>
 
 export function fieldStyle(theme: ControlTheme, disabled = false, style?: CSSProperties): CSSProperties {
 

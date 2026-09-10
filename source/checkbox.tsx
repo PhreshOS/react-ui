@@ -4,7 +4,7 @@ import type { CheckboxFieldProps } from "react-aria-components"
 import { FieldFeedback, fieldStyle, useControlTheme } from "./control.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import { ToggleIndicator, toggleStyle } from "./toggle-indicator.js"
-import type { SurfaceOverrides } from "./use-surface.js"
+import type { SurfaceOverrides } from "./surface.js"
 
 export interface CheckboxProps extends Omit<CheckboxFieldProps, ControlOverrides | "isReadOnly" | "isSelected" | "defaultSelected" | "isIndeterminate">, ControlProps, FieldProps, SurfaceOverrides {
     readonly checked?: boolean

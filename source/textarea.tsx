@@ -2,10 +2,10 @@ import { forwardRef } from "react"
 import { TextArea as AriaTextarea, TextField } from "react-aria-components"
 import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
 import { SurfaceField } from "./control-material.js"
-import type { InputProps } from "./input.js"
 import FieldStyle, { textControlClass } from "./field-style.js"
+import type { TextControlProps } from "./text-control.js"
 
-export interface TextareaProps extends Omit<InputProps, "type" | "pattern"> {
+export interface TextareaProps extends Omit<TextControlProps, "type" | "pattern"> {
     readonly rows?: number
 }
 

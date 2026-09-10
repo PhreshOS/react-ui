@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { createRef, type ReactNode } from "react"
-import { standardAppearance } from "@phreshos/core"
+import { defaultAppearance } from "@phreshos/core"
 import { AppearanceProvider, Button, type ButtonColor, type ButtonProps, type ScaleLevel } from "../source/main.js"
 import { resolveColorLevel, opaqueColor, solidColors } from "../source/color.js"
 
@@ -64,16 +64,16 @@ describe("Button", function () {
 
     const button = screen.getByRole("button", { name: "Continue" })
 
-    expect(button.style.paddingInline).toBe(`${standardAppearance.spacing.light * 2}px`)
-    expect(button.style.borderRadius).toBe(`${standardAppearance.radius.light * 0.25}px`)
+    expect(button.style.paddingInline).toBe(`${defaultAppearance.spacing.light * 2}px`)
+    expect(button.style.borderRadius).toBe(`${defaultAppearance.radius.light * 0.25}px`)
     expect(button.style.color).toBe("rgb(24, 52, 71)")
     expect(button.style.fontSize).toBe("15px")
   })
 
-  it("uses shared Surface material with a neutral control color by default", function () {
+  it("uses shared Material through Surface with a neutral control color by default", function () {
     renderButton(<Button>Continue</Button>)
     const button = screen.getByRole("button")
-    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(standardAppearance.background.light, "base")))
+    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.background.light, "base")))
     expect(button.style.background).toBe("transparent")
     expect(button.style.height).toBe("36px")
     expect(button.style.fontSize).toBe("13px")
@@ -85,7 +85,7 @@ describe("Button", function () {
   it.each<ButtonColor>(["primary", "secondary", "success", "warning", "danger", "info"])("uses Appearance's %s color", function (color) {
     renderButton(<Button color={color}>Continue</Button>)
     const button = screen.getByRole("button")
-    const paint = solidColors(standardAppearance[color].light, standardAppearance.background.light, standardAppearance.foreground.light).rest
+    const paint = solidColors(defaultAppearance[color].light, defaultAppearance.background.light, defaultAppearance.foreground.light).rest
     expect(materialColor(button)).toBe(cssBackground(paint.background))
     const expected = document.createElement("span")
     expected.style.color = paint.color
@@ -107,7 +107,7 @@ describe("Button", function () {
     const user = userEvent.setup()
     renderButton(<Button color="primary">Continue</Button>)
     const button = screen.getByRole("button")
-    const paints = solidColors(standardAppearance.primary.light, standardAppearance.background.light, standardAppearance.foreground.light)
+    const paints = solidColors(defaultAppearance.primary.light, defaultAppearance.background.light, defaultAppearance.foreground.light)
     const text = button.style.color
     await user.hover(button)
     expect(materialColor(button)).toBe(cssBackground(paints.hover.background))
@@ -127,7 +127,7 @@ describe("Button", function () {
     await userEvent.setup().tab()
     const button = screen.getByRole("button")
     expect(document.activeElement).toBe(button)
-    expect(button.style.outline).toBe(`2px solid ${standardAppearance.foreground.light}`)
+    expect(button.style.outline).toBe(`2px solid ${defaultAppearance.foreground.light}`)
     expect(button.style.boxShadow).toBe("")
   })
 
@@ -141,17 +141,17 @@ describe("Button", function () {
 
   it("resolves the nearest palette and updates when the theme changes", function () {
     const appearance = {
-      ...standardAppearance,
+      ...defaultAppearance,
       background: { light: "#101820", dark: "#faf0e0" },
       foreground: { light: "#faf0e0", dark: "#101820" },
       primary: { light: "#aabbcc", dark: "#334455" }
     }
-    const view = render(<AppearanceProvider appearance={standardAppearance} theme="light">
+    const view = render(<AppearanceProvider appearance={defaultAppearance} theme="light">
       <AppearanceProvider appearance={appearance} theme="light"><Button color="primary">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
     expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#aabbcc", "base")))
     expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#101820")))
-    view.rerender(<AppearanceProvider appearance={standardAppearance} theme="light">
+    view.rerender(<AppearanceProvider appearance={defaultAppearance} theme="light">
       <AppearanceProvider appearance={appearance} theme="dark"><Button color="primary">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
     expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#334455", "base")))
@@ -179,14 +179,14 @@ describe("Button", function () {
     expect(button.style.paddingBlock).toBe("12px")
     expect(button.style.textAlign).toBe("start")
     expect(button.style.flexShrink).toBe("0")
-    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(standardAppearance.background.light, "base")))
+    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.background.light, "base")))
     await userEvent.setup().click(button)
     expect(onPress).toHaveBeenCalledTimes(1)
   })
 })
 
 function renderButton(button: ReactNode) {
-  return render(<AppearanceProvider appearance={standardAppearance} theme="light">{button}</AppearanceProvider>)
+  return render(<AppearanceProvider appearance={defaultAppearance} theme="light">{button}</AppearanceProvider>)
 }
 
 function cssBackground(value: string) {
@@ -196,7 +196,7 @@ function cssBackground(value: string) {
 }
 
 function materialColor(button: HTMLElement) {
-  const base = button.querySelector<SVGRectElement>("[data-surface-base]")
+  const base = button.querySelector<SVGRectElement>("[data-material-base]")
   expect(base).not.toBeNull()
   expect(button.querySelector("button, div")).toBeNull()
   return cssBackground(base?.style.fill ?? "")

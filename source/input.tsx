@@ -1,17 +1,11 @@
 import { forwardRef } from "react"
 import { Input as AriaInput, TextField } from "react-aria-components"
-import type { TextFieldProps } from "react-aria-components"
 import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
 import { SurfaceField } from "./control-material.js"
-import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
-import type { RadiusProps } from "./radius.js"
-import type { SurfaceOverrides } from "./use-surface.js"
 import FieldStyle, { textControlClass } from "./field-style.js"
+import type { TextControlProps } from "./text-control.js"
 
-export interface InputProps extends Omit<TextFieldProps, ControlOverrides | "isReadOnly">, ControlProps, FieldProps, RadiusProps, SurfaceOverrides {
-    readonly placeholder?: string
-    readonly readOnly?: boolean
-}
+export type InputProps = TextControlProps
 
 /** A labeled single-line text control. onChange receives the string value. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
