@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode, Ref, RefCallback } from "react"
 import { SurfaceMaterial } from "./surface-material.js"
 import { useAppearanceOptions, type AppearanceOptions } from "./appearance-options.js"
 import { colorLightness, orderColors } from "./color.js"
+import { visualTransition } from "./motion-style.js"
 
 /** Appearance options consumed by the shared material mechanism. */
 export type SurfaceOptions = AppearanceOptions
@@ -50,15 +51,29 @@ export function useSurface<Element extends HTMLElement = HTMLElement>(options: S
 
   // Resolve the palette in the material's scope for the glass edge.
   // Theme names never determine color lightness.
-  useLayoutEffect(() => {
+  const updatePalette = useCallback(() => {
     const material = base.current
     const view = material?.ownerDocument.defaultView
     if (!material || !view) return
     const computed = view.getComputedStyle(material)
     const background = computed.fill
     const foreground = computed.color
-    if (colors?.background === background && colors.foreground === foreground) return
-    setColors({ ...orderColors(background, foreground), background, foreground, lightness: Math.max(0, Math.min(1, colorLightness(background))) })
+    setColors(previous => previous?.background === background && previous.foreground === foreground ? previous
+      : { ...orderColors(background, foreground), background, foreground, lightness: Math.max(0, Math.min(1, colorLightness(background))) })
+  }, [])
+
+  useLayoutEffect(updatePalette)
+
+  // CSS transitions finish after React's render. Refresh computed palette values
+  // at completion so the rim does not retain an intermediate animated color.
+  useLayoutEffect(() => {
+    const host = element.current
+    if (!host) return
+    const complete = (event: TransitionEvent) => {
+      if ((event.target === host || event.target === base.current) && (event.propertyName === "fill" || event.propertyName === "color")) updatePalette()
+    }
+    host.addEventListener("transitionend", complete)
+    return () => host.removeEventListener("transitionend", complete)
   })
 
   useLayoutEffect(() => {
@@ -69,6 +84,7 @@ export function useSurface<Element extends HTMLElement = HTMLElement>(options: S
   return {
     ref: capture,
     style: {
+      ...visualTransition,
       background: "transparent",
       borderRadius: radius,
       color: foreground,

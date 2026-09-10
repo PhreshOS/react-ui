@@ -1,6 +1,7 @@
 import { Fragment, useMemo, type Ref } from "react"
 import { colorOpacity } from "./color.js"
 import { scale } from "./scale.js"
+import { paintTransition } from "./motion-style.js"
 
 interface SurfaceMaterialProps {
   readonly baseRef: Ref<SVGRectElement>
@@ -62,8 +63,8 @@ export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground
           />)}
         </pattern>}
       </defs>}
-      {hasPaint && <g data-surface-paint="" opacity={opacity}>
-        <rect ref={baseRef} data-surface-base="" width="100%" height="100%" style={{ fill: color, color: foreground }} />
+      {hasPaint && <g data-surface-paint="" opacity={opacity} style={paintTransition}>
+        <rect ref={baseRef} data-surface-base="" width="100%" height="100%" style={{ ...paintTransition, fill: color, color: foreground }} />
         {hasGrain && <rect
           data-surface-grain=""
           width="100%"
@@ -77,6 +78,7 @@ export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground
       data-surface-border=""
       aria-hidden="true"
       style={{
+        ...paintTransition,
         position: "absolute",
         // The material belongs behind content; its rim belongs above it.
         // Opaque children must not erase the Surface's rounded edge.

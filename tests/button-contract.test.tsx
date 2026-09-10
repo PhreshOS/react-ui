@@ -4,7 +4,7 @@ import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { createRef, type ReactNode } from "react"
 import { standardAppearance } from "@phreshos/core"
 import { AppearanceProvider, Button, type ButtonColor, type ButtonProps, type ScaleLevel } from "../source/main.js"
-import { colorShade, opaqueColor, solidColors } from "../source/color.js"
+import { resolveColorLevel, opaqueColor, solidColors } from "../source/color.js"
 
 afterEach(cleanup)
 
@@ -73,7 +73,7 @@ describe("Button", function () {
   it("uses shared Surface material with a neutral control color by default", function () {
     renderButton(<Button>Continue</Button>)
     const button = screen.getByRole("button")
-    expect(materialColor(button)).toBe(cssBackground(colorShade(standardAppearance.background.light, 0.08)))
+    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(standardAppearance.background.light, "soft")))
     expect(button.style.background).toBe("transparent")
     expect(button.style.height).toBe("36px")
     expect(button.style.fontSize).toBe("13px")
@@ -108,10 +108,13 @@ describe("Button", function () {
     renderButton(<Button color="primary">Continue</Button>)
     const button = screen.getByRole("button")
     const paints = solidColors(standardAppearance.primary.light, standardAppearance.background.light, standardAppearance.foreground.light)
+    const text = button.style.color
     await user.hover(button)
     expect(materialColor(button)).toBe(cssBackground(paints.hover.background))
+    expect(button.style.color).toBe(text)
     await user.pointer({ target: button, keys: "[MouseLeft>]" })
     expect(materialColor(button)).toBe(cssBackground(paints.pressed.background))
+    expect(button.style.color).toBe(text)
     expect(button.style.height).toBe("36px")
     expect(button.style.transform).toBe("")
     await user.pointer({ keys: "[/MouseLeft]" })
@@ -146,13 +149,13 @@ describe("Button", function () {
     const view = render(<AppearanceProvider appearance={standardAppearance} theme="light">
       <AppearanceProvider appearance={appearance} theme="light"><Button color="primary">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
-    expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(opaqueColor("#aabbcc")))
+    expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#aabbcc", "soft")))
     expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#101820")))
     view.rerender(<AppearanceProvider appearance={standardAppearance} theme="light">
       <AppearanceProvider appearance={appearance} theme="dark"><Button color="primary">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
-    expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(opaqueColor("#334455")))
-    expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#faf0e0")))
+    expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#334455", "soft")))
+    expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#101820")))
   })
 
   it("forwards its native button reference", function () {

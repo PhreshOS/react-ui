@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { colorShade, opaqueColor, onColor, orderColors, solidColors } from "../source/color.js"
+import { colorShade, opaqueColor, onColor, orderColors, resolveColorLevel, solidColors } from "../source/color.js"
 import { contrastWCAG21, parse, to } from "colorjs.io/fn"
 
 describe("color lightness", () => {
@@ -20,17 +20,31 @@ describe("color lightness", () => {
 })
 
 describe("solid control colors", () => {
-  it.each(["#3465ce", "yellow", "hsl(180 60% 35%)", "oklch(70% .12 40)", "color(display-p3 .2 .8 .1)"])("pairs every shade of %s with the higher-contrast Appearance color", base => {
+  it("resolves soft as the same 60% source treatment exposed by the color scale", () => {
+    const result = to(resolveColorLevel("oklch(40% 0 0)", "soft"), "oklch")
+    expect(result.coords[0]).toBeCloseTo(0.4 * 0.6 + 0.4, 4)
+  })
+
+  it.each(["#3465ce", "#777777", "yellow", "hsl(180 60% 35%)", "oklch(70% .12 40)", "color(display-p3 .2 .8 .1)"])("keeps the base contrast choice for every shade of %s", base => {
     for (const [background, foreground] of [["#faf0e0", "#101820"], ["#101820", "#faf0e0"]]) {
       const paints = solidColors(base, background!, foreground!)
+      expect(paints.rest.background).toBe(resolveColorLevel(base, "soft"))
       const choices = [opaqueColor(background!), opaqueColor(foreground!)]
       for (const paint of Object.values(paints)) {
         expect(parse(paint.background).alpha).toBe(1)
         expect(choices).toContain(paint.color)
-        expect(contrastWCAG21(paint.background, paint.color)).toBe(Math.max(...choices.map(color => contrastWCAG21(paint.background, color))))
+        expect(paint.color).toBe(paints.rest.color)
       }
+      expect(contrastWCAG21(paints.rest.background, paints.rest.color)).toBe(Math.max(...choices.map(color => contrastWCAG21(paints.rest.background, color))))
       expect(new Set(Object.values(paints).map(paint => paint.background)).size).toBe(3)
     }
+  })
+
+  it("does not switch text when an interaction shade crosses the contrast threshold", () => {
+    const paints = solidColors("#111111", "white", "black")
+    expect(onColor(paints.pressed.background, "white", "black")).not.toBe(paints.rest.color)
+    expect(paints.hover.color).toBe(paints.rest.color)
+    expect(paints.pressed.color).toBe(paints.rest.color)
   })
 
   it("changes lightness without deliberately changing hue or chroma", () => {

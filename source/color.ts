@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { ColorSpace, parse, serialize, to, toGamut, contrastWCAG21, sRGB, sRGB_Linear, HSL, HWB, Lab, LCH, OKLab, OKLCH, P3, A98RGB, ProPhoto, REC_2020, XYZ_D50, XYZ_D65 } from "colorjs.io/fn"
+import { ColorSpace, mix, parse, serialize, to, toGamut, contrastWCAG21, sRGB, sRGB_Linear, HSL, HWB, Lab, LCH, OKLab, OKLCH, P3, A98RGB, ProPhoto, REC_2020, XYZ_D50, XYZ_D65 } from "colorjs.io/fn"
 
 // Register the CSS color spaces, without bundling unrelated color-model APIs.
 for (const space of [sRGB, sRGB_Linear, HSL, HWB, Lab, LCH, OKLab, OKLCH, P3, A98RGB, ProPhoto, REC_2020, XYZ_D50, XYZ_D65]) ColorSpace.register(space)
@@ -10,6 +10,13 @@ export type ColorLevel = "subtle" | "soft" | "base" | "strong" | "intense"
 /** Every visual treatment derived from one concrete CSS color. */
 export type ColorScale = Readonly<Record<ColorLevel, string>>
 
+const treatments = {
+  subtle: { weight: 25, target: "white" },
+  soft: { weight: 60, target: "white" },
+  strong: { weight: 82, target: "black" },
+  intense: { weight: 68, target: "black" }
+} as const
+
 /** Distinguishes derived color levels from direct CSS colors. */
 export function isColorLevel(value: string | undefined): value is ColorLevel {
   return value === "subtle" || value === "soft" || value === "base" || value === "strong" || value === "intense"
@@ -17,13 +24,24 @@ export function isColorLevel(value: string | undefined): value is ColorLevel {
 
 /** Derives visual treatments while preserving the concrete value at `base`. */
 export function color(value: string): ColorScale {
+  const shade = (level: keyof typeof treatments) => {
+    const { weight, target } = treatments[level]
+    return `color-mix(in oklch, ${value} ${weight}%, ${target})`
+  }
   return Object.freeze({
-    subtle: `color-mix(in oklch, ${value} 25%, white)`,
-    soft: `color-mix(in oklch, ${value} 60%, white)`,
+    subtle: shade("subtle"),
+    soft: shade("soft"),
     base: value,
-    strong: `color-mix(in oklch, ${value} 82%, black)`,
-    intense: `color-mix(in oklch, ${value} 68%, black)`
+    strong: shade("strong"),
+    intense: shade("intense")
   })
+}
+
+/** Resolves the same named treatment for solid paint and contrast calculations. */
+export function resolveColorLevel(value: string, level: ColorLevel): string {
+  if (level === "base") return opaqueColor(value)
+  const { weight, target } = treatments[level]
+  return opaqueColor(serialize(mix(opaqueColor(value), target, 1 - weight / 100, { space: "oklch" })))
 }
 
 /** Returns the complete visual treatments derived from one concrete color. */
@@ -72,10 +90,11 @@ export function onColor(fill: string, background: string, foreground: string): s
   return contrastWCAG21(fill, first) > contrastWCAG21(fill, second) ? first : second
 }
 
-/** One base color produces all solid interaction states and their paired text. */
+/** Solid controls start at soft; interaction shades preserve its text choice. */
 export function solidColors(base: string, background: string, foreground: string) {
-  const paint = (fill: string) => ({ background: fill, color: onColor(fill, background, foreground) })
-  const fill = opaqueColor(base)
+  const fill = resolveColorLevel(base, "soft")
+  const color = onColor(fill, background, foreground)
+  const paint = (background: string) => ({ background, color })
   return {
     rest: paint(fill),
     hover: paint(colorShade(fill, 0.045)),

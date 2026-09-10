@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { createRef, useState, type ReactNode } from "react"
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { standardAppearance } from "@phreshos/core"
-import { colorShade, opaqueColor, solidColors } from "../source/color.js"
+import { resolveColorLevel, solidColors } from "../source/color.js"
 import {
     AppearanceProvider, Button, Input, Textarea, Checkbox, Switch, Radio, RadioGroup, Select, Slider,
     type InputProps, type TextareaProps, type CheckboxProps, type SwitchProps, type RadioGroupProps,
@@ -26,13 +26,13 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on th
     expect(indicator?.style.background).toBe("transparent")
     expect(indicator?.style.boxShadow).toBe("")
     expect(material?.getAttribute("opacity")).toBe(String(standardAppearance.surface.light.opacity))
-    expect(css(base?.style.fill ?? "")).toBe(css(colorShade(standardAppearance.background.light, 0.08)))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(standardAppearance.background.light, "soft")))
 
     const user = userEvent.setup()
     await user.click(screen.getByRole(kind, { name: "Choice" }))
     await user.unhover(screen.getByRole(kind, { name: "Choice" }))
     expect((screen.getByRole(kind) as HTMLInputElement).checked).toBe(true)
-    expect(css(base?.style.fill ?? "")).toBe(css(opaqueColor(standardAppearance.secondary.light)))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(standardAppearance.secondary.light, "soft")))
     expect(indicator?.style.borderRadius).toBe(kind === "checkbox" ? "4.75px" : "19px")
 })
 
@@ -137,7 +137,7 @@ it.each(["primary", "secondary", "success", "warning", "danger", "info"] as cons
 
 it("gives invalid fields danger precedence over their chosen color", () => {
     renderUI(<Input label="Name" color="success" invalid />)
-    expect(materialColor(screen.getByRole("textbox"))).toBe(css(opaqueColor(standardAppearance.danger.light)))
+    expect(materialColor(screen.getByRole("textbox"))).toBe(css(resolveColorLevel(standardAppearance.danger.light, "soft")))
 })
 
 it("forwards native text-control refs and preserves textarea rows", () => {
@@ -154,9 +154,9 @@ it("shares Button height and responds to the nearest concrete theme colors", () 
     const view = render(<AppearanceProvider appearance={appearance} theme="light">{sample}</AppearanceProvider>)
     const field = screen.getByRole("textbox")
     expect(field.style.height).toBe(screen.getByRole("button").style.height)
-    expect(materialColor(field)).toBe(css(colorShade("#111111", 0.08)))
+    expect(materialColor(field)).toBe(css(resolveColorLevel("#111111", "soft")))
     view.rerender(<AppearanceProvider appearance={appearance} theme="dark">{sample}</AppearanceProvider>)
-    expect(materialColor(field)).toBe(css(colorShade("#eeeeee", 0.08)))
+    expect(materialColor(field)).toBe(css(resolveColorLevel("#eeeeee", "soft")))
 })
 
 describe.each([["Checkbox", Checkbox, "checkbox"], ["Switch", Switch, "switch"]] as const)("%s", (_, Control, role) => {

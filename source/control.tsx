@@ -4,7 +4,8 @@ import { FieldError, Label, Text } from "react-aria-components"
 import { useAppearance, useResolveTheme } from "./appearance-provider.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { scale, type ScaleLevel } from "./scale.js"
-import { colorShade, solidColors } from "./color.js"
+import { solidColors } from "./color.js"
+import { visualTransition } from "./motion-style.js"
 
 /** Semantic Appearance colors accepted by interactive controls. */
 export type ControlColor = "primary" | "secondary" | "success" | "warning" | "danger" | "info"
@@ -50,7 +51,7 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
     const danger = useResolveTheme(appearance.danger)
     const paints = useMemo(() => ({
         palette: solidColors(tint, background, foreground),
-        neutral: solidColors(colorShade(background, 0.08), background, foreground),
+        neutral: solidColors(background, background, foreground),
         danger: solidColors(danger, background, foreground)
     }), [tint, background, foreground, danger])
 
@@ -75,6 +76,7 @@ export function fieldStyle(theme: ControlTheme, disabled = false, style?: CSSPro
 
     return {
         ...style,
+        ...visualTransition,
         display: "grid",
         gap: theme.gap,
         minWidth: 0,
@@ -96,6 +98,7 @@ export function controlStyle(theme: ControlTheme, focused: boolean, invalid: boo
     const paint = controlPaint(theme, focused, invalid, hovered)
 
     return {
+        ...visualTransition,
         appearance: "none",
         boxSizing: "border-box",
         width: "100%",

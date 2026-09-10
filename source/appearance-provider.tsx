@@ -2,6 +2,7 @@ import { createContext, useContext } from "react"
 import type { ReactNode } from "react"
 import type { Appearance, Theme, ThemedValue } from "@phreshos/core"
 import DocumentScrollbars from "./document-scrollbars.js"
+import MotionStyle from "./motion-style.js"
 
 const missing = Symbol("AppearanceProvider")
 const AppearanceContext = createContext<Appearance | typeof missing>(missing)
@@ -11,6 +12,7 @@ const ThemeContext = createContext<Theme | typeof missing>(missing)
 export function AppearanceProvider({ appearance, children, theme }: AppearanceProviderProps) {
   return <AppearanceContext.Provider value={appearance}>
     <ThemeContext.Provider value={theme}>
+      <MotionStyle />
       <DocumentScrollbars appearance={appearance} theme={theme} />
       {children}
     </ThemeContext.Provider>

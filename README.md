@@ -45,8 +45,10 @@ interpreted by the provider and components.
 use the shared Surface material while retaining their own colors. Omit `color` for
 a neutral shade of Appearance's background, or select `primary`, `secondary`,
 `success`, `warning`, `danger`, or `info` for a semantic color.
-Hover and press derive shades of the same base color. Each fill chooses the
-higher-contrast text from Appearance's background and foreground.
+Solid controls use the `soft` color level (60% source color mixed with white in
+OKLCH). Hover and press derive shades of that fill. The resting fill chooses the
+higher-contrast text from Appearance's background and foreground once; interaction
+shades keep that choice.
 `size` accepts `xsmall`, `small`, `medium` (default), `large`, or `xlarge`;
 spacing and radius follow Appearance. `disabled` prevents activation and focus;
 `pending` prevents activation while retaining focus.
@@ -133,12 +135,22 @@ Every input uses Appearance colors and the same five `size` levels as Button.
 neutral when it is omitted; selection controls default to `primary`. Invalid
 fields use danger instead. Text fields share Surface's glass edge. Interaction shades
 derive from the base color's lightness, and text or selection marks use whichever
-Appearance background or foreground has higher contrast against the actual fill.
+Appearance background or foreground has higher contrast against the base fill.
+That text or mark color stays unchanged across interaction shades.
 These are component-owned derivations, not additional Appearance settings.
 Theme names never imply particular colors. No component requires a Client or
 Server SDK.
 
 Fields distinguish hover, pointer focus, keyboard focus, and invalid state.
+Shared CSS transitions use a fixed 160ms ease-out timing for colors and corner
+radius. Material fill and opacity transition on the painted layers, not on the
+Surface host. Select menus share a small placement-aware slide for entry and
+exit, using React Aria's animation lifecycle. Reduced-motion preferences make
+these changes immediate. No Appearance configuration is added for motion yet.
+Blur, distortion, geometry, and host opacity are not transitioned; gradients
+and structurally removed effects change directly rather than adding extra
+layers or keeping disabled effects alive.
+
 Motion animates toggle presses, selection marks, switch travel, the Select
 chevron, and Slider thumb feedback. Reduced-motion preferences remove spatial
 feedback and make state transitions immediate. Slider values and native input

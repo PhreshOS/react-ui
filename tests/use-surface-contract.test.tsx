@@ -111,5 +111,5 @@ it("lets a Radio override its group's material and preserves defaults for undefi
   </AppearanceProvider>)
   expect([...document.querySelectorAll("[data-surface-paint]")].slice(0, 2).map(element => element.getAttribute("opacity"))).toEqual(["0.6", "0.3"])
   expect(screen.getByTestId("button").style.borderRadius).toBe("5px")
-  expect(screen.getByTestId("button").querySelector<SVGRectElement>("[data-surface-base]")?.style.fill).toBe("rgb(220, 38, 38)")
+  expect(screen.getByTestId("button").querySelector<SVGRectElement>("[data-surface-base]")?.style.fill).toBe("rgb(244, 139, 127)")
 })
