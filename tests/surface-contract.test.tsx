@@ -172,10 +172,7 @@ describe("Surface", function () {
       grainAmount={0.5}
       backdrop={8}
       distortion={70}
-      waves={12}
-      ripples={8}
       saturation={1.8}
-      brightness={1.06}
       opacity={0.5}
     />)
 
@@ -187,11 +184,11 @@ describe("Surface", function () {
 
     expect(surface.style.backdropFilter).toBe("")
     expect(refraction.style.backdropFilter).toContain("url(")
-    expect(frost.style.backdropFilter).toBe("blur(8px) saturate(1.8) brightness(1.06)")
+    expect(frost.style.backdropFilter).toBe("blur(8px) saturate(1.8)")
     expect(surface.style.backgroundColor).toBe("transparent")
     expect(grain.getAttribute("opacity")).toBeNull()
     expect(material.querySelector("[data-surface-grain-tone='0']")?.getAttribute("fill")).toBe("color-mix(in srgb, #ffffff 10%, rgb(0 0 0) 90%)")
-    expect(material.querySelectorAll("[data-surface-distortion-field]")).toHaveLength(3)
+    expect(material.querySelectorAll("[data-surface-distortion-field]")).toHaveLength(1)
     expect(material.querySelectorAll("[data-surface-distortion-stage]")).toHaveLength(1)
     expect(material.style.opacity).toBe("")
     expect(material.querySelector("[data-surface-paint]")?.getAttribute("opacity")).toBe("0.5")
@@ -200,21 +197,18 @@ describe("Surface", function () {
     expect(surface.hasAttribute("grainAmount")).toBe(false)
     expect(surface.hasAttribute("backdrop")).toBe(false)
     expect(surface.hasAttribute("distortion")).toBe(false)
-    expect(surface.hasAttribute("waves")).toBe(false)
-    expect(surface.hasAttribute("ripples")).toBe(false)
     expect(surface.hasAttribute("saturation")).toBe(false)
-    expect(surface.hasAttribute("brightness")).toBe(false)
     expect(surface.hasAttribute("opacity")).toBe(false)
   })
 
   it("removes its backdrop properties when the resolved value returns to zero", function () {
-    const rendered = renderSurface(<Surface data-testid="surface" backdrop={8} distortion={70} saturation={1.8} brightness={1.06} />)
+    const rendered = renderSurface(<Surface data-testid="surface" backdrop={8} distortion={70} saturation={1.8} />)
     const surface = screen.getByTestId("surface")
 
     expect(surface.querySelectorAll("[data-surface-backdrop]")).toHaveLength(2)
 
     rendered.rerender(<AppearanceProvider appearance={standardAppearance} theme="light">
-      <Surface data-testid="surface" backdrop={0} distortion={0} waves={0} ripples={0} saturation={1} brightness={1} />
+      <Surface data-testid="surface" backdrop={0} distortion={0} saturation={1} />
     </AppearanceProvider>)
 
     expect(surface.querySelector("[data-surface-backdrop]")).toBeNull()
@@ -244,7 +238,7 @@ describe("Surface", function () {
   })
 
   it("omits the complete SVG material when opacity and displacement are zero", function () {
-    renderSurface(<Surface data-testid="surface" opacity={0} distortion={0} waves={0} ripples={0} />)
+    renderSurface(<Surface data-testid="surface" opacity={0} distortion={0} />)
 
     const surface = screen.getByTestId("surface")
 
@@ -253,16 +247,13 @@ describe("Surface", function () {
     expect(surface.style.borderColor).toBe("")
   })
 
-  it("combines only enabled distortion fields into one displacement stage", function () {
-    renderSurface(<Surface data-testid="surface" distortion={0} waves={12} ripples={0} />)
+  it("renders one organic distortion field and one displacement stage", function () {
+    renderSurface(<Surface data-testid="surface" distortion={12} />)
 
     const material = required(screen.getByTestId("surface").querySelector<SVGSVGElement>("[data-surface-material]"))
-    expect(material.querySelector('[data-surface-distortion-field="organic"]')).toBeNull()
-    expect(material.querySelector('[data-surface-distortion-field="waves"]')).not.toBeNull()
-    expect(material.querySelector('[data-surface-distortion-field="ripples"]')).toBeNull()
-    expect(material.querySelectorAll('[data-surface-distortion-stage="combined"]')).toHaveLength(1)
-    expect(material.querySelector("[data-surface-distortion-combine]")).toBeNull()
-    expect(material.querySelector("[data-surface-distortion-noise]")).toBeNull()
+    expect(material.querySelectorAll('[data-surface-distortion-field="organic"]')).toHaveLength(1)
+    expect(material.querySelectorAll('[data-surface-distortion-stage="organic"]')).toHaveLength(1)
+    expect(material.querySelector("[data-surface-distortion-noise]")).not.toBeNull()
   })
 
   it("derives the rim colors from the current palette", function () {

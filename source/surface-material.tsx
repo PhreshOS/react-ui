@@ -13,16 +13,14 @@ interface SurfaceMaterialProps {
   readonly grainAmount: number
   readonly identity: string
   readonly opacity: number
-  readonly ripples: number
-  readonly waves: number
 }
 
 /** The locally owned fill, refraction definition, and glass rim inside one Surface. */
-export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground, grain, grainAmount, identity, opacity, ripples, waves }: SurfaceMaterialProps) {
+export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground, grain, grainAmount, identity, opacity }: SurfaceMaterialProps) {
   const seed = useMemo(() => seedFrom(identity), [identity])
   const hasPaint = opacity > 0
   const hasGrain = hasPaint && grain > 0 && grainAmount > 0
-  const hasDistortion = distortion > 0 || waves > 0 || ripples > 0
+  const hasDistortion = distortion > 0
   const initial = useMemo(() => hasGrain ? grainPaths(seed, grainAmount) : [], [grainAmount, hasGrain, seed])
 
   if (!hasPaint && !hasDistortion) return null
@@ -45,13 +43,7 @@ export function SurfaceMaterial({ baseRef, colors, color, distortion, foreground
       }}
     >
       {(hasGrain || hasDistortion) && <defs>
-        {hasDistortion && <DistortionFilter
-          distortion={distortion}
-          identity={identity}
-          ripples={ripples}
-          seed={seed}
-          waves={waves}
-        />}
+        {hasDistortion && <DistortionFilter distortion={distortion} identity={identity} />}
         {hasGrain && <pattern id={`${identity}-grain`} width={patternSize} height={patternSize} patternUnits="userSpaceOnUse">
           {initial.map((path, tone) => <path
             key={tone}
@@ -103,22 +95,10 @@ function glassRim(light: string, dark: string) {
   return `linear-gradient(145deg, ${colorOpacity(light, 0.92)}, ${colorOpacity(light, 0.4)} 35%, ${colorOpacity(edge, 0.18)} 55%, ${colorOpacity(light, 0.6)} 85%, ${colorOpacity(light, 0.3)})`
 }
 
-function DistortionFilter({ distortion, identity, ripples, seed, waves }: Readonly<{
+function DistortionFilter({ distortion, identity }: Readonly<{
   distortion: number
   identity: string
-  ripples: number
-  seed: number
-  waves: number
 }>) {
-  const fields = [
-    distortion > 0 && { name: "organic", strength: distortion, x: "R" },
-    waves > 0 && { name: "waves", strength: waves, x: "R" },
-    ripples > 0 && { name: "ripples", strength: ripples, x: "B" }
-  ].filter((field): field is DistortionField => Boolean(field))
-  const scale = fields.reduce((total, field) => total + field.strength, 0)
-  const weighted = fields.map(field => `${identity}-${field.name}-weighted`)
-  const map = `${identity}-distortion-map`
-
   return <filter
     id={`${identity}-distortion`}
     data-surface-distortion=""
@@ -128,84 +108,29 @@ function DistortionFilter({ distortion, identity, ripples, seed, waves }: Readon
     height="140%"
     colorInterpolationFilters="sRGB"
   >
-    {distortion > 0 && <Fragment>
-      <feTurbulence
-        data-surface-distortion-noise=""
-        data-surface-distortion-field="organic"
-        type="fractalNoise"
-        baseFrequency="0.008 0.008"
-        numOctaves={2}
-        seed={92}
-        result={`${identity}-organic-noise`}
-      />
-      <feGaussianBlur
-        in={`${identity}-organic-noise`}
-        stdDeviation={2}
-        result={`${identity}-organic-noise-blurred`}
-      />
-    </Fragment>}
-    {waves > 0 && <Fragment>
-      <feTurbulence
-        data-surface-distortion-field="waves"
-        type="turbulence"
-        baseFrequency="0.006 0.045"
-        numOctaves={1}
-        seed={seed + 17}
-        result={`${identity}-waves-noise`}
-      />
-    </Fragment>}
-    {ripples > 0 && <Fragment>
-      <feTurbulence
-        data-surface-distortion-field="ripples"
-        type="turbulence"
-        baseFrequency="0.055"
-        numOctaves={2}
-        seed={seed + 31}
-        result={`${identity}-ripples-noise`}
-      />
-    </Fragment>}
-    {fields.map(field => <feColorMatrix
-      key={field.name}
-      data-surface-distortion-weight={field.name}
-      in={`${identity}-${field.name}-noise${field.name === "organic" ? "-blurred" : ""}`}
-      type="matrix"
-      values={weightMatrix(field.x, field.strength / scale)}
-      result={`${identity}-${field.name}-weighted`}
-    />)}
-    {weighted.slice(1).map((field, index) => <feComposite
-      key={field}
-      data-surface-distortion-combine=""
-      in={index === 0 ? weighted[0] : `${identity}-distortion-sum-${index}`}
-      in2={field}
-      operator="arithmetic"
-      k2={1}
-      k3={1}
-      result={index === weighted.length - 2 ? map : `${identity}-distortion-sum-${index + 1}`}
-    />)}
+    <feTurbulence
+      data-surface-distortion-noise=""
+      data-surface-distortion-field="organic"
+      type="fractalNoise"
+      baseFrequency="0.008 0.008"
+      numOctaves={2}
+      seed={92}
+      result={`${identity}-organic-noise`}
+    />
+    <feGaussianBlur
+      in={`${identity}-organic-noise`}
+      stdDeviation={2}
+      result={`${identity}-organic-noise-blurred`}
+    />
     <feDisplacementMap
-      data-surface-distortion-stage="combined"
+      data-surface-distortion-stage="organic"
       in="SourceGraphic"
-      in2={weighted.length === 1 ? weighted[0] : map}
-      scale={scale}
+      in2={`${identity}-organic-noise-blurred`}
+      scale={distortion}
       xChannelSelector="R"
       yChannelSelector="G"
     />
   </filter>
-}
-
-interface DistortionField {
-  readonly name: "organic" | "waves" | "ripples"
-  readonly strength: number
-  readonly x: "R" | "B"
-}
-
-function weightMatrix(x: DistortionField["x"], weight: number) {
-  const red = x === "R" ? `${weight} 0 0 0 0` : `0 0 ${weight} 0 0`
-
-  return `${red}
-          0 ${weight} 0 0 0
-          0 0 0 0 0
-          0 0 0 1 0`
 }
 
 function grainTone(color: string, tone: number, intensity: number) {

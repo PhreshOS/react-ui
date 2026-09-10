@@ -29,13 +29,12 @@ const layerStyle = {
 
 /** Apply ref and style to one host supporting decorative children, then render material inside it. */
 export function useSurface<Element extends HTMLElement = HTMLElement>(options: SurfaceOptions = {}, forwardedRef?: Ref<Element>): SurfaceResult<Element> {
-  const { radius, foreground, backdrop, saturation, brightness, ...material } = useAppearanceOptions(options)
+  const { radius, foreground, backdrop, saturation, ...material } = useAppearanceOptions(options)
   const frost = [
     backdrop === 0 ? "" : `blur(${backdrop}px)`,
-    saturation === 1 ? "" : `saturate(${saturation})`,
-    brightness === 1 ? "" : `brightness(${brightness})`
+    saturation === 1 ? "" : `saturate(${saturation})`
   ].filter(Boolean).join(" ")
-  const refracts = material.distortion > 0 || material.waves > 0 || material.ripples > 0
+  const refracts = material.distortion > 0
   const identity = `phresh-surface-${useId().replaceAll(":", "")}`
   const element = useRef<Element | null>(null)
   const base = useRef<SVGRectElement>(null)

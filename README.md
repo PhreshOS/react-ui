@@ -90,8 +90,8 @@ function CustomSurface({ options }: { options?: SurfaceOptions }) {
 ```
 
 `SurfaceOptions` uses the shared `AppearanceOptions` contract: `color`, `radius`,
-`opacity`, `backdrop`, `grain`, `grainAmount`, `distortion`, `waves`, `ripples`,
-`saturation`, and `brightness`. These are Appearance values consumed by Surface,
+`opacity`, `backdrop`, `grain`, `grainAmount`, `distortion`, and `saturation`.
+These are Appearance values consumed by Surface,
 not concepts owned by it. Omitted values follow the current Appearance. Effect
 options accept a scale level or a direct number; opacity affects material only,
 never the host's children. The glass edge reads the host's actual foreground.

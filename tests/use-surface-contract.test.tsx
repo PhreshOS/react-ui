@@ -27,6 +27,7 @@ it("exposes one options contract across the hook and material-bearing controls",
   expectTypeOf<SwitchProps["surface"]>().toEqualTypeOf<ButtonProps["surface"]>()
   expectTypeOf<RadioProps["surface"]>().toEqualTypeOf<ButtonProps["surface"]>()
   expectTypeOf<SelectProps["surface"]>().toEqualTypeOf<ButtonProps["surface"]>()
+
 })
 
 it("requires Appearance and creates no container of its own", () => {
@@ -58,7 +59,7 @@ it("forwards ref cleanup without replacing the native element on option changes"
 })
 
 it("renders the same material through the hook and Surface, with isolated filter identities", () => {
-  const options: SurfaceOptions = { color: "soft", radius: "large", opacity: 0.4, backdrop: 8, grain: 0.2, grainAmount: 0.3, distortion: 4, waves: 2, ripples: 1, saturation: 1.1, brightness: 1.05 }
+  const options: SurfaceOptions = { color: "soft", radius: "large", opacity: 0.4, backdrop: 8, grain: 0.2, grainAmount: 0.3, distortion: 4, saturation: 1.1 }
   render(<AppearanceProvider appearance={standardAppearance} theme="light">
     <Custom options={options} /><Surface data-testid="surface" {...options}>Surface</Surface>
   </AppearanceProvider>)

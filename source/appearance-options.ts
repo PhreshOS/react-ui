@@ -12,10 +12,7 @@ export interface AppearanceOptions extends RadiusProps {
   readonly grain?: ScaleLevel | number
   readonly grainAmount?: ScaleLevel | number
   readonly distortion?: ScaleLevel | number
-  readonly waves?: ScaleLevel | number
-  readonly ripples?: ScaleLevel | number
   readonly saturation?: ScaleLevel | number
-  readonly brightness?: ScaleLevel | number
 }
 
 /** Resolves shared values. Their current Core storage does not define their ownership. */
@@ -38,10 +35,7 @@ export function useAppearanceOptions(values: AppearanceOptions) {
     grain: resolve(values.grain, defaults.grain, limits.grain),
     grainAmount: resolve(values.grainAmount, defaults.grainAmount, limits.grainAmount),
     distortion: resolve(values.distortion, defaults.distortion, limits.distortion),
-    waves: resolve(values.waves, defaults.waves, limits.waves),
-    ripples: resolve(values.ripples, defaults.ripples, limits.ripples),
-    saturation: resolve(values.saturation, defaults.saturation, limits.saturation, scaleMultiplier),
-    brightness: resolve(values.brightness, defaults.brightness, limits.brightness, scaleMultiplier)
+    saturation: resolve(values.saturation, defaults.saturation, limits.saturation, scaleMultiplier)
   }
 }
 

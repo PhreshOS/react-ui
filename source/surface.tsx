@@ -6,10 +6,9 @@ export type SurfaceProps = Omit<ComponentPropsWithoutRef<"div">, keyof SurfaceOp
 
 /** Contains content above locally owned Surface material layers. */
 export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface({
-  backdrop, brightness, children, color, radius, distortion, grain, grainAmount, opacity, ripples,
-  saturation, style, waves, ...properties
+  backdrop, children, color, radius, distortion, grain, grainAmount, opacity, saturation, style, ...properties
 }, ref) {
-  const surface = useSurface({ color, radius, backdrop, brightness, distortion, grain, grainAmount, opacity, ripples, saturation, waves }, ref)
+  const surface = useSurface({ color, radius, backdrop, distortion, grain, grainAmount, opacity, saturation }, ref)
 
   return <div {...properties} ref={surface.ref} style={{ ...surface.style, ...style }}>
     {surface.material}
