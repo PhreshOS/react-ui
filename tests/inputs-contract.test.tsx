@@ -26,13 +26,13 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on th
     expect(indicator?.style.background).toBe("transparent")
     expect(indicator?.style.boxShadow).toBe("")
     expect(material?.getAttribute("opacity")).toBe(String(standardAppearance.surface.light.opacity))
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(standardAppearance.background.light, "soft")))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(standardAppearance.background.light, "base")))
 
     const user = userEvent.setup()
     await user.click(screen.getByRole(kind, { name: "Choice" }))
     await user.unhover(screen.getByRole(kind, { name: "Choice" }))
     expect((screen.getByRole(kind) as HTMLInputElement).checked).toBe(true)
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(standardAppearance.secondary.light, "soft")))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(standardAppearance.secondary.light, "base")))
     expect(indicator?.style.borderRadius).toBe(kind === "checkbox" ? "4.75px" : "19px")
 })
 
@@ -51,6 +51,16 @@ it("exposes value callbacks and one shared color and size contract", () => {
 })
 
 describe.each([["Input", Input], ["Textarea", Textarea]] as const)("%s", (_, Control) => {
+    it("scopes placeholder paint to the native control and inherits its contrast color", () => {
+        renderUI(<Control label="Name" placeholder="Enter a name" />)
+        const field = screen.getByRole("textbox")
+        expect(field.classList.contains("phreshos-ui-text-control")).toBe(true)
+        const sheets = [...document.head.querySelectorAll("style")].filter(sheet => sheet.textContent?.includes(".phreshos-ui-text-control::placeholder"))
+        expect(sheets).toHaveLength(1)
+        expect(sheets[0]?.textContent).toContain("color: inherit")
+        expect(sheets[0]?.textContent).toContain("opacity: 0.6")
+    })
+
     it("associates labels, descriptions, and invalid errors", () => {
         renderUI(<Control label="Name" description="A public name" invalid errorMessage="Enter a name" />)
         const input = screen.getByRole("textbox", { name: "Name" })
@@ -137,7 +147,7 @@ it.each(["primary", "secondary", "success", "warning", "danger", "info"] as cons
 
 it("gives invalid fields danger precedence over their chosen color", () => {
     renderUI(<Input label="Name" color="success" invalid />)
-    expect(materialColor(screen.getByRole("textbox"))).toBe(css(resolveColorLevel(standardAppearance.danger.light, "soft")))
+    expect(materialColor(screen.getByRole("textbox"))).toBe(css(resolveColorLevel(standardAppearance.danger.light, "base")))
 })
 
 it("forwards native text-control refs and preserves textarea rows", () => {
@@ -154,9 +164,9 @@ it("shares Button height and responds to the nearest concrete theme colors", () 
     const view = render(<AppearanceProvider appearance={appearance} theme="light">{sample}</AppearanceProvider>)
     const field = screen.getByRole("textbox")
     expect(field.style.height).toBe(screen.getByRole("button").style.height)
-    expect(materialColor(field)).toBe(css(resolveColorLevel("#111111", "soft")))
+    expect(materialColor(field)).toBe(css(resolveColorLevel("#111111", "base")))
     view.rerender(<AppearanceProvider appearance={appearance} theme="dark">{sample}</AppearanceProvider>)
-    expect(materialColor(field)).toBe(css(resolveColorLevel("#eeeeee", "soft")))
+    expect(materialColor(field)).toBe(css(resolveColorLevel("#eeeeee", "base")))
 })
 
 describe.each([["Checkbox", Checkbox, "checkbox"], ["Switch", Switch, "switch"]] as const)("%s", (_, Control, role) => {
@@ -283,6 +293,35 @@ it("Select typeahead changes a string value, closes, and restores trigger focus"
     expect(onChange).toHaveBeenLastCalledWith("three")
     expect(screen.queryByRole("listbox")).toBeNull()
     await waitFor(() => expect(document.activeElement).toBe(trigger))
+})
+
+it("keeps a long controlled Select open across rerenders and constrains scrolling to its list", async () => {
+    const user = userEvent.setup()
+    const entries = Array.from({ length: 100 }, (_, index) => ({ value: String(index), label: `Model ${index}` }))
+    const onChange = vi.fn()
+    const view = renderUI(<Select label="Model" options={entries} value="80" onChange={onChange} />)
+    const trigger = screen.getByRole("button", { name: /Model/ })
+
+    await user.click(trigger)
+    const list = screen.getByRole("listbox")
+    const material = list.parentElement!
+    const popover = material.parentElement!
+    expect(material.style.maxHeight).toBe("inherit")
+    expect(material.style.boxSizing).toBe("border-box")
+    expect(material.style.display).toBe("flex")
+    expect(material.style.flexDirection).toBe("column")
+    expect(list.style.minHeight).toBe("0px")
+    expect(list.style.overflow).toBe("auto")
+    expect(list.style.maxHeight).toBe("")
+    expect(popover.style.maxHeight).not.toBe("")
+
+    view.rerender(wrap(<Select label="Model" options={entries.map(entry => ({ ...entry }))} value="80" onChange={onChange} />))
+    fireEvent.scroll(list)
+    expect(screen.getByRole("listbox")).toBe(list)
+    expect(onChange).not.toHaveBeenCalled()
+    await user.keyboard("[ArrowDown][Enter]")
+    expect(onChange).toHaveBeenLastCalledWith("81")
+    expect(screen.queryByRole("listbox")).toBeNull()
 })
 
 it("Select rejects disabled options, dismisses with Escape, and cleans up its portal", async () => {

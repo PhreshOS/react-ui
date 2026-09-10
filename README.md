@@ -45,8 +45,8 @@ interpreted by the provider and components.
 use the shared Surface material while retaining their own colors. Omit `color` for
 a neutral shade of Appearance's background, or select `primary`, `secondary`,
 `success`, `warning`, `danger`, or `info` for a semantic color.
-Solid controls use the `soft` color level (60% source color mixed with white in
-OKLCH). Hover and press derive shades of that fill. The resting fill chooses the
+Solid controls use the `base` color level, without mixing it with white or black.
+Hover and press derive shades of that fill. The resting fill chooses the
 higher-contrast text from Appearance's background and foreground once; interaction
 shades keep that choice.
 `size` accepts `xsmall`, `small`, `medium` (default), `large`, or `xlarge`;
@@ -59,11 +59,11 @@ spacing and radius follow Appearance. `disabled` prevents activation and focus;
 <Button color="danger" size="small">Delete</Button>
 ```
 
-`Surface` has no automatic outer shadow. `color` accepts a background level
+`Surface` never creates or consumes a shadow. Shadow is an independent visual
+concern owned outside the material contract. `color` accepts a background level
 (`subtle`, `soft`, `base`, `strong`, `intense`) derived from Appearance's background,
 or a direct CSS color. `radius` accepts a size level, a number in pixels, or a
-CSS radius. Defaults are `color="base"` and `radius="medium"`. Native `style`
-can provide a caller-owned shadow when needed.
+CSS radius. Defaults are `color="base"` and `radius="medium"`.
 
 ```tsx
 <Surface color="soft" radius="large">Derived values</Surface>
@@ -74,7 +74,7 @@ can provide a caller-owned shadow when needed.
 Surface material. It returns `ref`, `style`, and `material` (rendered content,
 not a component type). Apply the ref and styles to the same native element and
 render the material inside it. It requires an `AppearanceProvider` and adds no
-container, padding, layout, interaction behavior, or outer shadow.
+container, padding, layout, interaction behavior, or shadow.
 
 ```tsx
 import { useSurface, type SurfaceOptions } from "@phreshos/react-ui"
@@ -142,12 +142,12 @@ Theme names never imply particular colors. No component requires a Client or
 Server SDK.
 
 Fields distinguish hover, pointer focus, keyboard focus, and invalid state.
-Shared CSS transitions use a fixed 160ms ease-out timing for colors and corner
+Shared CSS transitions use a fixed 120ms ease-out timing for colors and corner
 radius. Material fill and opacity transition on the painted layers, not on the
-Surface host. Select menus share a small placement-aware slide for entry and
-exit, using React Aria's animation lifecycle. Reduced-motion preferences make
+Surface host. Select menus combine a small placement-aware slide with an overlay
+opacity fade for entry and exit, using React Aria's animation lifecycle. Reduced-motion preferences make
 these changes immediate. No Appearance configuration is added for motion yet.
-Blur, distortion, geometry, and host opacity are not transitioned; gradients
+Blur, distortion, geometry, and Surface host opacity are not transitioned; gradients
 and structurally removed effects change directly rather than adding extra
 layers or keeping disabled effects alive.
 

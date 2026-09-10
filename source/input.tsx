@@ -6,6 +6,7 @@ import { SurfaceField } from "./control-material.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import type { RadiusProps } from "./radius.js"
 import type { SurfaceOverrides } from "./use-surface.js"
+import FieldStyle, { textControlClass } from "./field-style.js"
 
 export interface InputProps extends Omit<TextFieldProps, ControlOverrides | "isReadOnly">, ControlProps, FieldProps, RadiusProps, SurfaceOverrides {
     readonly placeholder?: string
@@ -22,8 +23,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
 
     return <TextField {...properties} className={className} isDisabled={disabled} isReadOnly={readOnly}
         isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
+        <FieldStyle />
         <FieldLabel label={label} />
-        <AriaInput ref={ref} placeholder={placeholder}
+        <AriaInput ref={ref} placeholder={placeholder} className={textControlClass}
             render={(native, state) => <SurfaceField options={surface} radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
                 <input {...native} style={{ ...native.style, borderRadius: "inherit", background: "transparent" }} />
             </SurfaceField>}

@@ -1,9 +1,12 @@
 import type { CSSProperties } from "react"
 
 const timing = {
-  transitionDuration: "var(--phreshos-ui-motion-duration, 160ms)",
+  transitionDuration: "var(--phreshos-ui-motion-duration, 120ms)",
   transitionTimingFunction: "ease-out"
 } satisfies CSSProperties
+
+/** The same fixed timing for Motion-driven control movements. */
+export const controlTransition = { type: "tween", duration: 0.12, ease: "easeOut" } as const
 
 /** Host opacity and filters are excluded: either can change backdrop sampling. */
 export const visualTransition = {
@@ -20,22 +23,22 @@ export const paintTransition = {
 export const overlayMotionClass = "phreshos-ui-overlay"
 
 const stylesheet = `
-:root { --phreshos-ui-motion-duration: 160ms; }
+:root { --phreshos-ui-motion-duration: 120ms; }
 
 .phreshos-ui-overlay { --phreshos-ui-overlay-x: 0px; --phreshos-ui-overlay-y: -4px; }
 .phreshos-ui-overlay[data-placement="top"] { --phreshos-ui-overlay-y: 4px; }
 .phreshos-ui-overlay[data-placement="left"] { --phreshos-ui-overlay-x: 4px; --phreshos-ui-overlay-y: 0px; }
 .phreshos-ui-overlay[data-placement="right"] { --phreshos-ui-overlay-x: -4px; --phreshos-ui-overlay-y: 0px; }
 .phreshos-ui-overlay[data-entering] {
-  animation: phreshos-ui-overlay-enter var(--phreshos-ui-motion-duration, 160ms) ease-out both;
+  animation: phreshos-ui-overlay-enter var(--phreshos-ui-motion-duration, 120ms) ease-out both;
 }
 .phreshos-ui-overlay[data-exiting] {
-  animation: phreshos-ui-overlay-enter var(--phreshos-ui-motion-duration, 160ms) ease-out reverse both;
+  animation: phreshos-ui-overlay-enter var(--phreshos-ui-motion-duration, 120ms) ease-out reverse both;
   pointer-events: none;
 }
 @keyframes phreshos-ui-overlay-enter {
-  from { translate: var(--phreshos-ui-overlay-x) var(--phreshos-ui-overlay-y); }
-  to { translate: 0 0; }
+  from { opacity: 0; translate: var(--phreshos-ui-overlay-x) var(--phreshos-ui-overlay-y); }
+  to { opacity: 1; translate: 0 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   :root { --phreshos-ui-motion-duration: 0ms; }

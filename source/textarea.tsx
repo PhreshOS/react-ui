@@ -3,6 +3,7 @@ import { TextArea as AriaTextarea, TextField } from "react-aria-components"
 import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
 import { SurfaceField } from "./control-material.js"
 import type { InputProps } from "./input.js"
+import FieldStyle, { textControlClass } from "./field-style.js"
 
 export interface TextareaProps extends Omit<InputProps, "type" | "pattern"> {
     readonly rows?: number
@@ -18,8 +19,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
 
     return <TextField {...properties} className={className} isDisabled={disabled} isReadOnly={readOnly}
         isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
+        <FieldStyle />
         <FieldLabel label={label} />
-        <AriaTextarea ref={ref} placeholder={placeholder} rows={rows}
+        <AriaTextarea ref={ref} placeholder={placeholder} rows={rows} className={textControlClass}
             render={(native, state) => <SurfaceField options={surface} radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
                 <textarea {...native} style={{ ...native.style, borderRadius: "inherit", background: "transparent" }} />
             </SurfaceField>}

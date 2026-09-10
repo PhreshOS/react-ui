@@ -73,7 +73,7 @@ describe("Button", function () {
   it("uses shared Surface material with a neutral control color by default", function () {
     renderButton(<Button>Continue</Button>)
     const button = screen.getByRole("button")
-    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(standardAppearance.background.light, "soft")))
+    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(standardAppearance.background.light, "base")))
     expect(button.style.background).toBe("transparent")
     expect(button.style.height).toBe("36px")
     expect(button.style.fontSize).toBe("13px")
@@ -149,13 +149,13 @@ describe("Button", function () {
     const view = render(<AppearanceProvider appearance={standardAppearance} theme="light">
       <AppearanceProvider appearance={appearance} theme="light"><Button color="primary">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
-    expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#aabbcc", "soft")))
+    expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#aabbcc", "base")))
     expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#101820")))
     view.rerender(<AppearanceProvider appearance={standardAppearance} theme="light">
       <AppearanceProvider appearance={appearance} theme="dark"><Button color="primary">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
-    expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#334455", "soft")))
-    expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#101820")))
+    expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#334455", "base")))
+    expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#faf0e0")))
   })
 
   it("forwards its native button reference", function () {
@@ -164,6 +164,24 @@ describe("Button", function () {
     renderButton(<Button ref={ref}>Continue</Button>)
 
     expect(ref.current).toBe(screen.getByRole("button", { name: "Continue" }))
+  })
+
+  it("honors native layout styles for multiline content without changing activation or material", async function () {
+    const onPress = vi.fn()
+    renderButton(<Button onPress={onPress} style={{
+      height: "auto", display: "grid", gridTemplateColumns: "minmax(0, 1fr)",
+      paddingBlock: 12, textAlign: "start", width: "100%"
+    }}><span><span>Task title</span><span>Completed</span></span></Button>)
+    const button = screen.getByRole("button")
+    expect(button.style.height).toBe("auto")
+    expect(button.style.display).toBe("grid")
+    expect(button.style.gridTemplateColumns).toBe("minmax(0, 1fr)")
+    expect(button.style.paddingBlock).toBe("12px")
+    expect(button.style.textAlign).toBe("start")
+    expect(button.style.flexShrink).toBe("0")
+    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(standardAppearance.background.light, "base")))
+    await userEvent.setup().click(button)
+    expect(onPress).toHaveBeenCalledTimes(1)
   })
 })
 

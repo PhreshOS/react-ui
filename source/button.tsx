@@ -36,7 +36,7 @@ export interface ButtonProps extends NativeButtonProps, RadiusProps, SurfaceOver
   /** Derives the Button's spacing from Appearance's concrete default. */
   readonly size?: ScaleLevel
 
-  /** Additional native styles that do not replace the Button's identity. */
+  /** Native styles applied after Button defaults. Material is configured through surface. */
   readonly style?: CSSProperties
 
 }
@@ -107,7 +107,6 @@ function buttonStyle({
   const paint = buttonPaint(theme, interactive, isHovered, isPressed)
 
   return {
-    ...style,
     appearance: "none",
     boxSizing: "border-box",
     display: "inline-grid",
@@ -134,7 +133,8 @@ function buttonStyle({
     textAlign: "center",
     textDecoration: "none",
     userSelect: "none",
-    WebkitTapHighlightColor: "transparent"
+    WebkitTapHighlightColor: "transparent",
+    ...style
   }
 }
 

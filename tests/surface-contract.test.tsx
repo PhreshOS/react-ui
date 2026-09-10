@@ -60,38 +60,23 @@ describe("Surface", function () {
     const view = render(<AppearanceProvider appearance={appearance} theme="light">
       <Surface data-testid="surface" />
     </AppearanceProvider>)
-    const material = required(screen.getByTestId("surface").querySelector<SVGSVGElement>("[data-surface-material]"))
     expect(screen.getByTestId("surface").style.boxShadow).toBe("")
     view.rerender(<AppearanceProvider appearance={appearance} theme="dark">
       <Surface data-testid="surface" />
     </AppearanceProvider>)
     expect(screen.getByTestId("surface").style.boxShadow).toBe("")
-    expect(material.style.boxShadow).toContain("inset 0 1px 2px")
   })
 
   it("requires the explicit Theme that supplies its background", function () {
     expect(() => render(<Surface />)).toThrow("useAppearance() requires an AppearanceProvider")
   })
 
-  it.each(["hidden", "clip"] as const)("keeps the glass edge without adding a shadow when content overflow is %s", function (overflow) {
+  it.each(["hidden", "clip"] as const)("keeps the glass edge when content overflow is %s", function (overflow) {
     renderSurface(<Surface data-testid="surface" style={{ overflow }}><span>Content</span></Surface>)
 
     const surface = screen.getByTestId("surface")
-    const material = required(surface.querySelector<SVGSVGElement>("[data-surface-material]"))
-
     expect(surface.style.overflow).toBe(overflow)
-    expect(surface.style.boxShadow).toBe("")
-    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 255, 255) 28%, transparent)")
-  })
-
-  it("preserves a caller-owned native shadow without adding another outer shadow", function () {
-    renderSurface(<Surface data-testid="surface" style={{ boxShadow: "0 2px 8px #123456" }} />)
-
-    const surface = screen.getByTestId("surface")
-    const material = required(surface.querySelector<SVGSVGElement>("[data-surface-material]"))
-
-    expect(surface.style.boxShadow).toBe("0 2px 8px #123456")
-    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 255, 255) 28%, transparent)")
+    expect(surface.querySelector("[data-surface-border]")).not.toBeNull()
   })
 
   it("preserves the complete native div contract", function () {
@@ -143,8 +128,6 @@ describe("Surface", function () {
     expect(surface.style.isolation).toBe("isolate")
     const border = required(surface.querySelector<HTMLElement>("[data-surface-border]"))
     expect(material.style.border).toBe("")
-    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 255, 255) 28%, transparent)")
-    expect(surface.style.boxShadow).toBe("")
     expect(border.parentElement).toBe(surface)
     expect(border.childElementCount).toBe(0)
     expect(border.style.padding).toBe("1px")
@@ -292,16 +275,12 @@ describe("Surface", function () {
       <Surface data-testid="surface" opacity={0.5} />
     </AppearanceProvider>)
     const border = required(screen.getByTestId("surface").querySelector<HTMLElement>("[data-surface-border]"))
-    const material = required(screen.getByTestId("surface").querySelector<SVGSVGElement>("[data-surface-material]"))
     const light = border.style.background
     const lightOpacity = Number(border.style.opacity)
 
     expect(light).toContain("rgb(255, 238, 204)")
     expect(light).toContain("rgb(68, 51, 34)")
     expect(light).not.toMatch(/\b(white|black)\b/)
-    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(255, 238, 204) 28%, transparent)")
-    expect(screen.getByTestId("surface").style.boxShadow).toBe("")
-
     rendered.rerender(<AppearanceProvider appearance={appearance} theme="dark">
       <Surface data-testid="surface" opacity={0.5} />
     </AppearanceProvider>)
@@ -310,8 +289,6 @@ describe("Surface", function () {
     expect(border.style.background).toContain("rgb(204, 221, 238)")
     expect(border.style.background).not.toBe(light)
     expect(Number(border.style.opacity)).toBeLessThan(lightOpacity)
-    expect(material.style.boxShadow).toBe("inset 0 1px 2px color-mix(in srgb, rgb(204, 221, 238) 28%, transparent)")
-    expect(screen.getByTestId("surface").style.boxShadow).toBe("")
   })
 
   it("keeps lighting colors identical but follows background lightness when palette roles are reversed", function () {
@@ -326,7 +303,6 @@ describe("Surface", function () {
     const surface = screen.getByTestId("surface")
     const border = required(surface.querySelector<HTMLElement>("[data-surface-border]"))
     const gradient = border.style.background
-    const shadow = surface.style.boxShadow
     const darkOpacity = Number(border.style.opacity)
     expect(gradient).toMatch(/^linear-gradient\(145deg, color-mix\(in srgb, rgb\(255, 238, 204\)/)
 
@@ -335,7 +311,6 @@ describe("Surface", function () {
     </AppearanceProvider>)
 
     expect(border.style.background).toBe(gradient)
-    expect(surface.style.boxShadow).toBe(shadow)
     expect(Number(border.style.opacity)).toBeGreaterThan(darkOpacity)
   })
 
@@ -345,9 +320,8 @@ describe("Surface", function () {
       background: { light: "color-mix(in srgb, #ffffff 80%, #000000)", dark: "#000000" },
       foreground: { light: "rgb(20 30 40)", dark: "#ffffff" }
     }} theme="light"><Surface data-testid="surface" /></AppearanceProvider>)
-    const material = required(screen.getByTestId("surface").querySelector<SVGSVGElement>("[data-surface-material]"))
-    expect(material.style.boxShadow).toContain("color(srgb 0.8 0.8 0.8) 28%")
-    expect(screen.getByTestId("surface").style.boxShadow).toBe("")
+    const border = required(screen.getByTestId("surface").querySelector<HTMLElement>("[data-surface-border]"))
+    expect(border.style.background).toContain("color(srgb 0.8 0.8 0.8)")
   })
 
   it.each(["light", "dark"] as const)("scales the %s rim by background lightness after capping xlarge opacity", function (theme) {
@@ -387,8 +361,6 @@ describe("Surface", function () {
 
     expect(surface.querySelector("[data-surface-border]")).toBeNull()
     expect(surface.querySelector("[data-surface-distortion]")).not.toBeNull()
-    expect(surface.querySelector<SVGSVGElement>("[data-surface-material]")?.style.boxShadow).toBe("")
-    expect(surface.style.boxShadow).toBe("")
   })
 
   it("keeps caller-provided position and native backdrop styles authoritative", function () {

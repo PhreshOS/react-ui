@@ -8,7 +8,7 @@ import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import type { RadiusProps } from "./radius.js"
 import { Surface } from "./surface.js"
 import type { SurfaceOverrides } from "./use-surface.js"
-import { overlayMotionClass, visualTransition } from "./motion-style.js"
+import { controlTransition, overlayMotionClass, visualTransition } from "./motion-style.js"
 
 export interface SelectOption {
     readonly value: string
@@ -46,12 +46,12 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
             })}>
                 <SelectValue style={({ isPlaceholder }) => ({ opacity: isPlaceholder ? 0.6 : 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" })} />
                 <motion.svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"
-                    initial={false} animate={{ rotate: state.isOpen ? 180 : 0 }} transition={{ duration: reduced ? 0 : 0.18, ease: "easeOut" }}
+                    initial={false} animate={{ rotate: state.isOpen ? 180 : 0 }} transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }}
                     style={{ flexShrink: 0 }}><path d="m2 4 4 4 4-4" /></motion.svg>
             </Button>
-            <Popover className={overlayMotionClass} placement="bottom start" offset={theme.gap} style={{ width: "var(--trigger-width)", maxWidth: "calc(100vw - 16px)" }}>
-                <Surface style={{ padding: theme.gap }}>
-                    <ListBox items={options} style={{ display: "grid", gap: theme.gap, maxHeight: `min(280px, calc(var(--available-height) - ${theme.gap * 2}px))`, overflow: "auto", outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
+            <Popover className={overlayMotionClass} placement="bottom start" offset={theme.gap} maxHeight={280 + theme.gap * 2} style={{ width: "var(--trigger-width)", maxWidth: "calc(100vw - 16px)" }}>
+                <Surface style={{ padding: theme.gap, display: "flex", flexDirection: "column", maxHeight: "inherit", boxSizing: "border-box" }}>
+                    <ListBox items={options} style={{ display: "grid", gap: theme.gap, minHeight: 0, overflow: "auto", outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
                         {option => <ListBoxItem id={option.value} textValue={option.label} style={item => ({
                             ...visualTransition,
                             display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,

@@ -38,9 +38,6 @@ export const controlFontSizes: Readonly<Record<ScaleLevel, number>> = Object.fre
     xlarge: 15
 })
 
-/** Shared response for small control movements, never value interpolation. */
-export const controlSpring = { type: "spring", stiffness: 520, damping: 32, mass: 0.7 } as const
-
 export function useControlTheme({ size = "medium", color, radius = "medium" }: ControlProps & RadiusProps) {
 
     const appearance = useAppearance()

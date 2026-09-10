@@ -90,9 +90,9 @@ export function onColor(fill: string, background: string, foreground: string): s
   return contrastWCAG21(fill, first) > contrastWCAG21(fill, second) ? first : second
 }
 
-/** Solid controls start at soft; interaction shades preserve its text choice. */
+/** Solid controls start at base; interaction shades preserve its text choice. */
 export function solidColors(base: string, background: string, foreground: string) {
-  const fill = resolveColorLevel(base, "soft")
+  const fill = resolveColorLevel(base, "base")
   const color = onColor(fill, background, foreground)
   const paint = (background: string) => ({ background, color })
   return {

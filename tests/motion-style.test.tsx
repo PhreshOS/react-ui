@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it, vi } from "vitest"
 import { standardAppearance } from "@phreshos/core"
 import { AppearanceProvider, Button, Input, Surface, Select } from "../source/main.js"
-import { overlayMotionClass, paintTransition, visualTransition } from "../source/motion-style.js"
+import { controlTransition, overlayMotionClass, paintTransition, visualTransition } from "../source/motion-style.js"
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
@@ -14,7 +14,7 @@ it("shares fixed CSS timing and limits transitions to explicit visual properties
   const host = screen.getByTestId("surface")
   for (const element of [host, screen.getByRole("button"), screen.getByRole("textbox")]) {
     expect(element.style.transitionProperty).toBe(visualTransition.transitionProperty)
-    expect(element.style.transitionDuration).toBe("var(--phreshos-ui-motion-duration, 160ms)")
+    expect(element.style.transitionDuration).toBe("var(--phreshos-ui-motion-duration, 120ms)")
     expect(element.style.transitionTimingFunction).toBe("ease-out")
   }
   for (const selector of ["[data-surface-paint]", "[data-surface-base]", "[data-surface-border]"]) {
@@ -25,6 +25,7 @@ it("shares fixed CSS timing and limits transitions to explicit visual properties
   expect(visualTransition.transitionProperty).not.toMatch(/opacity|filter|transform|width|height|all/)
   expect(paintTransition.transitionProperty).not.toContain("border-radius")
   expect(host.querySelector<HTMLElement>("[data-surface-backdrop]")?.style.transitionProperty).toBe("")
+  expect(controlTransition).toEqual({ type: "tween", duration: 0.12, ease: "easeOut" })
 })
 
 it("hoists one scoped stylesheet for nested providers and declares reduced-motion behavior", () => {
@@ -40,7 +41,11 @@ it("hoists one scoped stylesheet for nested providers and declares reduced-motio
   expect(css).toContain("[data-entering]")
   expect(css).toContain("[data-exiting]")
   expect(css).toContain("pointer-events: none")
-  expect(css).not.toContain("opacity:")
+  expect(css).toContain("120ms) ease-out both")
+  expect(css).toContain("120ms) ease-out reverse both")
+  expect(css).not.toContain("ease-in")
+  expect(css).toContain("from { opacity: 0; translate:")
+  expect(css).toContain("to { opacity: 1; translate: 0 0;")
   expect(css).not.toContain("filter:")
   expect(css).not.toContain("transition: all")
 })

@@ -28,7 +28,7 @@ describe("solid control colors", () => {
   it.each(["#3465ce", "#777777", "yellow", "hsl(180 60% 35%)", "oklch(70% .12 40)", "color(display-p3 .2 .8 .1)"])("keeps the base contrast choice for every shade of %s", base => {
     for (const [background, foreground] of [["#faf0e0", "#101820"], ["#101820", "#faf0e0"]]) {
       const paints = solidColors(base, background!, foreground!)
-      expect(paints.rest.background).toBe(resolveColorLevel(base, "soft"))
+      expect(paints.rest.background).toBe(resolveColorLevel(base, "base"))
       const choices = [opaqueColor(background!), opaqueColor(foreground!)]
       for (const paint of Object.values(paints)) {
         expect(parse(paint.background).alpha).toBe(1)
@@ -41,7 +41,7 @@ describe("solid control colors", () => {
   })
 
   it("does not switch text when an interaction shade crosses the contrast threshold", () => {
-    const paints = solidColors("#111111", "white", "black")
+    const paints = solidColors("oklch(55% 0 0)", "white", "black")
     expect(onColor(paints.pressed.background, "white", "black")).not.toBe(paints.rest.color)
     expect(paints.hover.color).toBe(paints.rest.color)
     expect(paints.pressed.color).toBe(paints.rest.color)

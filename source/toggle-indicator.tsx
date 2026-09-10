@@ -1,9 +1,9 @@
 import { motion, useReducedMotion } from "motion/react"
 import type { CSSProperties } from "react"
 import { useLocale } from "react-aria-components"
-import { controlSpring, type ControlTheme } from "./control.js"
+import type { ControlTheme } from "./control.js"
 import { useSurface, type SurfaceOptions } from "./use-surface.js"
-import { visualTransition } from "./motion-style.js"
+import { controlTransition, visualTransition } from "./motion-style.js"
 
 /** Shared paint only. Selection, focus, validation, and native input behavior belong to React Aria. */
 export function ToggleIndicator({ kind, selected, indeterminate = false, focused, invalid = false, hovered = false, pressed = false, theme, surface: options }: Readonly<{
@@ -35,7 +35,7 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
 
     return <motion.span ref={surface.ref} aria-hidden="true" initial={false}
         animate={{ scale: reduced || switching ? 1 : pressed ? 0.94 : hovered ? 1.03 : 1 }}
-        transition={reduced ? { duration: 0 } : controlSpring} style={{
+        transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }} style={{
         ...surface.style,
         color: paint.color,
         display: "inline-grid",
@@ -51,20 +51,20 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
     }}>
         {surface.material}
         {switching ? <motion.span initial={false} animate={{ width: thumbWidth, x: (selected ? travel : -travel) * (direction === "rtl" ? -1 : 1) }}
-            transition={reduced ? { duration: 0 } : controlSpring} style={{
+            transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }} style={{
                 ...visualTransition,
                 height: diameter - 6, borderRadius: diameter,
                 background: paint.color
             }} /> : <motion.span initial={false} animate={{ opacity: active ? 1 : 0, scale: active ? 1 : 0.7 }}
-            transition={reduced ? { duration: 0 } : controlSpring} style={{ display: "grid", placeItems: "center" }}>
+            transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }} style={{ display: "grid", placeItems: "center" }}>
             {kind === "radio" ? <span style={{ ...visualTransition, width: diameter / 2, height: diameter / 2, borderRadius: "50%", background: "currentColor" }} />
                 : <svg width={diameter - 4} height={diameter - 4} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <motion.path d="m3 8 3 3 7-7" initial={false}
                         animate={{ pathLength: selected && !indeterminate ? 1 : 0, opacity: selected && !indeterminate ? 1 : 0 }}
-                        transition={{ duration: reduced ? 0 : 0.16, ease: "easeOut" }} />
+                        transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }} />
                     <motion.path d="M4 8h8" initial={false}
                         animate={{ pathLength: indeterminate ? 1 : 0, opacity: indeterminate ? 1 : 0 }}
-                        transition={{ duration: reduced ? 0 : 0.16, ease: "easeOut" }} />
+                        transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }} />
                 </svg>}
         </motion.span>}
     </motion.span>

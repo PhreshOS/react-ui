@@ -2,9 +2,9 @@ import { forwardRef, useId } from "react"
 import { motion, useReducedMotion } from "motion/react"
 import { Slider as AriaSlider, SliderTrack, SliderThumb, SliderFill, SliderOutput } from "react-aria-components"
 import type { SliderProps as AriaSliderProps } from "react-aria-components"
-import { controlSpring, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
+import { FieldLabel, fieldStyle, useControlTheme } from "./control.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
-import { visualTransition } from "./motion-style.js"
+import { controlTransition, visualTransition } from "./motion-style.js"
 
 export interface SliderProps extends Omit<AriaSliderProps<number>, ControlOverrides>, ControlProps, Pick<FieldProps, "label" | "description"> {
     readonly name?: string
@@ -51,7 +51,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
             })}>
                 {state => <motion.span aria-hidden="true" initial={false}
                     animate={{ scale: reduced || state.isDisabled ? 1 : state.isDragging ? 0.92 : state.isHovered ? 1.08 : 1 }}
-                    transition={reduced ? { duration: 0 } : controlSpring}
+                    transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }}
                     style={{ ...visualTransition, position: "absolute", inset: 0, borderRadius: "inherit", pointerEvents: "none",
                         background: (state.isDragging ? theme.paints.palette.pressed : state.isHovered ? theme.paints.palette.hover : theme.paints.palette.rest).color,
                         border: `3px solid ${(state.isDragging ? theme.paints.palette.pressed : state.isHovered ? theme.paints.palette.hover : theme.paints.palette.rest).background}`,
