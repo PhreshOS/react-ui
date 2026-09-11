@@ -10,7 +10,7 @@ interface MaterialPaintProps {
   readonly opacity: number
 }
 
-/** The fill, refraction definition, and grain of one Material. */
+/** The fill, refraction definition, and grain of one Surface. */
 export function MaterialPaint({ color, distortion, grain, grainAmount, identity, opacity }: MaterialPaintProps) {
   const seed = useMemo(() => seedFrom(identity), [identity])
   const hasPaint = opacity > 0

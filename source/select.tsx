@@ -3,11 +3,11 @@ import { motion, useReducedMotion } from "motion/react"
 import { Select as AriaSelect, Button, SelectValue, Popover, ListBox, ListBoxItem } from "react-aria-components"
 import type { SelectProps as AriaSelectProps } from "react-aria-components"
 import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
-import { MaterialButton } from "./control-material.js"
+import { SurfaceButton } from "./control-surface.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import type { RadiusProps } from "./radius.js"
 import { Surface } from "./surface.js"
-import type { MaterialOverrides } from "./material.js"
+import type { MaterialOverrides } from "./material-options.js"
 import { controlTransition, overlayMotionClass, visualTransition } from "./motion-style.js"
 
 export interface SelectOption {
@@ -38,7 +38,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
         isDisabled={disabled} isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
         {state => <>
             <FieldLabel label={label} />
-            <Button render={(native, button) => <MaterialButton native={native} material={material} paint={controlPaint(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered)} />}
+            <Button render={(native, button) => <SurfaceButton native={native} material={material} paint={controlPaint(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered)} />}
                 style={button => ({
                 ...controlStyle(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered, button.isFocusVisible),
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,

@@ -5,7 +5,7 @@ import type { RadioGroupProps as AriaRadioGroupProps, RadioFieldProps } from "re
 import { FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import { ToggleIndicator, toggleStyle } from "./toggle-indicator.js"
-import type { MaterialOverrides } from "./material.js"
+import type { MaterialOverrides } from "./material-options.js"
 
 const RadioStyle = createContext<Pick<ControlProps, "size" | "color" | "disabled"> & MaterialOverrides>({})
 

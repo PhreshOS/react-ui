@@ -54,9 +54,9 @@ import { AppearanceProvider, Button } from "@phreshos/react-ui"
 ```
 
 `Button`, `Input`, `Textarea`, `Select`, `Checkbox`, `Switch`, and `Radio`
-host the shared Material while retaining their native behavior. Color and material
+use the shared Surface implementation while retaining their native behavior. Color and material
 are independent inputs. `color` accepts an Appearance color and resting level such
-as `background:base` or `primary:soft`, or a direct CSS color. Material and neutral
+as `background:base` or `primary:soft`, or a direct CSS color. Surface and neutral
 surface hosts default to `background:base`; a component may select a semantic
 default required by its own behavior, such as `primary:base` for selection.
 Hover and press derive shades of that fill. The resting fill chooses the
@@ -72,40 +72,27 @@ spacing and radius follow Appearance. `disabled` prevents activation and focus;
 <Button color="danger:soft" size="small">Delete</Button>
 ```
 
-`Material` is the raw visual substance: paint, opacity, frost, refraction, and
-grain. It fills the geometry of its nearest positioned container,
-inherits that container's radius, and adds no content, layout, interaction, or
-shadow. The container must establish its own geometry and isolation.
-
-```tsx
-<div style={{ position: "relative", isolation: "isolate", width: 240, height: 120, borderRadius: 18 }}>
-  <Material color="background:soft" material={{ opacity: 0.4 }} />
-</div>
-```
-
-`Surface` is the standard geometric host for a `Material`. It establishes the
-required positioning and isolation on a `div`, resolves radius, renders Material,
-and then renders its content. It never creates or consumes a shadow. Shadow remains
-an independent visual concern. `radius` accepts a size level, a number in pixels,
-or a CSS radius and defaults to `medium`.
+`Surface` is the material-owning element. It renders a `div` by default, while
+`as` selects another React element and preserves that element's native properties
+and ref type. Surface owns its paint, opacity, frost, refraction, grain, edge,
+radius, and clipping requirements. It never creates or consumes a shadow; shadow
+remains an independent visual concern. `radius` accepts a size level, a number in
+pixels, or a CSS radius and defaults to `medium`.
 
 ```tsx
 <Surface color="background:soft" radius="large">Derived values</Surface>
-<Surface color="#345678" radius={18}>Direct values</Surface>
+<Surface as="button" type="button" color="#345678" radius={18}>Action</Surface>
 ```
 
 `MaterialOptions` defines `opacity`, `backdrop`, `grain`, `grainAmount`,
-`distortion`, and `saturation`. It contains no color. `MaterialProps` keeps
-`color` beside `material?: MaterialOptions`, so paint selection never becomes a
-physical-material setting. Omitted material values follow `appearance.material`.
-Effect options accept a scale level or a direct number; opacity affects material
-only, never the host's children.
+`distortion`, and `saturation`. Surface accepts these properties directly because
+it is the material-owning element; it does not accept a nested `material` prop.
+Color remains a separate Surface property. Omitted material values follow
+`appearance.material`. Effect options accept a scale level or a direct number;
+opacity affects Surface paint only, never its content. The material edge is part
+of the same Surface rather than a second public entity.
 
-Radius belongs to host geometry, while Surface's border belongs to its geometric
-boundary. Material may determine the border treatment, but it neither owns nor
-renders that border.
-
-Material-bearing controls expose the same separate `color` and `material` props.
+Surface-based controls expose the same separate `color` and `material` props.
 For text fields and Select, `material` targets the field or trigger; for Checkbox,
 Switch, and Radio, it targets the indicator. RadioGroup supplies material defaults
 to its options, and a Radio can override them.
@@ -146,7 +133,7 @@ Server SDK.
 
 Fields distinguish hover, pointer focus, keyboard focus, and invalid state.
 Shared CSS transitions use a fixed 120ms ease-out timing for colors and corner
-radius. Material fill and opacity transition on the painted layers, not on the
+radius. The material fill and opacity values transition on the painted layers, not on the
 Surface host. Select menus combine a small placement-aware slide with an overlay
 opacity fade for entry and exit, using React Aria's animation lifecycle. Reduced-motion preferences make
 these changes immediate. No Appearance configuration is added for motion yet.

@@ -12,7 +12,7 @@ import {
 
 afterEach(cleanup)
 
-it.each(["checkbox", "switch", "radio"] as const)("shares Material on the %s indicator while retaining selection colors", async kind => {
+it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on the %s indicator while retaining selection colors", async kind => {
     const sample = kind === "checkbox" ? <Checkbox label="Choice" color="secondary:base" />
         : kind === "switch" ? <Switch label="Choice" color="secondary:base" />
         : <RadioGroup label="Choices" color="secondary:base"><Radio value="one" label="Choice" /></RadioGroup>

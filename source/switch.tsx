@@ -4,7 +4,7 @@ import type { SwitchFieldProps } from "react-aria-components"
 import { FieldFeedback, fieldStyle, useControlTheme } from "./control.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import { ToggleIndicator, toggleStyle } from "./toggle-indicator.js"
-import type { MaterialOverrides } from "./material.js"
+import type { MaterialOverrides } from "./material-options.js"
 
 export interface SwitchProps extends Omit<SwitchFieldProps, ControlOverrides | "isReadOnly" | "isSelected" | "defaultSelected">, ControlProps, FieldProps, MaterialOverrides {
     readonly checked?: boolean

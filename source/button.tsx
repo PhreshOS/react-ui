@@ -5,8 +5,8 @@ import type { ButtonProps as AriaButtonProps } from "react-aria-components"
 import type { ScaleLevel } from "./scale.js"
 import type { RadiusProps } from "./radius.js"
 import { controlFontSizes, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
-import { MaterialButton } from "./control-material.js"
-import type { MaterialOverrides } from "./material.js"
+import { SurfaceButton } from "./control-surface.js"
+import type { MaterialOverrides } from "./material-options.js"
 import { visualTransition } from "./motion-style.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
@@ -68,7 +68,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     isDisabled={disabled}
     isPending={pending}
     onPress={onPress}
-    render={(native, state) => <MaterialButton native={native} material={material} paint={buttonPaint(theme, !disabled && !pending, state.isHovered, state.isPressed)} />}
+    render={(native, state) => <SurfaceButton native={native} material={material} paint={buttonPaint(theme, !disabled && !pending, state.isHovered, state.isPressed)} />}
     style={({ isFocusVisible, isHovered, isPressed }) => buttonStyle({
       theme,
       disabled,

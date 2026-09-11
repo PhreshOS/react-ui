@@ -31,8 +31,6 @@ try {
   assert(paths.has("dist/main.d.ts"), "the package has no declaration entry point")
   assert(paths.has("dist/panel.js"), "the package has no Panel implementation")
   assert(paths.has("dist/panel.d.ts"), "the package has no Panel contract")
-  assert(paths.has("dist/material.js"), "the package has no Material implementation")
-  assert(paths.has("dist/material.d.ts"), "the package has no Material contract")
   for (const name of ["input", "textarea", "checkbox", "radio", "switch", "select", "slider"]) {
     assert(paths.has(`dist/${name}.js`), `the package has no ${name} implementation`)
     assert(paths.has(`dist/${name}.d.ts`), `the package has no ${name} contract`)
@@ -87,7 +85,6 @@ import {
   Button,
   Flex,
   Grid,
-  Material,
   Panel,
   Surface,
   Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider,
@@ -99,7 +96,7 @@ import {
   useScale
 } from "@phreshos/react-ui"
 
-for (const exported of [AppearanceProvider, Button, Flex, Grid, Material, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useColor, useScale]) {
+for (const exported of [AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useColor, useScale]) {
   assert.notEqual(exported, undefined)
 }
 assert.equal(defaultAppearance, coreDefaultAppearance)
@@ -110,9 +107,9 @@ assert.deepEqual(Object.keys(icons), [])
 
   writeFileSync(
     join(consumer, "consumer.tsx"),
-    `import { AppearanceProvider, Button, Flex, Grid, Material, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useColor, useScale } from "@phreshos/react-ui"
+    `import { AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useColor, useScale } from "@phreshos/react-ui"
 
-const material = <div style={{ position: "relative", isolation: "isolate", width: 80, height: 40 }}><Material color="background:soft" /></div>
+const surface = <Surface as="button" type="button" color="background:soft" opacity={0.4}>Surface</Surface>
 const standalone = <Button>Default Appearance and browser Theme</Button>
 const themed = <AppearanceProvider theme="dark"><Surface>Dark subtree</Surface></AppearanceProvider>
 
@@ -129,8 +126,8 @@ const view = (
       <Grid columns={2} gap="small">
         <Flex align="center" justify="between">
           <Button onPress={() => undefined} material={{ opacity: "large" }}>Save</Button>
-          {material}
-          <Surface color="background:soft" radius={12} material={{ backdrop: 8 }}>Surface</Surface>
+          {surface}
+          <Surface color="background:soft" radius={12} backdrop={8}>Surface</Surface>
           <Derived />
           <Input label="Name" onChange={value => value.toUpperCase()} />
           <Textarea label="Notes" rows={3} />

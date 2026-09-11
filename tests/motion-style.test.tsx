@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
@@ -63,11 +63,11 @@ it("uses the shared overlay style without changing Select selection, dismissal, 
   await user.click(screen.getByRole("option", { name: "Two" }))
   expect(onChange).toHaveBeenLastCalledWith("two")
   expect(screen.queryByRole("listbox")).toBeNull()
-  expect(document.activeElement).toBe(trigger)
+  await waitFor(() => expect(document.activeElement).toBe(trigger))
   await user.click(trigger)
   await user.keyboard("[Escape]")
   expect(screen.queryByRole("listbox")).toBeNull()
-  expect(document.activeElement).toBe(trigger)
+  await waitFor(() => expect(document.activeElement).toBe(trigger))
 })
 
 it("refreshes derived edge colors when the Surface palette finishes animating", () => {

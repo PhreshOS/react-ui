@@ -4,18 +4,18 @@ import { createRef } from "react"
 import { afterEach, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
 import {
-  AppearanceProvider, Material, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Radio,
-  type MaterialOptions, type MaterialProps, type SurfaceProps,
+  AppearanceProvider, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Radio,
+  type MaterialOptions, type SurfaceProps,
   type ButtonProps, type InputProps, type CheckboxProps, type SwitchProps, type RadioProps, type SelectProps
 } from "../source/main.js"
 
 afterEach(cleanup)
 
-it("separates color from one shared Material configuration", () => {
+it("keeps Surface material properties flat while controls group their customization", () => {
   expectTypeOf<"color" extends keyof MaterialOptions ? true : false>().toEqualTypeOf<false>()
-  expectTypeOf<MaterialProps["material"]>().toEqualTypeOf<MaterialOptions | undefined>()
-  expectTypeOf<SurfaceProps["material"]>().toEqualTypeOf<MaterialProps["material"]>()
-  expectTypeOf<ButtonProps["material"]>().toEqualTypeOf<MaterialProps["material"]>()
+  expectTypeOf<"material" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<false>()
+  expectTypeOf<SurfaceProps["opacity"]>().toEqualTypeOf<MaterialOptions["opacity"]>()
+  expectTypeOf<ButtonProps["material"]>().toEqualTypeOf<MaterialOptions | undefined>()
   expectTypeOf<InputProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<CheckboxProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<SwitchProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
@@ -23,25 +23,29 @@ it("separates color from one shared Material configuration", () => {
   expectTypeOf<SelectProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
 })
 
-it("renders Surface as its fixed div host", () => {
-  const ref = createRef<HTMLDivElement>()
+it("renders a div by default and preserves the selected host contract", () => {
+  const div = createRef<HTMLDivElement>()
+  const button = createRef<HTMLButtonElement>()
   const { container } = render(<AppearanceProvider appearance={defaultAppearance} theme="light">
-    <Surface ref={ref} data-testid="surface">Content</Surface>
+    <Surface ref={div} data-testid="surface">Content</Surface>
+    <Surface as="button" ref={button} data-testid="button" type="button">Action</Surface>
   </AppearanceProvider>)
   const surface = screen.getByTestId("surface")
 
-  expect(ref.current).toBe(surface)
+  expect(div.current).toBe(surface)
   expect(surface.tagName).toBe("DIV")
   expect(surface.parentElement).toBe(container)
   expect(surface.querySelector("[data-material]")).not.toBeNull()
   expect(screen.getByText("Content")).toBe(surface)
+  expect(button.current).toBe(screen.getByTestId("button"))
+  expect(button.current?.tagName).toBe("BUTTON")
+  expect(button.current?.type).toBe("button")
 })
 
-it("renders Material independently inside caller-owned geometry", () => {
+it("accepts flattened material properties without another rendered entity", () => {
   render(<AppearanceProvider appearance={defaultAppearance} theme="light">
-    <div data-testid="geometry" style={{ position: "relative", isolation: "isolate", width: 80, height: 60, borderRadius: 12 }}>
-      <Material color="#345678" material={{ opacity: 0.45, backdrop: 0 }} />
-    </div>
+    <Surface data-testid="geometry" color="#345678" opacity={0.45} backdrop={0}
+      style={{ width: 80, height: 60 }} />
   </AppearanceProvider>)
   const geometry = screen.getByTestId("geometry")
   const material = geometry.querySelector<HTMLElement>("[data-material]")
@@ -51,10 +55,10 @@ it("renders Material independently inside caller-owned geometry", () => {
   expect(material?.style.inset).toBe("0px")
   expect(material?.style.borderRadius).toBe("inherit")
   expect(material?.querySelector<SVGRectElement>("[data-material-base]")?.style.fill).toBe("rgb(52, 86, 120)")
-  expect(material?.querySelector("[data-surface-edge]")).toBeNull()
+  expect(geometry.querySelector("[data-surface-edge]")).not.toBeNull()
 })
 
-it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"] as const)("applies the shared Material configuration to %s without leaking props or changing behavior", async kind => {
+it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"] as const)("applies the shared material configuration to %s without leaking props or changing behavior", async kind => {
   const material: MaterialOptions = { opacity: 0.45, backdrop: 0 }
   const action = vi.fn()
   const example = kind === "button" ? <Button color="#345678" material={material} onPress={action}>Action</Button>

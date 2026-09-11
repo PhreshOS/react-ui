@@ -71,7 +71,7 @@ describe("Button", function () {
     expect(button.style.fontSize).toBe("15px")
   })
 
-  it("uses shared Material through Surface with a neutral control color by default", function () {
+  it("uses shared Surface material with a neutral control color by default", function () {
     renderButton(<Button>Continue</Button>)
     const button = screen.getByRole("button")
     expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.colors.background.light, "base")))

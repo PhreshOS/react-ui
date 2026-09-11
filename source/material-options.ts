@@ -12,7 +12,12 @@ export interface MaterialOptions {
   readonly saturation?: ScaleLevel | number
 }
 
-/** Resolves Material values from the current Appearance without knowing any host geometry. */
+/** Grouped material customization exposed by components built on Surface. */
+export interface MaterialOverrides {
+  readonly material?: MaterialOptions
+}
+
+/** Resolves material values from the current Appearance without knowing any host geometry. */
 export function useMaterialOptions(values: MaterialOptions = {}) {
   const appearance = useAppearance()
   const defaults = useResolveTheme(appearance.material)

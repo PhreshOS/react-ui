@@ -1,41 +1,124 @@
-import { forwardRef } from "react"
-import type { ComponentPropsWithRef } from "react"
-import { useAppearance } from "./appearance-provider.js"
-import { MaterialLayer, useResolvedMaterial, type MaterialProps } from "./material.js"
-import { visualTransition } from "./motion-style.js"
+import { createElement, forwardRef, useId } from "react"
+import type { ComponentPropsWithRef, ComponentPropsWithoutRef, CSSProperties, ElementType, ReactElement } from "react"
+import { useAppearance, useResolveTheme } from "./appearance-provider.js"
+import { useResolveColor, type Color } from "./color.js"
+import { useMaterialOptions, type MaterialOptions } from "./material-options.js"
+import { MaterialPaint } from "./material-paint.js"
+import MotionStyle, { visualTransition } from "./motion-style.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { SurfaceEdge } from "./surface-edge.js"
 
-/** A div that hosts one Material and owns its geometry. */
-export interface SurfaceProps extends Omit<ComponentPropsWithRef<"div">, "color">, MaterialProps, RadiusProps {}
+export type { MaterialOptions } from "./material-options.js"
 
-export const Surface = forwardRef<HTMLDivElement, SurfaceProps>(function Surface({
+export interface SurfaceOwnProps extends MaterialOptions, RadiusProps {
+  readonly color?: Color
+}
+
+export type SurfaceProps<As extends ElementType = "div"> = SurfaceOwnProps
+  & Readonly<{ as?: As }>
+  & Omit<ComponentPropsWithRef<As>, keyof SurfaceOwnProps | "as" | "color">
+
+export type SurfaceComponent = <As extends ElementType = "div">(
+  properties: SurfaceProps<As>
+) => ReactElement | null
+
+type SurfaceImplementationProps = SurfaceOwnProps
+  & Readonly<{ as?: ElementType }>
+  & Omit<ComponentPropsWithoutRef<"div">, keyof SurfaceOwnProps | "as" | "color">
+
+/** One material-owning element. The host is a div unless `as` selects another element. */
+const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Surface({
+  as: Element = "div",
   color,
-  material: options,
+  opacity,
+  backdrop,
+  grain,
+  grainAmount,
+  distortion,
+  saturation,
   radius,
   children,
   style,
   ...properties
 }, ref) {
   const appearance = useAppearance()
-  const material = useResolvedMaterial({ color, material: options })
+  const material = useResolvedSurface(color, { opacity, backdrop, grain, grainAmount, distortion, saturation })
   const resolvedRadius = resolveRadius(radius ?? "medium", appearance)
 
-  return <div
-    {...properties}
-    ref={ref}
-    style={{
+  return createElement(Element, {
+    ...properties,
+    ref,
+    style: {
       ...visualTransition,
-      background: "transparent",
-      color: material.foreground,
       ...style,
+      background: "transparent",
+      color: style?.color ?? material.foreground,
       borderRadius: radius === undefined ? style?.borderRadius ?? resolvedRadius : resolvedRadius,
       position: style?.position ?? "relative",
       isolation: "isolate"
-    }}
-  >
-    <MaterialLayer material={material} />
-    <SurfaceEdge material={material} />
-    {children}
-  </div>
+    }
+  }, <SurfaceLayers material={material} />, <SurfaceEdge material={material} />, children)
 })
+
+export const Surface = SurfaceRoot as SurfaceComponent
+
+function useResolvedSurface(color: Color | undefined, options: MaterialOptions) {
+  const appearance = useAppearance()
+  const material = useMaterialOptions(options)
+
+  return {
+    ...material,
+    color: useResolveColor(color),
+    foreground: useResolveTheme(appearance.colors.foreground)
+  }
+}
+
+type ResolvedSurface = ReturnType<typeof useResolvedSurface>
+
+const layerStyle = {
+  position: "absolute",
+  inset: 0,
+  borderRadius: "inherit",
+  pointerEvents: "none"
+} satisfies CSSProperties
+
+function SurfaceLayers({ material }: Readonly<{ material: ResolvedSurface }>) {
+  const { backdrop, saturation, distortion } = material
+  const frost = [
+    backdrop === 0 ? "" : `blur(${backdrop}px)`,
+    saturation === 1 ? "" : `saturate(${saturation})`
+  ].filter(Boolean).join(" ")
+  const identity = `phresh-material-${useId().replaceAll(":", "")}`
+
+  return <span data-material="" aria-hidden="true" style={layerStyle}>
+    <MotionStyle />
+    {distortion > 0 && <BackdropLayer
+      name="refraction"
+      filter={`url("#${identity}-distortion")`}
+      zIndex={-3}
+    />}
+    {frost && <BackdropLayer name="frost" filter={frost} zIndex={-2} />}
+    <MaterialPaint
+      identity={identity}
+      distortion={distortion}
+      color={material.color}
+      grain={material.grain}
+      grainAmount={material.grainAmount}
+      opacity={material.opacity}
+    />
+  </span>
+}
+
+/** Keep refraction and native frost in independent compositor passes. */
+function BackdropLayer({ filter, name, zIndex }: Readonly<{ filter: string, name: string, zIndex: number }>) {
+  return <span
+    data-material-backdrop={name}
+    aria-hidden="true"
+    style={{
+      ...layerStyle,
+      zIndex,
+      backdropFilter: filter,
+      WebkitBackdropFilter: filter
+    }}
+  />
+}

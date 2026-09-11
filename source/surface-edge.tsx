@@ -1,10 +1,9 @@
 import { Fragment, useCallback, useLayoutEffect, useRef, useState } from "react"
 import { colorLightness, colorOpacity, orderColors } from "./color.js"
-import type { ResolvedMaterial } from "./material.js"
 import { paintTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 
-type EdgeMaterial = Pick<ResolvedMaterial, "color" | "foreground" | "opacity">
+type EdgeMaterial = Readonly<{ color: string, foreground: string, opacity: number }>
 
 /** Paints the boundary owned by one Surface from the material it contains. */
 export function SurfaceEdge({ material }: Readonly<{ material: EdgeMaterial }>) {
