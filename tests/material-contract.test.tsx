@@ -1,17 +1,22 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { createRef } from "react"
+import { createRef, forwardRef } from "react"
+import type { ComponentPropsWithoutRef } from "react"
 import { afterEach, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
 import {
-  AppearanceProvider, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Radio,
-  type MaterialOptions, type SurfaceProps,
+  AppearanceProvider, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Radio, Grid,
+  type MaterialOptions, type SurfaceHost, type SurfaceProps,
   type ButtonProps, type InputProps, type CheckboxProps, type SwitchProps, type RadioProps, type SelectProps
 } from "../source/main.js"
 
 afterEach(cleanup)
 
 it("keeps Surface material properties flat while controls group their customization", () => {
+  const NotAHost = (_: Readonly<{ value: string }>) => <div />
+
+  expectTypeOf<typeof Grid extends SurfaceHost ? true : false>().toEqualTypeOf<true>()
+  expectTypeOf<typeof NotAHost extends SurfaceHost ? true : false>().toEqualTypeOf<false>()
   expectTypeOf<"color" extends keyof MaterialOptions ? true : false>().toEqualTypeOf<false>()
   expectTypeOf<"material" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<false>()
   expectTypeOf<SurfaceProps["opacity"]>().toEqualTypeOf<MaterialOptions["opacity"]>()
@@ -21,6 +26,29 @@ it("keeps Surface material properties flat while controls group their customizat
   expectTypeOf<SwitchProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<RadioProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<SelectProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
+})
+
+it("lets any ref-forwarding host that preserves style and children carry the Surface", () => {
+  const OutsideLayout = forwardRef<HTMLDivElement, ComponentPropsWithoutRef<"div"> & Readonly<{ direction?: "row" | "column" }>>(
+    function OutsideLayout({ direction = "row", style, ...properties }, ref) {
+      return <div {...properties} ref={ref} style={{ ...style, display: "flex", flexDirection: direction }} />
+    }
+  )
+  const grid = createRef<HTMLDivElement>()
+  const outside = createRef<HTMLDivElement>()
+
+  render(<AppearanceProvider appearance={defaultAppearance} theme="light">
+    <Surface as={Grid} ref={grid} data-testid="grid" columns={2}>Grid content</Surface>
+    <Surface as={OutsideLayout} ref={outside} data-testid="outside" direction="column">Outside content</Surface>
+  </AppearanceProvider>)
+
+  expect(grid.current).toBe(screen.getByTestId("grid"))
+  expect(grid.current?.style.display).toBe("grid")
+  expect(grid.current?.querySelector(":scope > [data-material]")).not.toBeNull()
+  expect(outside.current).toBe(screen.getByTestId("outside"))
+  expect(outside.current?.style.display).toBe("flex")
+  expect(outside.current?.style.flexDirection).toBe("column")
+  expect(outside.current?.querySelector(":scope > [data-material]")).not.toBeNull()
 })
 
 it("renders a div by default and preserves the selected host contract", () => {

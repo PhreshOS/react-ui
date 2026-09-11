@@ -14,7 +14,15 @@ export {
 } from "./appearance-provider.js"
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
-export { Surface, type MaterialOptions, type SurfaceComponent, type SurfaceOwnProps, type SurfaceProps } from "./surface.js"
+export {
+  Surface,
+  type MaterialOptions,
+  type SurfaceComponent,
+  type SurfaceHost,
+  type SurfaceHostProps,
+  type SurfaceOwnProps,
+  type SurfaceProps
+} from "./surface.js"
 export { defaultColor, type Color, type ColorLevel, type ColorScale } from "./color.js"
 export { Panel, type PanelProps } from "./panel.js"
 export { Button, type ButtonColor, type ButtonProps } from "./button.js"

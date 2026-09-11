@@ -1,5 +1,5 @@
 import { createElement, forwardRef, useId } from "react"
-import type { ComponentPropsWithRef, ComponentPropsWithoutRef, CSSProperties, ElementType, ReactElement } from "react"
+import type { ComponentPropsWithRef, ComponentPropsWithoutRef, CSSProperties, ElementType, ReactElement, ReactNode } from "react"
 import { useAppearance, useResolveTheme } from "./appearance-provider.js"
 import { useResolveColor, type Color } from "./color.js"
 import { useMaterialOptions, type MaterialOptions } from "./material-options.js"
@@ -14,11 +14,23 @@ export interface SurfaceOwnProps extends MaterialOptions, RadiusProps {
   readonly color?: Color
 }
 
-export type SurfaceProps<As extends ElementType = "div"> = SurfaceOwnProps
+/**
+ * The structural properties a component must preserve when it hosts a Surface.
+ * The component must apply `style` and render `children` on the same host element,
+ * and it must forward its ref to that element.
+ */
+export interface SurfaceHostProps {
+  readonly children?: ReactNode
+  readonly style?: CSSProperties
+}
+
+export type SurfaceHost = ElementType<SurfaceHostProps>
+
+export type SurfaceProps<As extends SurfaceHost = "div"> = SurfaceOwnProps
   & Readonly<{ as?: As }>
   & Omit<ComponentPropsWithRef<As>, keyof SurfaceOwnProps | "as" | "color">
 
-export type SurfaceComponent = <As extends ElementType = "div">(
+export type SurfaceComponent = <As extends SurfaceHost = "div">(
   properties: SurfaceProps<As>
 ) => ReactElement | null
 

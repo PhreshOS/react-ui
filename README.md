@@ -82,7 +82,14 @@ pixels, or a CSS radius and defaults to `medium`.
 ```tsx
 <Surface color="background:soft" radius="large">Derived values</Surface>
 <Surface as="button" type="button" color="#345678" radius={18}>Action</Surface>
+<Surface as={Grid} columns={3} gap="medium">Grid content</Surface>
 ```
+
+`as` can also select an outside React component. A valid Surface host preserves
+the `style` and `children` it receives on one host element and forwards its ref
+to that same element. This lets layout components carry the material without a
+wrapper. The host retains ownership of its own behavior and layout properties;
+Surface retains ownership of material, edge, radius, and required geometry.
 
 `MaterialOptions` defines `opacity`, `backdrop`, `grain`, `grainAmount`,
 `distortion`, and `saturation`. Surface accepts these properties directly because
