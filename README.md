@@ -54,10 +54,11 @@ import { AppearanceProvider, Button } from "@phreshos/react-ui"
 ```
 
 `Button`, `Input`, `Textarea`, `Select`, `Checkbox`, `Switch`, and `Radio`
-use the shared Material through Surface while retaining their own colors. Omit `color` for
-a neutral shade of Appearance's background, or select `primary`, `secondary`,
-`success`, `warning`, `danger`, or `info` for a semantic color.
-Solid controls use the `base` color level, without mixing it with white or black.
+host the shared Material while retaining their native behavior. Color and material
+are independent inputs. `color` accepts an Appearance color and resting level such
+as `background:base` or `primary:soft`, or a direct CSS color. Material and neutral
+surface hosts default to `background:base`; a component may select a semantic
+default required by its own behavior, such as `primary:base` for selection.
 Hover and press derive shades of that fill. The resting fill chooses the
 higher-contrast text from Appearance's background and foreground once; interaction
 shades keep that choice.
@@ -67,8 +68,8 @@ spacing and radius follow Appearance. `disabled` prevents activation and focus;
 
 ```tsx
 <Button>Cancel</Button>
-<Button color="primary" onPress={save}>Save</Button>
-<Button color="danger" size="small">Delete</Button>
+<Button color="primary:base" onPress={save}>Save</Button>
+<Button color="danger:soft" size="small">Delete</Button>
 ```
 
 `Material` is the raw visual substance: paint, opacity, frost, refraction, and
@@ -78,52 +79,40 @@ shadow. The container must establish its own geometry and isolation.
 
 ```tsx
 <div style={{ position: "relative", isolation: "isolate", width: 240, height: 120, borderRadius: 18 }}>
-  <Material color="soft" />
+  <Material color="background:soft" material={{ opacity: 0.4 }} />
 </div>
 ```
 
 `Surface` is the standard geometric host for a `Material`. It establishes the
-required positioning and isolation, resolves radius, renders the Material, and
-then renders its content. It never creates or consumes a shadow. Shadow remains
-an independent visual concern. `color` accepts a background level
-(`subtle`, `soft`, `base`, `strong`, `intense`) derived from Appearance's background,
-or a direct CSS color. `radius` accepts a size level, a number in pixels, or a
-CSS radius. Defaults are `color="base"` and `radius="medium"`.
+required positioning and isolation on a `div`, resolves radius, renders Material,
+and then renders its content. It never creates or consumes a shadow. Shadow remains
+an independent visual concern. `radius` accepts a size level, a number in pixels,
+or a CSS radius and defaults to `medium`.
 
 ```tsx
-<Surface color="soft" radius="large">Derived values</Surface>
+<Surface color="background:soft" radius="large">Derived values</Surface>
 <Surface color="#345678" radius={18}>Direct values</Surface>
-<Surface as="button" type="button">Native button Surface</Surface>
 ```
 
-`MaterialProps` defines `color`, `opacity`, `backdrop`, `grain`, `grainAmount`,
-`distortion`, and `saturation`. `SurfaceOptions` composes that complete contract
-with `radius`; Material never depends on Surface or host geometry. Omitted values
-follow the current Appearance. Effect
-options accept a scale level or a direct number; opacity affects material only,
-never the host's children. Surface's glass edge reads the resolved material and
-foreground colors.
-
-`as` selects the native non-void HTML host and preserves its correlated native
-properties and ref type. For example, `as="button"` accepts button properties
-and targets an `HTMLButtonElement` ref. Void elements cannot be Surface hosts
-because they cannot contain Material and content. Inputs therefore use a
-Surface container around the native input.
+`MaterialOptions` defines `opacity`, `backdrop`, `grain`, `grainAmount`,
+`distortion`, and `saturation`. It contains no color. `MaterialProps` keeps
+`color` beside `material?: MaterialOptions`, so paint selection never becomes a
+physical-material setting. Omitted material values follow `appearance.material`.
+Effect options accept a scale level or a direct number; opacity affects material
+only, never the host's children.
 
 Radius belongs to host geometry, while Surface's border belongs to its geometric
 boundary. Material may determine the border treatment, but it neither owns nor
 renders that border.
 
-Material-bearing controls accept `surface?: SurfaceOptions`. Explicit options
-override their material defaults without changing their native behavior or
-content color. Unspecified values preserve the control's own color and radius.
-For text fields and Select, the options target the field/trigger material; for
-Checkbox, Switch, and Radio, they target the indicator. RadioGroup supplies
-defaults to its options, and a Radio can provide its own `surface` value.
+Material-bearing controls expose the same separate `color` and `material` props.
+For text fields and Select, `material` targets the field or trigger; for Checkbox,
+Switch, and Radio, it targets the indicator. RadioGroup supplies material defaults
+to its options, and a Radio can override them.
 
 ```tsx
-<Button color="primary" surface={{ opacity: 0.6, backdrop: 0 }}>Save</Button>
-<Input label="Name" surface={{ radius: "large" }} />
+<Button color="primary:base" material={{ opacity: 0.6, backdrop: 0 }}>Save</Button>
+<Input label="Name" radius="large" material={{ grain: "small" }} />
 ```
 
 `Panel` composes an outer `Surface`, an optional header, and an inset content
@@ -144,8 +133,9 @@ Native properties and the forwarded ref target the outer Surface.
 ## Inputs
 
 Every input uses Appearance colors and the same five `size` levels as Button.
-`color` selects the semantic fill. Input, Textarea, and Select remain
-neutral when it is omitted; selection controls default to `primary`. Invalid
+`color` selects the fill independently from material. Input, Textarea, Select,
+and Button use `background:base` when it is omitted; selection indicators use
+`primary:base`. Invalid
 fields use danger instead. Text fields share Surface's glass edge. Interaction shades
 derive from the base color's lightness, and text or selection marks use whichever
 Appearance background or foreground has higher contrast against the base fill.

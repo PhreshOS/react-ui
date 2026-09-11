@@ -5,8 +5,9 @@ import type { ButtonProps as AriaButtonProps } from "react-aria-components"
 import type { ScaleLevel } from "./scale.js"
 import type { RadiusProps } from "./radius.js"
 import { controlFontSizes, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
-import { SurfaceButton } from "./control-material.js"
-import type { SurfaceOverrides } from "./surface.js"
+import { MaterialButton } from "./control-material.js"
+import type { MaterialOverrides } from "./material.js"
+import { visualTransition } from "./motion-style.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
 
@@ -14,7 +15,7 @@ type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color
 export type ButtonColor = ControlColor
 
 /** Properties accepted by the shared interactive button. */
-export interface ButtonProps extends NativeButtonProps, RadiusProps, SurfaceOverrides {
+export interface ButtonProps extends NativeButtonProps, RadiusProps, MaterialOverrides {
   /** Visible Button content. */
   readonly children?: ReactNode
 
@@ -36,7 +37,7 @@ export interface ButtonProps extends NativeButtonProps, RadiusProps, SurfaceOver
   /** Derives the Button's spacing from Appearance's concrete default. */
   readonly size?: ScaleLevel
 
-  /** Native styles applied after Button defaults. Material is configured through surface. */
+  /** Native styles applied after Button defaults. */
   readonly style?: CSSProperties
 
 }
@@ -52,7 +53,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     radius = "medium",
     size = "medium",
     style,
-    surface,
+    material,
     type = "button",
     ...properties
   },
@@ -67,7 +68,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     isDisabled={disabled}
     isPending={pending}
     onPress={onPress}
-    render={(native, state) => <SurfaceButton native={native} options={surface} paint={buttonPaint(theme, !disabled && !pending, state.isHovered, state.isPressed)} />}
+    render={(native, state) => <MaterialButton native={native} material={material} paint={buttonPaint(theme, !disabled && !pending, state.isHovered, state.isPressed)} />}
     style={({ isFocusVisible, isHovered, isPressed }) => buttonStyle({
       theme,
       disabled,
@@ -107,6 +108,7 @@ function buttonStyle({
   const paint = buttonPaint(theme, interactive, isHovered, isPressed)
 
   return {
+    ...visualTransition,
     appearance: "none",
     boxSizing: "border-box",
     display: "inline-grid",

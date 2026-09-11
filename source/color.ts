@@ -1,5 +1,7 @@
 import { useMemo } from "react"
+import type { AppearanceColor } from "@phreshos/core"
 import { ColorSpace, mix, parse, serialize, to, toGamut, contrastWCAG21, sRGB, sRGB_Linear, HSL, HWB, Lab, LCH, OKLab, OKLCH, P3, A98RGB, ProPhoto, REC_2020, XYZ_D50, XYZ_D65 } from "colorjs.io/fn"
+import { useAppearance, useResolveTheme } from "./appearance-provider.js"
 
 // Register the CSS color spaces, without bundling unrelated color-model APIs.
 for (const space of [sRGB, sRGB_Linear, HSL, HWB, Lab, LCH, OKLab, OKLCH, P3, A98RGB, ProPhoto, REC_2020, XYZ_D50, XYZ_D65]) ColorSpace.register(space)
@@ -9,6 +11,11 @@ export type ColorLevel = "subtle" | "soft" | "base" | "strong" | "intense"
 
 /** Every visual treatment derived from one concrete CSS color. */
 export type ColorScale = Readonly<Record<ColorLevel, string>>
+
+/** One Appearance color and resting level, or a direct CSS color. */
+export type Color = `${AppearanceColor}:${ColorLevel}` | (string & {})
+
+export const defaultColor = "background:base" satisfies Color
 
 const treatments = {
   subtle: { weight: 25, target: "white" },
@@ -47,6 +54,24 @@ export function resolveColorLevel(value: string, level: ColorLevel): string {
 /** Returns the complete visual treatments derived from one concrete color. */
 export function useColor(value: string): ColorScale {
   return useMemo(() => color(value), [value])
+}
+
+/** Resolves a semantic Appearance color or preserves a direct CSS color. */
+export function useResolveColor(value: Color = defaultColor): string {
+  const appearance = useAppearance()
+  const semantic = parseSemanticColor(value)
+  const source = useResolveTheme(appearance.colors[semantic?.name ?? "background"])
+
+  return semantic ? color(source)[semantic.level] : value
+}
+
+/** Resolves a color to concrete opaque paint for solid interactive states. */
+export function useResolveSolidColor(value: Color): string {
+  const appearance = useAppearance()
+  const semantic = parseSemanticColor(value)
+  const source = useResolveTheme(appearance.colors[semantic?.name ?? "background"])
+
+  return semantic ? resolveColorLevel(source, semantic.level) : opaqueColor(value)
 }
 
 /** Applies material opacity without restricting the source CSS color syntax. */
@@ -100,4 +125,18 @@ export function solidColors(base: string, background: string, foreground: string
     hover: paint(colorShade(fill, 0.045)),
     pressed: paint(colorShade(fill, 0.085))
   }
+}
+
+function parseSemanticColor(value: string): { name: AppearanceColor, level: ColorLevel } | null {
+  const separator = value.indexOf(":")
+  if (separator < 0 || value.indexOf(":", separator + 1) >= 0) return null
+  const name = value.slice(0, separator)
+  const level = value.slice(separator + 1)
+  if (!isAppearanceColor(name) || !isColorLevel(level)) return null
+  return { name, level }
+}
+
+function isAppearanceColor(value: string): value is AppearanceColor {
+  return value === "background" || value === "foreground" || value === "primary" || value === "secondary"
+    || value === "success" || value === "warning" || value === "danger" || value === "info"
 }

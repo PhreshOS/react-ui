@@ -11,7 +11,7 @@ describe("AppearanceProvider", function () {
 
     render(<AppearanceProvider><Read onRead={value => values.push(value)} /></AppearanceProvider>)
 
-    expect(values).toEqual([defaultAppearance, "light", defaultAppearance.background.light])
+    expect(values).toEqual([defaultAppearance, "light", defaultAppearance.colors.background.light])
   })
 
   it("provides unresolved Appearance and effective Theme directly", function () {
@@ -21,18 +21,21 @@ describe("AppearanceProvider", function () {
       <Read onRead={value => values.push(value)} />
     </AppearanceProvider>)
 
-    expect(values).toEqual([defaultAppearance, "dark", defaultAppearance.background.dark])
+    expect(values).toEqual([defaultAppearance, "dark", defaultAppearance.colors.background.dark])
   })
 
   it("inherits every omitted value from the nearest provider", function () {
-    const appearance = { ...defaultAppearance, background: { light: "#112233", dark: "#ddeeff" } }
+    const appearance = {
+      ...defaultAppearance,
+      colors: { ...defaultAppearance.colors, background: { light: "#112233", dark: "#ddeeff" } }
+    }
     const values: Array<Appearance | Theme | string> = []
 
     render(<AppearanceProvider appearance={appearance} theme="dark">
       <AppearanceProvider><Read onRead={value => values.push(value)} /></AppearanceProvider>
     </AppearanceProvider>)
 
-    expect(values).toEqual([appearance, "dark", appearance.background.dark])
+    expect(values).toEqual([appearance, "dark", appearance.colors.background.dark])
   })
 
   it("resolves shared values through their light branch in either Theme", function () {
@@ -101,7 +104,7 @@ describe("AppearanceProvider", function () {
 
     render(<Read onRead={value => values.push(value)} />)
 
-    expect(values).toEqual([defaultAppearance, "light", defaultAppearance.background.light])
+    expect(values).toEqual([defaultAppearance, "light", defaultAppearance.colors.background.light])
   })
 
   it("reacts to the browser Theme when no provider selects one", function () {
@@ -142,7 +145,7 @@ function Read({ onRead }: Readonly<{ onRead: (value: Appearance | Theme | string
   const appearance = useAppearance()
   onRead(appearance)
   onRead(useTheme())
-  onRead(useResolveTheme(appearance.background))
+  onRead(useResolveTheme(appearance.colors.background))
   return null
 }
 

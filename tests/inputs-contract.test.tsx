@@ -12,10 +12,10 @@ import {
 
 afterEach(cleanup)
 
-it.each(["checkbox", "switch", "radio"] as const)("shares Material through Surface on the %s indicator while retaining selection colors", async kind => {
-    const sample = kind === "checkbox" ? <Checkbox label="Choice" color="secondary" />
-        : kind === "switch" ? <Switch label="Choice" color="secondary" />
-        : <RadioGroup label="Choices" color="secondary"><Radio value="one" label="Choice" /></RadioGroup>
+it.each(["checkbox", "switch", "radio"] as const)("shares Material on the %s indicator while retaining selection colors", async kind => {
+    const sample = kind === "checkbox" ? <Checkbox label="Choice" color="secondary:base" />
+        : kind === "switch" ? <Switch label="Choice" color="secondary:base" />
+        : <RadioGroup label="Choices" color="secondary:base"><Radio value="one" label="Choice" /></RadioGroup>
     const { container } = renderUI(sample)
     const base = container.querySelector<SVGRectElement>("[data-material-base]")
     const material = container.querySelector("[data-material-fill]")
@@ -26,13 +26,13 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Material through Surfa
     expect(indicator?.style.background).toBe("transparent")
     expect(indicator?.style.boxShadow).toBe("")
     expect(material?.getAttribute("opacity")).toBe(String(defaultAppearance.material.light.opacity))
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.background.light, "base")))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.background.light, "base")))
 
     const user = userEvent.setup()
     await user.click(screen.getByRole(kind, { name: "Choice" }))
     await user.unhover(screen.getByRole(kind, { name: "Choice" }))
     expect((screen.getByRole(kind) as HTMLInputElement).checked).toBe(true)
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.secondary.light, "base")))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.secondary.light, "base")))
     expect(indicator?.style.borderRadius).toBe(kind === "checkbox" ? "4.75px" : "19px")
 })
 
@@ -107,10 +107,10 @@ describe.each([["Input", Input], ["Textarea", Textarea]] as const)("%s", (_, Con
 
     it("shows hover and pointer focus without changing its value or dimensions", async () => {
         const user = userEvent.setup()
-        renderUI(<Control label="Name" color="secondary" defaultValue="Example" />)
+        renderUI(<Control label="Name" color="secondary:base" defaultValue="Example" />)
         const field = screen.getByRole("textbox") as HTMLInputElement
         const height = field.style.height
-        const paints = solidColors(defaultAppearance.secondary.light, defaultAppearance.background.light, defaultAppearance.foreground.light)
+        const paints = solidColors(defaultAppearance.colors.secondary.light, defaultAppearance.colors.background.light, defaultAppearance.colors.foreground.light)
 
         await user.hover(field)
         expect(materialColor(field)).toBe(css(paints.hover.background))
@@ -123,18 +123,18 @@ describe.each([["Input", Input], ["Textarea", Textarea]] as const)("%s", (_, Con
     })
 })
 
-it.each(["primary", "secondary", "success", "warning", "danger", "info"] as const)("shows %s on resting fields and follows theme changes", color => {
+it.each(["primary", "secondary", "success", "warning", "danger", "info"] as const)("shows %s on resting fields and follows theme changes", role => {
     const sample = <>
-        <Input label="Single" color={color} />
-        <Textarea label="Multiple" color={color} />
-        <Select label="Choice" color={color} options={[{ value: "one", label: "One" }]} />
+        <Input label="Single" color={`${role}:base`} />
+        <Textarea label="Multiple" color={`${role}:base`} />
+        <Select label="Choice" color={`${role}:base`} options={[{ value: "one", label: "One" }]} />
     </>
     const view = renderUI(sample)
 
     for (const theme of ["light", "dark"] as const) {
         view.rerender(<AppearanceProvider appearance={defaultAppearance} theme={theme}>{sample}</AppearanceProvider>)
-        const tint = defaultAppearance[color][theme]
-        const paint = solidColors(tint, defaultAppearance.background[theme], defaultAppearance.foreground[theme]).rest
+        const tint = defaultAppearance.colors[role][theme]
+        const paint = solidColors(tint, defaultAppearance.colors.background[theme], defaultAppearance.colors.foreground[theme]).rest
 
         for (const field of [...screen.getAllByRole("textbox"), screen.getByRole("button")]) {
             expect(materialColor(field)).toBe(css(paint.background))
@@ -146,8 +146,8 @@ it.each(["primary", "secondary", "success", "warning", "danger", "info"] as cons
 })
 
 it("gives invalid fields danger precedence over their chosen color", () => {
-    renderUI(<Input label="Name" color="success" invalid />)
-    expect(materialColor(screen.getByRole("textbox"))).toBe(css(resolveColorLevel(defaultAppearance.danger.light, "base")))
+    renderUI(<Input label="Name" color="success:base" invalid />)
+    expect(materialColor(screen.getByRole("textbox"))).toBe(css(resolveColorLevel(defaultAppearance.colors.danger.light, "base")))
 })
 
 it("forwards native text-control refs and preserves textarea rows", () => {
@@ -159,7 +159,14 @@ it("forwards native text-control refs and preserves textarea rows", () => {
 })
 
 it("shares Button height and responds to the nearest concrete theme colors", () => {
-    const appearance = { ...defaultAppearance, background: { light: "#111111", dark: "#eeeeee" }, foreground: { light: "#eeeeee", dark: "#111111" } }
+    const appearance = {
+        ...defaultAppearance,
+        colors: {
+            ...defaultAppearance.colors,
+            background: { light: "#111111", dark: "#eeeeee" },
+            foreground: { light: "#eeeeee", dark: "#111111" }
+        }
+    }
     const sample = <><Input aria-label="Name" size="large" /><Button size="large">Save</Button></>
     const view = render(<AppearanceProvider appearance={appearance} theme="light">{sample}</AppearanceProvider>)
     const field = screen.getByRole("textbox")

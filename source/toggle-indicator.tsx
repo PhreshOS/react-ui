@@ -2,13 +2,13 @@ import { motion, useReducedMotion } from "motion/react"
 import type { CSSProperties } from "react"
 import { useLocale } from "react-aria-components"
 import type { ControlTheme } from "./control.js"
-import { Surface, type SurfaceOptions } from "./surface.js"
+import { MaterialLayer, useResolvedMaterial } from "./material.js"
+import type { MaterialOptions } from "./material-options.js"
+import { SurfaceEdge } from "./surface-edge.js"
 import { controlTransition, visualTransition } from "./motion-style.js"
 
-const MotionSurface = motion.create(Surface)
-
 /** Shared paint only. Selection, focus, validation, and native input behavior belong to React Aria. */
-export function ToggleIndicator({ kind, selected, indeterminate = false, focused, invalid = false, hovered = false, pressed = false, theme, surface: options }: Readonly<{
+export function ToggleIndicator({ kind, selected, indeterminate = false, focused, invalid = false, hovered = false, pressed = false, theme, material: options }: Readonly<{
     kind: "checkbox" | "radio" | "switch"
     selected: boolean
     indeterminate?: boolean
@@ -17,7 +17,7 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
     hovered?: boolean
     pressed?: boolean
     theme: ControlTheme
-    surface?: SurfaceOptions
+    material?: MaterialOptions
 }>) {
 
     const reduced = useReducedMotion()
@@ -26,15 +26,19 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
     const active = selected || indeterminate
     const paints = invalid ? theme.paints.danger : active ? theme.paints.palette : theme.paints.neutral
     const paint = pressed ? paints.pressed : hovered ? paints.hover : paints.rest
-    const radius = options?.radius ?? (kind === "checkbox" ? Math.min(diameter / 4, typeof theme.radius === "number" ? theme.radius : diameter / 4) : diameter)
+    const radius = kind === "checkbox" ? Math.min(diameter / 4, typeof theme.radius === "number" ? theme.radius : diameter / 4) : diameter
     const switching = kind === "switch"
     const thumbWidth = diameter - 6 + (pressed && !reduced ? 3 : 0)
     const travel = (diameter * 2 - thumbWidth) / 2 - 3
 
-    return <MotionSurface as="span" {...options} color={options?.color ?? paint.background} radius={radius} aria-hidden="true" initial={false}
+    const material = useResolvedMaterial({ color: paint.background, material: options })
+
+    return <motion.span aria-hidden="true" initial={false}
         animate={{ scale: reduced || switching ? 1 : pressed ? 0.94 : hovered ? 1.03 : 1 }}
         transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }} style={{
         color: paint.color,
+        ...visualTransition,
+        background: "transparent",
         display: "inline-grid",
         placeItems: "center",
         position: "relative",
@@ -42,10 +46,13 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
         flexShrink: 0,
         width: switching ? diameter * 2 : diameter,
         height: diameter,
+        borderRadius: radius,
         border: "none",
         outline: focused ? `2px solid ${theme.foreground}` : "none",
         outlineOffset: 2,
     }}>
+        <MaterialLayer material={material} />
+        <SurfaceEdge material={material} />
         {switching ? <motion.span initial={false} animate={{ width: thumbWidth, x: (selected ? travel : -travel) * (direction === "rtl" ? -1 : 1) }}
             transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }} style={{
                 ...visualTransition,
@@ -63,7 +70,7 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
                         transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }} />
                 </svg>}
         </motion.span>}
-    </MotionSurface>
+    </motion.span>
 }
 
 export function toggleStyle(theme: ControlTheme, disabled: boolean, readOnly: boolean): CSSProperties {

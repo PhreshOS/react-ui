@@ -1,7 +1,7 @@
 import { forwardRef } from "react"
 import { TextArea as AriaTextarea, TextField } from "react-aria-components"
 import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
-import { SurfaceField } from "./control-material.js"
+import { MaterialField } from "./control-material.js"
 import FieldStyle, { textControlClass } from "./field-style.js"
 import type { TextControlProps } from "./text-control.js"
 
@@ -12,7 +12,7 @@ export interface TextareaProps extends Omit<TextControlProps, "type" | "pattern"
 /** A labeled multiline text control, vertically resizable without escaping its width. */
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea({
     label, description, errorMessage, disabled, readOnly, required, invalid,
-    size, color, radius, style, className, placeholder, rows = 4, surface, ...properties
+    size, color, radius, style, className, placeholder, rows = 4, material, ...properties
 }, ref) {
 
     const theme = useControlTheme({ size, color, radius })
@@ -22,9 +22,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
         <FieldStyle />
         <FieldLabel label={label} />
         <AriaTextarea ref={ref} placeholder={placeholder} rows={rows} className={textControlClass}
-            render={(native, state) => <SurfaceField options={surface} radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
+            render={(native, state) => <MaterialField material={material} radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
                 <textarea {...native} style={{ ...native.style, borderRadius: "inherit", background: "transparent" }} />
-            </SurfaceField>}
+            </MaterialField>}
             style={state => ({
             ...controlStyle(theme, state.isFocused, state.isInvalid, state.isHovered, state.isFocusVisible),
             height: "auto",

@@ -91,7 +91,7 @@ const documents = new WeakMap<Document, DocumentScrollbars>()
 /** Applies one Appearance to the complete owning document without rendering. */
 export default function DocumentScrollbars({ appearance, theme }: Readonly<{ appearance: Appearance, theme: Theme }>) {
   const identity = useRef(Symbol("AppearanceProvider")).current
-  const foreground = theme === "dark" ? appearance.foreground.dark : appearance.foreground.light
+  const foreground = theme === "dark" ? appearance.colors.foreground.dark : appearance.colors.foreground.light
   const padding = 5
   const thumbSize = 6
   const size = thumbSize + padding * 2

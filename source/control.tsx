@@ -5,10 +5,11 @@ import { useAppearance, useResolveTheme } from "./appearance-provider.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { scale, type ScaleLevel } from "./scale.js"
 import { solidColors } from "./color.js"
+import { useResolveSolidColor, type Color } from "./color.js"
 import { visualTransition } from "./motion-style.js"
 
 /** Semantic Appearance colors accepted by interactive controls. */
-export type ControlColor = "primary" | "secondary" | "success" | "warning" | "danger" | "info"
+export type ControlColor = Color
 
 export interface ControlProps {
     readonly size?: ScaleLevel
@@ -62,10 +63,10 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
 
     const appearance = useAppearance()
     const spacing = scale(useResolveTheme(appearance.spacing), size)
-    const foreground = useResolveTheme(appearance.foreground)
-    const background = useResolveTheme(appearance.background)
-    const tint = useResolveTheme(appearance[color ?? "primary"])
-    const danger = useResolveTheme(appearance.danger)
+    const foreground = useResolveTheme(appearance.colors.foreground)
+    const background = useResolveTheme(appearance.colors.background)
+    const tint = useResolveSolidColor(color ?? "primary:base")
+    const danger = useResolveSolidColor("danger:base")
     const paints = useMemo(() => ({
         palette: solidColors(tint, background, foreground),
         neutral: solidColors(background, background, foreground),

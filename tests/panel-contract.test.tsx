@@ -67,7 +67,7 @@ describe("Panel", () => {
   })
 
   it("applies material controls independently to the outer and content Surfaces", () => {
-    render(provider(<Panel data-testid="panel" opacity={0.4} contentProps={{ opacity: 0.1, "aria-label": "Body" }}>Content</Panel>))
+    render(provider(<Panel data-testid="panel" material={{ opacity: 0.4 }} contentProps={{ material: { opacity: 0.1 }, "aria-label": "Body" }}>Content</Panel>))
     expect(screen.getByTestId("panel").querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.4")
     expect(screen.getByLabelText("Body").querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.1")
   })

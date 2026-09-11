@@ -4,9 +4,9 @@ import type { CheckboxFieldProps } from "react-aria-components"
 import { FieldFeedback, fieldStyle, useControlTheme } from "./control.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import { ToggleIndicator, toggleStyle } from "./toggle-indicator.js"
-import type { SurfaceOverrides } from "./surface.js"
+import type { MaterialOverrides } from "./material.js"
 
-export interface CheckboxProps extends Omit<CheckboxFieldProps, ControlOverrides | "isReadOnly" | "isSelected" | "defaultSelected" | "isIndeterminate">, ControlProps, FieldProps, SurfaceOverrides {
+export interface CheckboxProps extends Omit<CheckboxFieldProps, ControlOverrides | "isReadOnly" | "isSelected" | "defaultSelected" | "isIndeterminate">, ControlProps, FieldProps, MaterialOverrides {
     readonly checked?: boolean
     readonly defaultChecked?: boolean
     readonly indeterminate?: boolean
@@ -16,7 +16,7 @@ export interface CheckboxProps extends Omit<CheckboxFieldProps, ControlOverrides
 /** An independent boolean field with optional mixed-state presentation. */
 export const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(function Checkbox({
     label, description, errorMessage, disabled, required, invalid, readOnly,
-    checked, defaultChecked, indeterminate, size, color, style, surface, ...properties
+    checked, defaultChecked, indeterminate, size, color, style, material, ...properties
 }, ref) {
 
     const theme = useControlTheme({ size, color })
@@ -26,7 +26,7 @@ export const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(function Check
         style={state => fieldStyle(theme, state.isDisabled, style)}>
         <CheckboxButton style={state => toggleStyle(theme, state.isDisabled, state.isReadOnly)}>
             {state => <>
-                <ToggleIndicator kind="checkbox" surface={surface} theme={theme} selected={state.isSelected} indeterminate={state.isIndeterminate}
+                <ToggleIndicator kind="checkbox" material={material} theme={theme} selected={state.isSelected} indeterminate={state.isIndeterminate}
                     focused={state.isFocusVisible} invalid={state.isInvalid}
                     hovered={!state.isDisabled && !state.isReadOnly && state.isHovered}
                     pressed={!state.isDisabled && !state.isReadOnly && state.isPressed} />

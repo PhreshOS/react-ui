@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useLayoutEffect, useRef, useState } from "react"
 import { colorLightness, colorOpacity, orderColors } from "./color.js"
-import type { ResolvedMaterial } from "./material-options.js"
+import type { ResolvedMaterial } from "./material.js"
 import { paintTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 

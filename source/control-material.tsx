@@ -1,39 +1,40 @@
 import type { ComponentPropsWithRef, CSSProperties, ReactNode } from "react"
-import { Surface, type SurfaceOptions } from "./surface.js"
+import { MaterialLayer, useResolvedMaterial } from "./material.js"
+import type { MaterialOptions } from "./material-options.js"
+import { SurfaceEdge } from "./surface-edge.js"
 
 type Paint = Readonly<{ background: string, color: string }>
 
-/** A native button owns its Surface directly; no additional container. */
-export function SurfaceButton({ native, paint, options }: { readonly native: ComponentPropsWithRef<"button">, readonly paint: Paint, readonly options?: SurfaceOptions }) {
+/** A native button hosts Material without changing its native contract. */
+export function MaterialButton({ native, paint, material: options }: { readonly native: ComponentPropsWithRef<"button">, readonly paint: Paint, readonly material?: MaterialOptions }) {
   const { ref, style, children, ...properties } = native
+  const material = useResolvedMaterial({ color: paint.background, material: options })
 
-  return <Surface
+  return <button
     {...properties}
-    as="button"
     ref={ref}
-    {...options}
-    color={options?.color ?? paint.background}
-    radius={options?.radius ?? style?.borderRadius}
-    style={{ ...style, background: "transparent", color: paint.color }}
+    style={{ ...style, background: "transparent", color: paint.color, position: style?.position ?? "relative", isolation: "isolate" }}
   >
+    <MaterialLayer material={material} />
+    <SurfaceEdge material={material} />
     {children}
-  </Surface>
+  </button>
 }
 
-/** Void text controls use a Surface host while retaining native sizing. */
-export function SurfaceField({ paint, radius, children, options }: Readonly<{
+/** Void text controls use a material host while retaining native sizing. */
+export function MaterialField({ paint, radius, children, material: options }: Readonly<{
   paint: Paint
   radius: CSSProperties["borderRadius"]
   children: ReactNode
-  options?: SurfaceOptions
+  material?: MaterialOptions
 }>) {
-  return <Surface
-    as="span"
-    {...options}
-    color={options?.color ?? paint.background}
-    radius={options?.radius ?? radius}
-    style={{ color: paint.color, display: "grid", minWidth: 0 }}
+  const material = useResolvedMaterial({ color: paint.background, material: options })
+
+  return <span
+    style={{ color: paint.color, display: "grid", minWidth: 0, borderRadius: radius, position: "relative", isolation: "isolate" }}
   >
+    <MaterialLayer material={material} />
+    <SurfaceEdge material={material} />
     {children}
-  </Surface>
+  </span>
 }

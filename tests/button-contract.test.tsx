@@ -9,8 +9,9 @@ import { resolveColorLevel, opaqueColor, solidColors } from "../source/color.js"
 afterEach(cleanup)
 
 describe("Button", function () {
-  it("accepts only semantic palette keys and the shared size scale", function () {
-    expectTypeOf<ButtonProps["color"]>().toEqualTypeOf<"primary" | "secondary" | "success" | "warning" | "danger" | "info" | undefined>()
+  it("accepts the shared color and size contracts", function () {
+    expectTypeOf<ButtonProps["color"]>().toEqualTypeOf<ButtonColor | undefined>()
+    expectTypeOf<"primary:soft">().toExtend<ButtonColor>()
     expectTypeOf<ButtonProps["size"]>().toEqualTypeOf<ScaleLevel | undefined>()
   })
   it("renders a native non-submitting button", function () {
@@ -73,7 +74,7 @@ describe("Button", function () {
   it("uses shared Material through Surface with a neutral control color by default", function () {
     renderButton(<Button>Continue</Button>)
     const button = screen.getByRole("button")
-    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.background.light, "base")))
+    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.colors.background.light, "base")))
     expect(button.style.background).toBe("transparent")
     expect(button.style.height).toBe("36px")
     expect(button.style.fontSize).toBe("13px")
@@ -82,10 +83,10 @@ describe("Button", function () {
     expect(button.style.backgroundImage).toBe("none")
   })
 
-  it.each<ButtonColor>(["primary", "secondary", "success", "warning", "danger", "info"])("uses Appearance's %s color", function (color) {
-    renderButton(<Button color={color}>Continue</Button>)
+  it.each(["primary", "secondary", "success", "warning", "danger", "info"] as const)("uses Appearance's %s color", function (role) {
+    renderButton(<Button color={`${role}:base`}>Continue</Button>)
     const button = screen.getByRole("button")
-    const paint = solidColors(defaultAppearance[color].light, defaultAppearance.background.light, defaultAppearance.foreground.light).rest
+    const paint = solidColors(defaultAppearance.colors[role].light, defaultAppearance.colors.background.light, defaultAppearance.colors.foreground.light).rest
     expect(materialColor(button)).toBe(cssBackground(paint.background))
     const expected = document.createElement("span")
     expected.style.color = paint.color
@@ -105,9 +106,9 @@ describe("Button", function () {
 
   it("updates its material color on hover and press without changing geometry", async function () {
     const user = userEvent.setup()
-    renderButton(<Button color="primary">Continue</Button>)
+    renderButton(<Button color="primary:base">Continue</Button>)
     const button = screen.getByRole("button")
-    const paints = solidColors(defaultAppearance.primary.light, defaultAppearance.background.light, defaultAppearance.foreground.light)
+    const paints = solidColors(defaultAppearance.colors.primary.light, defaultAppearance.colors.background.light, defaultAppearance.colors.foreground.light)
     const text = button.style.color
     await user.hover(button)
     expect(materialColor(button)).toBe(cssBackground(paints.hover.background))
@@ -127,12 +128,12 @@ describe("Button", function () {
     await userEvent.setup().tab()
     const button = screen.getByRole("button")
     expect(document.activeElement).toBe(button)
-    expect(button.style.outline).toBe(`2px solid ${defaultAppearance.foreground.light}`)
+    expect(button.style.outline).toBe(`2px solid ${defaultAppearance.colors.foreground.light}`)
     expect(button.style.boxShadow).toBe("")
   })
 
   it.each(["disabled", "pending"] as const)("keeps the %s fill unchanged on hover", async function (state) {
-    renderButton(<Button color="primary" disabled={state === "disabled"} pending={state === "pending"}>Continue</Button>)
+    renderButton(<Button color="primary:base" disabled={state === "disabled"} pending={state === "pending"}>Continue</Button>)
     const button = screen.getByRole("button")
     const background = materialColor(button)
     await userEvent.setup().hover(button)
@@ -142,17 +143,20 @@ describe("Button", function () {
   it("resolves the nearest palette and updates when the theme changes", function () {
     const appearance = {
       ...defaultAppearance,
-      background: { light: "#101820", dark: "#faf0e0" },
-      foreground: { light: "#faf0e0", dark: "#101820" },
-      primary: { light: "#aabbcc", dark: "#334455" }
+      colors: {
+        ...defaultAppearance.colors,
+        background: { light: "#101820", dark: "#faf0e0" },
+        foreground: { light: "#faf0e0", dark: "#101820" },
+        primary: { light: "#aabbcc", dark: "#334455" }
+      }
     }
     const view = render(<AppearanceProvider appearance={defaultAppearance} theme="light">
-      <AppearanceProvider appearance={appearance} theme="light"><Button color="primary">Continue</Button></AppearanceProvider>
+      <AppearanceProvider appearance={appearance} theme="light"><Button color="primary:base">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
     expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#aabbcc", "base")))
     expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#101820")))
     view.rerender(<AppearanceProvider appearance={defaultAppearance} theme="light">
-      <AppearanceProvider appearance={appearance} theme="dark"><Button color="primary">Continue</Button></AppearanceProvider>
+      <AppearanceProvider appearance={appearance} theme="dark"><Button color="primary:base">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
     expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#334455", "base")))
     expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#faf0e0")))
@@ -179,7 +183,7 @@ describe("Button", function () {
     expect(button.style.paddingBlock).toBe("12px")
     expect(button.style.textAlign).toBe("start")
     expect(button.style.flexShrink).toBe("0")
-    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.background.light, "base")))
+    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.colors.background.light, "base")))
     await userEvent.setup().click(button)
     expect(onPress).toHaveBeenCalledTimes(1)
   })

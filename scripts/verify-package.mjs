@@ -112,13 +112,13 @@ assert.deepEqual(Object.keys(icons), [])
     join(consumer, "consumer.tsx"),
     `import { AppearanceProvider, Button, Flex, Grid, Material, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useColor, useScale } from "@phreshos/react-ui"
 
-const material = <div style={{ position: "relative", isolation: "isolate", width: 80, height: 40 }}><Material color="soft" /></div>
+const material = <div style={{ position: "relative", isolation: "isolate", width: 80, height: 40 }}><Material color="background:soft" /></div>
 const standalone = <Button>Default Appearance and browser Theme</Button>
 const themed = <AppearanceProvider theme="dark"><Surface>Dark subtree</Surface></AppearanceProvider>
 
 function Derived() {
   const spacing = useScale(defaultAppearance.spacing.light)
-  const primary = useColor(defaultAppearance.primary.light)
+  const primary = useColor(defaultAppearance.colors.primary.light)
 
   return <span style={{ color: primary.base, padding: spacing.small }}>Derived</span>
 }
@@ -128,9 +128,9 @@ const view = (
     <Panel header={<h2>Example</h2>} contentProps={{ style: { padding: 12 } }}>
       <Grid columns={2} gap="small">
         <Flex align="center" justify="between">
-          <Button onPress={() => undefined} surface={{ opacity: "large" }}>Save</Button>
+          <Button onPress={() => undefined} material={{ opacity: "large" }}>Save</Button>
           {material}
-          <Surface as="button" type="button" color="soft" radius={12} backdrop={8}>Native Surface</Surface>
+          <Surface color="background:soft" radius={12} material={{ backdrop: 8 }}>Surface</Surface>
           <Derived />
           <Input label="Name" onChange={value => value.toUpperCase()} />
           <Textarea label="Notes" rows={3} />

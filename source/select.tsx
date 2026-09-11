@@ -3,11 +3,11 @@ import { motion, useReducedMotion } from "motion/react"
 import { Select as AriaSelect, Button, SelectValue, Popover, ListBox, ListBoxItem } from "react-aria-components"
 import type { SelectProps as AriaSelectProps } from "react-aria-components"
 import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
-import { SurfaceButton } from "./control-material.js"
+import { MaterialButton } from "./control-material.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import type { RadiusProps } from "./radius.js"
 import { Surface } from "./surface.js"
-import type { SurfaceOverrides } from "./surface.js"
+import type { MaterialOverrides } from "./material.js"
 import { controlTransition, overlayMotionClass, visualTransition } from "./motion-style.js"
 
 export interface SelectOption {
@@ -16,7 +16,7 @@ export interface SelectOption {
     readonly disabled?: boolean
 }
 
-export interface SelectProps extends Omit<AriaSelectProps<SelectOption>, ControlOverrides | "value" | "defaultValue" | "onChange" | "selectedKey" | "defaultSelectedKey" | "onSelectionChange" | "disabledKeys" | "selectionMode">, ControlProps, FieldProps, RadiusProps, SurfaceOverrides {
+export interface SelectProps extends Omit<AriaSelectProps<SelectOption>, ControlOverrides | "value" | "defaultValue" | "onChange" | "selectedKey" | "defaultSelectedKey" | "onSelectionChange" | "disabledKeys" | "selectionMode">, ControlProps, FieldProps, RadiusProps, MaterialOverrides {
     readonly options: readonly SelectOption[]
     readonly value?: string | null
     readonly defaultValue?: string | null
@@ -26,7 +26,7 @@ export interface SelectProps extends Omit<AriaSelectProps<SelectOption>, Control
 /** Single selection from string-valued options; keyboard navigation and typeahead stay native to React Aria. */
 export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
     label, description, errorMessage, disabled, required, invalid, options, value, defaultValue, onChange,
-    size, color, radius, style, surface, ...properties
+    size, color, radius, style, material, ...properties
 }, ref) {
 
     const theme = useControlTheme({ size, color, radius })
@@ -38,7 +38,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
         isDisabled={disabled} isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
         {state => <>
             <FieldLabel label={label} />
-            <Button render={(native, button) => <SurfaceButton native={native} options={surface} paint={controlPaint(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered)} />}
+            <Button render={(native, button) => <MaterialButton native={native} material={material} paint={controlPaint(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered)} />}
                 style={button => ({
                 ...controlStyle(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered, button.isFocusVisible),
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,
