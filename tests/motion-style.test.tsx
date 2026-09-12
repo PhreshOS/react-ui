@@ -3,29 +3,31 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
 import { AppearanceProvider, Button, Input, Surface, Select } from "../source/main.js"
-import { controlTransition, overlayMotionClass, paintTransition, visualTransition } from "../source/motion-style.js"
+import { overlayMotionClass, useControlTransition } from "../source/motion-style.js"
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
-it("shares fixed CSS timing and limits transitions to explicit visual properties", () => {
-  render(<AppearanceProvider appearance={defaultAppearance} theme="light">
+it("consumes Appearance timing and limits transitions to explicit visual properties", () => {
+  const appearance = { ...defaultAppearance, transaction: { duration: 240, easing: "ease-in-out" as const } }
+  let motion: ReturnType<typeof useControlTransition> | undefined
+  render(<AppearanceProvider appearance={appearance} theme="light">
+    <ReadMotion onRead={value => { motion = value }} />
     <Surface data-testid="surface">Content</Surface><Button>Action</Button><Input label="Name" />
   </AppearanceProvider>)
   const host = screen.getByTestId("surface")
   for (const element of [host, screen.getByRole("button"), screen.getByRole("textbox")]) {
-    expect(element.style.transitionProperty).toBe(visualTransition.transitionProperty)
-    expect(element.style.transitionDuration).toBe("var(--phreshos-ui-motion-duration, 120ms)")
-    expect(element.style.transitionTimingFunction).toBe("ease-out")
+    expect(element.style.transitionProperty).toBe("background-color, color, border-color, border-radius")
+    expect(element.style.transitionDuration).toBe("240ms")
+    expect(element.style.transitionTimingFunction).toBe("ease-in-out")
   }
   for (const selector of ["[data-material-fill]", "[data-material-base]", "[data-surface-palette-base]", "[data-surface-edge]"]) {
     const layer = host.querySelector<HTMLElement | SVGElement>(selector)
-    expect(layer?.style.transitionProperty).toBe(paintTransition.transitionProperty)
+    expect(layer?.style.transitionProperty).toBe("fill, stroke, opacity")
     expect(layer?.style.transitionDuration).toBe(host.style.transitionDuration)
   }
-  expect(visualTransition.transitionProperty).not.toMatch(/opacity|filter|transform|width|height|all/)
-  expect(paintTransition.transitionProperty).not.toContain("border-radius")
+  expect(host.style.transitionProperty).not.toMatch(/opacity|filter|transform|width|height|all/)
   expect(host.querySelector<HTMLElement>("[data-material-backdrop]")?.style.transitionProperty).toBe("")
-  expect(controlTransition).toEqual({ type: "tween", duration: 0.12, ease: "easeOut" })
+  expect(motion).toEqual({ type: "tween", duration: 0.24, ease: "easeInOut" })
 })
 
 it("hoists one scoped stylesheet for nested providers and declares reduced-motion behavior", () => {
@@ -41,14 +43,20 @@ it("hoists one scoped stylesheet for nested providers and declares reduced-motio
   expect(css).toContain("[data-entering]")
   expect(css).toContain("[data-exiting]")
   expect(css).toContain("pointer-events: none")
-  expect(css).toContain("120ms) ease-out both")
-  expect(css).toContain("120ms) ease-out reverse both")
-  expect(css).not.toContain("ease-in")
+  expect(css).toContain("--phreshos-ui-motion-duration: 120ms")
+  expect(css).toContain("--phreshos-ui-motion-easing: ease-out")
+  expect(css).toContain("var(--phreshos-ui-motion-easing) both")
+  expect(css).toContain("var(--phreshos-ui-motion-easing) reverse both")
   expect(css).toContain("from { opacity: 0; translate:")
   expect(css).toContain("to { opacity: 1; translate: 0 0;")
   expect(css).not.toContain("filter:")
   expect(css).not.toContain("transition: all")
 })
+
+function ReadMotion({ onRead }: Readonly<{ onRead: (value: ReturnType<typeof useControlTransition>) => void }>) {
+  onRead(useControlTransition())
+  return null
+}
 
 it("uses the shared overlay style without changing Select selection, dismissal, or focus return", async () => {
   const onChange = vi.fn()

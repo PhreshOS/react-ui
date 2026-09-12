@@ -7,7 +7,6 @@ import type { RadiusProps } from "./radius.js"
 import { controlFontSizes, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
 import { SurfaceButton } from "./control-surface.js"
 import type { MaterialOverrides } from "./material-options.js"
-import { visualTransition } from "./motion-style.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
 
@@ -108,7 +107,7 @@ function buttonStyle({
   const paint = buttonPaint(theme, interactive, isHovered, isPressed)
 
   return {
-    ...visualTransition,
+    ...theme.transition,
     appearance: "none",
     boxSizing: "border-box",
     display: "inline-grid",

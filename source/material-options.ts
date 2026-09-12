@@ -1,5 +1,5 @@
 import { appearanceLimits, type AppearanceRange } from "@phreshos/core"
-import { useAppearance, useResolveTheme } from "./appearance-provider.js"
+import { useAppearance, useThemedValue } from "./appearance-provider.js"
 import { isScaleLevel, scale, scaleMultiplier, type ScaleLevel } from "./scale.js"
 
 /** Optional values of visual substance, expressed directly or relative to Appearance. */
@@ -20,7 +20,7 @@ export interface MaterialOverrides {
 /** Resolves material values from the current Appearance without knowing any host geometry. */
 export function useMaterialOptions(values: MaterialOptions = {}) {
   const appearance = useAppearance()
-  const defaults = useResolveTheme(appearance.material)
+  const defaults = useThemedValue(appearance.material)
   const limits = appearanceLimits.material
 
   return {

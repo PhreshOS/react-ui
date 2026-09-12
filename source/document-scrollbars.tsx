@@ -91,7 +91,7 @@ const documents = new WeakMap<Document, DocumentScrollbars>()
 /** Applies one Appearance to the complete owning document without rendering. */
 export default function DocumentScrollbars({ appearance, theme }: Readonly<{ appearance: Appearance, theme: Theme }>) {
   const identity = useRef(Symbol("AppearanceProvider")).current
-  const foreground = theme === "dark" ? appearance.colors.foreground.dark : appearance.colors.foreground.light
+  const foreground = appearance.colors[theme].foreground
   const padding = 5
   const thumbSize = 6
   const size = thumbSize + padding * 2
@@ -100,7 +100,7 @@ export default function DocumentScrollbars({ appearance, theme }: Readonly<{ app
     thumbHover: colorOpacity(foreground, 0.2),
     size: `${size}px`,
     padding: `${padding}px`,
-    radius: `${Math.min(appearance.radius.light, padding + thumbSize / 2)}px`
+    radius: `${Math.min(appearance.radius, padding + thumbSize / 2)}px`
   }
 
   useInsertionEffect(function () {

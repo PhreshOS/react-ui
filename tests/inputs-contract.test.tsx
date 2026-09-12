@@ -26,13 +26,13 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on th
     expect(indicator?.style.background).toBe("transparent")
     expect(indicator?.style.boxShadow).toBe("")
     expect(material?.getAttribute("opacity")).toBe(String(defaultAppearance.material.light.opacity))
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.background.light, "base")))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.background, "base")))
 
     const user = userEvent.setup()
     await user.click(screen.getByRole(kind, { name: "Choice" }))
     await user.unhover(screen.getByRole(kind, { name: "Choice" }))
     expect((screen.getByRole(kind) as HTMLInputElement).checked).toBe(true)
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.secondary.light, "base")))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.secondary, "base")))
     expect(indicator?.style.borderRadius).toBe(kind === "checkbox" ? "4.75px" : "19px")
 })
 
@@ -110,7 +110,7 @@ describe.each([["Input", Input], ["Textarea", Textarea]] as const)("%s", (_, Con
         renderUI(<Control label="Name" color="secondary:base" defaultValue="Example" />)
         const field = screen.getByRole("textbox") as HTMLInputElement
         const height = field.style.height
-        const paints = solidColors(defaultAppearance.colors.secondary.light, defaultAppearance.colors.background.light, defaultAppearance.colors.foreground.light)
+        const paints = solidColors(defaultAppearance.colors.light.secondary, defaultAppearance.colors.light.background, defaultAppearance.colors.light.foreground)
 
         await user.hover(field)
         expect(materialColor(field)).toBe(css(paints.hover.background))
@@ -133,8 +133,8 @@ it.each(["primary", "secondary", "success", "warning", "danger", "info"] as cons
 
     for (const theme of ["light", "dark"] as const) {
         view.rerender(<AppearanceProvider appearance={defaultAppearance} theme={theme}>{sample}</AppearanceProvider>)
-        const tint = defaultAppearance.colors[role][theme]
-        const paint = solidColors(tint, defaultAppearance.colors.background[theme], defaultAppearance.colors.foreground[theme]).rest
+        const tint = defaultAppearance.colors[theme][role]
+        const paint = solidColors(tint, defaultAppearance.colors[theme].background, defaultAppearance.colors[theme].foreground).rest
 
         for (const field of [...screen.getAllByRole("textbox"), screen.getByRole("button")]) {
             expect(materialColor(field)).toBe(css(paint.background))
@@ -147,7 +147,7 @@ it.each(["primary", "secondary", "success", "warning", "danger", "info"] as cons
 
 it("gives invalid fields danger precedence over their chosen color", () => {
     renderUI(<Input label="Name" color="success:base" invalid />)
-    expect(materialColor(screen.getByRole("textbox"))).toBe(css(resolveColorLevel(defaultAppearance.colors.danger.light, "base")))
+    expect(materialColor(screen.getByRole("textbox"))).toBe(css(resolveColorLevel(defaultAppearance.colors.light.danger, "base")))
 })
 
 it("forwards native text-control refs and preserves textarea rows", () => {
@@ -162,9 +162,8 @@ it("shares Button height and responds to the nearest concrete theme colors", () 
     const appearance = {
         ...defaultAppearance,
         colors: {
-            ...defaultAppearance.colors,
-            background: { light: "#111111", dark: "#eeeeee" },
-            foreground: { light: "#eeeeee", dark: "#111111" }
+            light: { ...defaultAppearance.colors.light, background: "#111111", foreground: "#eeeeee" },
+            dark: { ...defaultAppearance.colors.dark, background: "#eeeeee", foreground: "#111111" }
         }
     }
     const sample = <><Input aria-label="Name" size="large" /><Button size="large">Save</Button></>

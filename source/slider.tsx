@@ -4,7 +4,7 @@ import { Slider as AriaSlider, SliderTrack, SliderThumb, SliderFill, SliderOutpu
 import type { SliderProps as AriaSliderProps } from "react-aria-components"
 import { FieldLabel, fieldStyle, useControlTheme } from "./control.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
-import { controlTransition, visualTransition } from "./motion-style.js"
+import { useControlTransition } from "./motion-style.js"
 
 export interface SliderProps extends Omit<AriaSliderProps<number>, ControlOverrides>, ControlProps, Pick<FieldProps, "label" | "description"> {
     readonly name?: string
@@ -20,6 +20,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
     const vertical = orientation === "vertical"
     const diameter = theme.fontSize + 6
     const reduced = useReducedMotion()
+    const transition = useControlTransition(Boolean(reduced))
     const rail = Math.max(4, Math.round(diameter / 3))
 
     return <AriaSlider {...properties} ref={ref} isDisabled={disabled} orientation={orientation} style={fieldStyle(theme, disabled, style)}
@@ -33,13 +34,13 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
             width: vertical ? theme.height : "100%", height: vertical ? 160 : theme.height
         }}>
             <div aria-hidden="true" style={{
-                ...visualTransition,
+                ...theme.transition,
                 position: "absolute", borderRadius: rail,
                 ...(vertical ? { width: rail, height: "100%", left: "50%", transform: "translateX(-50%)" } : { height: rail, width: "100%", top: "50%", transform: "translateY(-50%)" }),
                 background: theme.paints.neutral.rest.background
             }} />
             <SliderFill style={{
-                ...visualTransition,
+                ...theme.transition,
                 position: "absolute", background: theme.paints.palette.rest.background, borderRadius: rail,
                 ...(vertical ? { width: rail, left: "50%", transform: "translateX(-50%)" } : { height: rail, top: "50%", transform: "translateY(-50%)" })
             }} />
@@ -51,8 +52,8 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
             })}>
                 {state => <motion.span aria-hidden="true" initial={false}
                     animate={{ scale: reduced || state.isDisabled ? 1 : state.isDragging ? 0.92 : state.isHovered ? 1.08 : 1 }}
-                    transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }}
-                    style={{ ...visualTransition, position: "absolute", inset: 0, borderRadius: "inherit", pointerEvents: "none",
+                    transition={transition}
+                    style={{ ...theme.transition, position: "absolute", inset: 0, borderRadius: "inherit", pointerEvents: "none",
                         background: (state.isDragging ? theme.paints.palette.pressed : state.isHovered ? theme.paints.palette.hover : theme.paints.palette.rest).color,
                         border: `3px solid ${(state.isDragging ? theme.paints.palette.pressed : state.isHovered ? theme.paints.palette.hover : theme.paints.palette.rest).background}`,
                         boxSizing: "border-box" }} />}

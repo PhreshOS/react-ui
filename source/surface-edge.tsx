@@ -1,12 +1,13 @@
 import { Fragment, useCallback, useLayoutEffect, useRef, useState } from "react"
 import { colorLightness, colorOpacity, orderColors } from "./color.js"
-import { paintTransition } from "./motion-style.js"
+import { usePaintTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 
 type EdgeMaterial = Readonly<{ color: string, foreground: string, opacity: number }>
 
 /** Paints the boundary owned by one Surface from the material it contains. */
 export function SurfaceEdge({ material }: Readonly<{ material: EdgeMaterial }>) {
+  const paintTransition = usePaintTransition()
   const visible = material.opacity > 0
   const palette = useRef<SVGRectElement>(null)
   const [colors, setColors] = useState<(ReturnType<typeof orderColors> & {

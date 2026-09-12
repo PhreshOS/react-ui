@@ -10,9 +10,9 @@ export function SurfaceButton({ native, paint, material: options }: { readonly n
 
   return <Surface
     {...properties}
-    {...options}
     as="button"
     color={paint.background}
+    material={options}
     ref={ref}
     style={{ ...style, color: paint.color }}
   >
@@ -28,9 +28,9 @@ export function SurfaceField({ paint, radius, children, material: options }: Rea
   material?: MaterialOptions
 }>) {
   return <Surface
-    {...options}
     as="span"
     color={paint.background}
+    material={options}
     radius={radius}
     style={{ color: paint.color, display: "grid", minWidth: 0 }}
   >

@@ -12,14 +12,15 @@ import {
 
 afterEach(cleanup)
 
-it("keeps Surface material properties flat while controls group their customization", () => {
+it("groups material customization uniformly across Surface and controls", () => {
   const NotAHost = (_: Readonly<{ value: string }>) => <div />
 
   expectTypeOf<typeof Grid extends SurfaceHost ? true : false>().toEqualTypeOf<true>()
   expectTypeOf<typeof NotAHost extends SurfaceHost ? true : false>().toEqualTypeOf<false>()
   expectTypeOf<"color" extends keyof MaterialOptions ? true : false>().toEqualTypeOf<false>()
-  expectTypeOf<"material" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<false>()
-  expectTypeOf<SurfaceProps["opacity"]>().toEqualTypeOf<MaterialOptions["opacity"]>()
+  expectTypeOf<"material" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<true>()
+  expectTypeOf<"opacity" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<false>()
+  expectTypeOf<SurfaceProps["material"]>().toEqualTypeOf<MaterialOptions | undefined>()
   expectTypeOf<ButtonProps["material"]>().toEqualTypeOf<MaterialOptions | undefined>()
   expectTypeOf<InputProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<CheckboxProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
@@ -70,14 +71,15 @@ it("renders a div by default and preserves the selected host contract", () => {
   expect(button.current?.type).toBe("button")
 })
 
-it("accepts flattened material properties without another rendered entity", () => {
+it("accepts grouped material properties without another rendered entity", () => {
   render(<AppearanceProvider appearance={defaultAppearance} theme="light">
-    <Surface data-testid="geometry" color="#345678" opacity={0.45} backdrop={0}
+    <Surface data-testid="geometry" color="#345678" material={{ opacity: 0.45, backdrop: 0 }}
       style={{ width: 80, height: 60 }} />
   </AppearanceProvider>)
   const geometry = screen.getByTestId("geometry")
   const material = geometry.querySelector<HTMLElement>("[data-material]")
 
+  expect(geometry.hasAttribute("material")).toBe(false)
   expect(material?.parentElement).toBe(geometry)
   expect(material?.style.position).toBe("absolute")
   expect(material?.style.inset).toBe("0px")

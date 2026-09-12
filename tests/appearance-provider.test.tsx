@@ -1,6 +1,6 @@
 import { act, cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
-import { AppearanceProvider, useAppearance, useResolveTheme, useTheme } from "../source/main.js"
+import { AppearanceProvider, useAppearance, useThemedValue, useTheme } from "../source/main.js"
 import { defaultAppearance, type Appearance, type Theme } from "@phreshos/core"
 
 afterEach(cleanup)
@@ -11,7 +11,7 @@ describe("AppearanceProvider", function () {
 
     render(<AppearanceProvider><Read onRead={value => values.push(value)} /></AppearanceProvider>)
 
-    expect(values).toEqual([defaultAppearance, "light", defaultAppearance.colors.background.light])
+    expect(values).toEqual([defaultAppearance, "light", defaultAppearance.colors.light.background])
   })
 
   it("provides unresolved Appearance and effective Theme directly", function () {
@@ -21,13 +21,16 @@ describe("AppearanceProvider", function () {
       <Read onRead={value => values.push(value)} />
     </AppearanceProvider>)
 
-    expect(values).toEqual([defaultAppearance, "dark", defaultAppearance.colors.background.dark])
+    expect(values).toEqual([defaultAppearance, "dark", defaultAppearance.colors.dark.background])
   })
 
   it("inherits every omitted value from the nearest provider", function () {
     const appearance = {
       ...defaultAppearance,
-      colors: { ...defaultAppearance.colors, background: { light: "#112233", dark: "#ddeeff" } }
+      colors: {
+        light: { ...defaultAppearance.colors.light, background: "#112233" },
+        dark: { ...defaultAppearance.colors.dark, background: "#ddeeff" }
+      }
     }
     const values: Array<Appearance | Theme | string> = []
 
@@ -35,17 +38,7 @@ describe("AppearanceProvider", function () {
       <AppearanceProvider><Read onRead={value => values.push(value)} /></AppearanceProvider>
     </AppearanceProvider>)
 
-    expect(values).toEqual([appearance, "dark", appearance.colors.background.dark])
-  })
-
-  it("resolves shared values through their light branch in either Theme", function () {
-    let received = 0
-
-    render(<AppearanceProvider appearance={defaultAppearance} theme="dark">
-      <ResolveSpacing onRead={value => { received = value }} />
-    </AppearanceProvider>)
-
-    expect(received).toBe(defaultAppearance.spacing.light)
+    expect(values).toEqual([appearance, "dark", appearance.colors.dark.background])
   })
 
   it("owns Appearance-derived document scrollbars without rendering a container", function () {
@@ -104,7 +97,7 @@ describe("AppearanceProvider", function () {
 
     render(<Read onRead={value => values.push(value)} />)
 
-    expect(values).toEqual([defaultAppearance, "light", defaultAppearance.colors.background.light])
+    expect(values).toEqual([defaultAppearance, "light", defaultAppearance.colors.light.background])
   })
 
   it("reacts to the browser Theme when no provider selects one", function () {
@@ -145,12 +138,7 @@ function Read({ onRead }: Readonly<{ onRead: (value: Appearance | Theme | string
   const appearance = useAppearance()
   onRead(appearance)
   onRead(useTheme())
-  onRead(useResolveTheme(appearance.colors.background))
-  return null
-}
-
-function ResolveSpacing({ onRead }: Readonly<{ onRead: (value: number) => void }>) {
-  onRead(useResolveTheme(useAppearance().spacing))
+  onRead(useThemedValue(appearance.colors).background)
   return null
 }
 

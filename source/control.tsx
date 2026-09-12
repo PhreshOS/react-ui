@@ -1,12 +1,12 @@
 import type { CSSProperties, ReactNode } from "react"
 import { useMemo } from "react"
 import { FieldError, Label, Text } from "react-aria-components"
-import { useAppearance, useResolveTheme } from "./appearance-provider.js"
+import { useAppearance, useThemedValue } from "./appearance-provider.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { scale, type ScaleLevel } from "./scale.js"
 import { solidColors } from "./color.js"
 import { useResolveSolidColor, type Color } from "./color.js"
-import { visualTransition } from "./motion-style.js"
+import { useVisualTransition } from "./motion-style.js"
 
 /** Semantic Appearance colors accepted by interactive controls. */
 export type ControlColor = Color
@@ -42,6 +42,7 @@ export const controlFontSizes: Readonly<Record<ScaleLevel, number>> = Object.fre
 type SolidColors = ReturnType<typeof solidColors>
 
 export interface ControlTheme {
+    readonly transition: CSSProperties
     readonly spacing: number
     readonly foreground: string
     readonly background: string
@@ -62,9 +63,11 @@ export interface ControlTheme {
 export function useControlTheme({ size = "medium", color, radius = "medium" }: ControlProps & RadiusProps): ControlTheme {
 
     const appearance = useAppearance()
-    const spacing = scale(useResolveTheme(appearance.spacing), size)
-    const foreground = useResolveTheme(appearance.colors.foreground)
-    const background = useResolveTheme(appearance.colors.background)
+    const transition = useVisualTransition()
+    const spacing = scale(appearance.spacing, size)
+    const colors = useThemedValue(appearance.colors)
+    const foreground = colors.foreground
+    const background = colors.background
     const tint = useResolveSolidColor(color ?? "primary:base")
     const danger = useResolveSolidColor("danger:base")
     const paints = useMemo(() => ({
@@ -74,6 +77,7 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
     }), [tint, background, foreground, danger])
 
     return {
+        transition,
         spacing,
         foreground,
         background,
@@ -92,7 +96,7 @@ export function fieldStyle(theme: ControlTheme, disabled = false, style?: CSSPro
 
     return {
         ...style,
-        ...visualTransition,
+        ...theme.transition,
         display: "grid",
         gap: theme.gap,
         minWidth: 0,
@@ -114,7 +118,7 @@ export function controlStyle(theme: ControlTheme, focused: boolean, invalid: boo
     const paint = controlPaint(theme, focused, invalid, hovered)
 
     return {
-        ...visualTransition,
+        ...theme.transition,
         appearance: "none",
         boxSizing: "border-box",
         width: "100%",

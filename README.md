@@ -92,9 +92,9 @@ wrapper. The host retains ownership of its own behavior and layout properties;
 Surface retains ownership of material, edge, radius, and required geometry.
 
 `MaterialOptions` defines `opacity`, `backdrop`, `grain`, `grainAmount`,
-`distortion`, and `saturation`. Surface accepts these properties directly because
-it is the material-owning element; it does not accept a nested `material` prop.
-Color remains a separate Surface property. Omitted material values follow
+`distortion`, and `saturation`. Every material-bearing component, including
+Surface, exposes these values through its `material` prop. Color remains a
+separate property. Omitted material values follow
 `appearance.material`. Effect options accept a scale level or a direct number;
 opacity affects Surface paint only, never its content. The material edge is part
 of the same Surface rather than a second public entity.
@@ -139,11 +139,11 @@ Theme names never imply particular colors. No component requires a Client or
 Server SDK.
 
 Fields distinguish hover, pointer focus, keyboard focus, and invalid state.
-Shared CSS transitions use a fixed 120ms ease-out timing for colors and corner
+Shared CSS transitions use `appearance.transaction` for colors and corner
 radius. The material fill and opacity values transition on the painted layers, not on the
 Surface host. Select menus combine a small placement-aware slide with an overlay
 opacity fade for entry and exit, using React Aria's animation lifecycle. Reduced-motion preferences make
-these changes immediate. No Appearance configuration is added for motion yet.
+these changes immediate without changing the Appearance value.
 Blur, distortion, geometry, and Surface host opacity are not transitioned; gradients
 and structurally removed effects change directly rather than adding extra
 layers or keeping disabled effects alive.

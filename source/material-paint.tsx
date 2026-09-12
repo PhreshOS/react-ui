@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { paintTransition } from "./motion-style.js"
+import { usePaintTransition } from "./motion-style.js"
 
 interface MaterialPaintProps {
   readonly color: string
@@ -12,6 +12,7 @@ interface MaterialPaintProps {
 
 /** The fill, refraction definition, and grain of one Surface. */
 export function MaterialPaint({ color, distortion, grain, grainAmount, identity, opacity }: MaterialPaintProps) {
+  const paintTransition = usePaintTransition()
   const seed = useMemo(() => seedFrom(identity), [identity])
   const hasPaint = opacity > 0
   const hasGrain = hasPaint && grain > 0 && grainAmount > 0

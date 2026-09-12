@@ -13,5 +13,5 @@ export function resolveSpacing(value: Spacing | undefined, appearance: Appearanc
 
   if (!appearance) throw new Error("Semantic spacing requires an AppearanceProvider")
 
-  return scale(appearance.spacing.light, value)
+  return scale(appearance.spacing, value)
 }

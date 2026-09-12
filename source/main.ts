@@ -8,7 +8,7 @@ export { defaultAppearance } from "@phreshos/core"
 export {
   AppearanceProvider,
   useAppearance,
-  useResolveTheme,
+  useThemedValue,
   useTheme,
   type AppearanceProviderProps
 } from "./appearance-provider.js"

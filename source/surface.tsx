@@ -1,16 +1,16 @@
 import { createElement, forwardRef, useId } from "react"
 import type { ComponentPropsWithRef, ComponentPropsWithoutRef, CSSProperties, ElementType, ReactElement, ReactNode } from "react"
-import { useAppearance, useResolveTheme } from "./appearance-provider.js"
+import { useAppearance, useThemedValue } from "./appearance-provider.js"
 import { useResolveColor, type Color } from "./color.js"
-import { useMaterialOptions, type MaterialOptions } from "./material-options.js"
+import { useMaterialOptions, type MaterialOptions, type MaterialOverrides } from "./material-options.js"
 import { MaterialPaint } from "./material-paint.js"
-import MotionStyle, { visualTransition } from "./motion-style.js"
+import MotionStyle, { useVisualTransition } from "./motion-style.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { SurfaceEdge } from "./surface-edge.js"
 
 export type { MaterialOptions } from "./material-options.js"
 
-export interface SurfaceOwnProps extends MaterialOptions, RadiusProps {
+export interface SurfaceOwnProps extends MaterialOverrides, RadiusProps {
   readonly color?: Color
 }
 
@@ -42,26 +42,22 @@ type SurfaceImplementationProps = SurfaceOwnProps
 const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Surface({
   as: Element = "div",
   color,
-  opacity,
-  backdrop,
-  grain,
-  grainAmount,
-  distortion,
-  saturation,
+  material: options,
   radius,
   children,
   style,
   ...properties
 }, ref) {
   const appearance = useAppearance()
-  const material = useResolvedSurface(color, { opacity, backdrop, grain, grainAmount, distortion, saturation })
+  const transition = useVisualTransition()
+  const material = useResolvedSurface(color, options)
   const resolvedRadius = resolveRadius(radius ?? "medium", appearance)
 
   return createElement(Element, {
     ...properties,
     ref,
     style: {
-      ...visualTransition,
+      ...transition,
       ...style,
       background: "transparent",
       color: style?.color ?? material.foreground,
@@ -74,14 +70,14 @@ const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Sur
 
 export const Surface = SurfaceRoot as SurfaceComponent
 
-function useResolvedSurface(color: Color | undefined, options: MaterialOptions) {
+function useResolvedSurface(color: Color | undefined, options?: MaterialOptions) {
   const appearance = useAppearance()
   const material = useMaterialOptions(options)
 
   return {
     ...material,
     color: useResolveColor(color),
-    foreground: useResolveTheme(appearance.colors.foreground)
+    foreground: useThemedValue(appearance.colors).foreground
   }
 }
 

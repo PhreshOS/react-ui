@@ -1,5 +1,5 @@
 import { forwardRef, type ReactNode } from "react"
-import { useAppearance, useResolveTheme } from "./appearance-provider.js"
+import { useAppearance } from "./appearance-provider.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceProps } from "./surface.js"
 
@@ -15,7 +15,7 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(function Panel(
   ref
 ) {
   const appearance = useAppearance()
-  const inset = scale(useResolveTheme(appearance.spacing), "small")
+  const inset = scale(appearance.spacing, "small")
   const hasHeader = header !== undefined && header !== null && header !== false
 
   return <Surface

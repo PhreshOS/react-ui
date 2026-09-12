@@ -14,5 +14,5 @@ export function resolveRadius(value: Radius | undefined, appearance: Appearance 
 
   if (!appearance) throw new Error("A semantic radius requires an AppearanceProvider")
 
-  return scale(appearance.radius.light, value)
+  return scale(appearance.radius, value)
 }

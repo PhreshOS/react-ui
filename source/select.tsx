@@ -8,7 +8,7 @@ import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import type { RadiusProps } from "./radius.js"
 import { Surface } from "./surface.js"
 import type { MaterialOverrides } from "./material-options.js"
-import { controlTransition, overlayMotionClass, visualTransition } from "./motion-style.js"
+import { overlayMotionClass, useControlTransition, useOverlayTransition } from "./motion-style.js"
 
 export interface SelectOption {
     readonly value: string
@@ -31,6 +31,8 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
 
     const theme = useControlTheme({ size, color, radius })
     const reduced = useReducedMotion()
+    const transition = useControlTransition(Boolean(reduced))
+    const overlayTransition = useOverlayTransition()
 
     return <AriaSelect {...properties} ref={ref} value={value} defaultValue={defaultValue}
         onChange={key => onChange?.(key == null ? null : String(key))}
@@ -46,14 +48,14 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
             })}>
                 <SelectValue style={({ isPlaceholder }) => ({ opacity: isPlaceholder ? 0.6 : 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" })} />
                 <motion.svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5"
-                    initial={false} animate={{ rotate: state.isOpen ? 180 : 0 }} transition={{ ...controlTransition, duration: reduced ? 0 : controlTransition.duration }}
+                    initial={false} animate={{ rotate: state.isOpen ? 180 : 0 }} transition={transition}
                     style={{ flexShrink: 0 }}><path d="m2 4 4 4 4-4" /></motion.svg>
             </Button>
-            <Popover className={overlayMotionClass} placement="bottom start" offset={theme.gap} maxHeight={280 + theme.gap * 2} style={{ width: "var(--trigger-width)", maxWidth: "calc(100vw - 16px)" }}>
+            <Popover className={overlayMotionClass} placement="bottom start" offset={theme.gap} maxHeight={280 + theme.gap * 2} style={{ ...overlayTransition, width: "var(--trigger-width)", maxWidth: "calc(100vw - 16px)" }}>
                 <Surface style={{ padding: theme.gap, display: "flex", flexDirection: "column", maxHeight: "inherit", boxSizing: "border-box" }}>
                     <ListBox items={options} style={{ display: "grid", gap: theme.gap, minHeight: 0, overflow: "auto", outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
                         {option => <ListBoxItem id={option.value} textValue={option.label} style={item => ({
-                            ...visualTransition,
+                            ...theme.transition,
                             display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,
                             minHeight: theme.height, paddingInline: Math.max(8, theme.spacing), boxSizing: "border-box",
                             borderRadius: theme.radius,
