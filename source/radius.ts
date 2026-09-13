@@ -1,12 +1,12 @@
 import type { CSSProperties } from "react"
-import type { Appearance, Shapeable } from "@phreshos/core"
+import type { Appearance } from "@phreshos/core"
 import { isScaleLevel, scale, type ScaleLevel } from "./scale.js"
 
 /** An Appearance-derived level, pixel value, or explicit CSS corner radius. */
 export type Radius = ScaleLevel | number | (string & {})
 
 /** Shared semantic corner-radius capability for React UI components. */
-export interface RadiusProps extends Shapeable<Radius> {}
+export interface RadiusProps { readonly radius?: Radius }
 
 /** Resolves a Radius while preserving explicit CSS and pixel values. */
 export function resolveRadius(value: Radius | undefined, appearance: Appearance | null): CSSProperties["borderRadius"] {
