@@ -26,7 +26,7 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on th
     expect(indicator?.style.background).toBe("transparent")
     expect(indicator?.style.boxShadow).toBe("")
     expect(material?.getAttribute("opacity")).toBe(String(defaultAppearance.material.light.opacity))
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.background, "base")))
+    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
 
     const user = userEvent.setup()
     await user.click(screen.getByRole(kind, { name: "Choice" }))
@@ -162,17 +162,17 @@ it("shares Button height and responds to the nearest concrete theme colors", () 
     const appearance = {
         ...defaultAppearance,
         colors: {
-            light: { ...defaultAppearance.colors.light, background: "#111111", foreground: "#eeeeee" },
-            dark: { ...defaultAppearance.colors.dark, background: "#eeeeee", foreground: "#111111" }
+            light: { ...defaultAppearance.colors.light, background: "#111111", foreground: "#eeeeee", default: "#223344" },
+            dark: { ...defaultAppearance.colors.dark, background: "#eeeeee", foreground: "#111111", default: "#ccddee" }
         }
     }
     const sample = <><Input aria-label="Name" size="large" /><Button size="large">Save</Button></>
     const view = render(<AppearanceProvider appearance={appearance} theme="light">{sample}</AppearanceProvider>)
     const field = screen.getByRole("textbox")
     expect(field.style.height).toBe(screen.getByRole("button").style.height)
-    expect(materialColor(field)).toBe(css(resolveColorLevel("#111111", "base")))
+    expect(materialColor(field)).toBe(css(resolveColorLevel("#223344", "base")))
     view.rerender(<AppearanceProvider appearance={appearance} theme="dark">{sample}</AppearanceProvider>)
-    expect(materialColor(field)).toBe(css(resolveColorLevel("#eeeeee", "base")))
+    expect(materialColor(field)).toBe(css(resolveColorLevel("#ccddee", "base")))
 })
 
 describe.each([["Checkbox", Checkbox, "checkbox"], ["Switch", Switch, "switch"]] as const)("%s", (_, Control, role) => {

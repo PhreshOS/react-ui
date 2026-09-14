@@ -56,9 +56,8 @@ import { AppearanceProvider, Button } from "@phreshos/react-ui"
 `Button`, `Input`, `Textarea`, `Select`, `Checkbox`, `Switch`, and `Radio`
 use the shared Surface implementation while retaining their native behavior. Color and material
 are independent inputs. `color` accepts an Appearance color and resting level such
-as `background:base` or `primary:soft`, or a direct CSS color. Surface and neutral
-surface hosts default to `background:base`; a component may select a semantic
-default required by its own behavior, such as `primary:base` for selection.
+as `background:base` or `primary:soft`, or a direct CSS color. Surface defaults
+to `background:base`; solid controls default to `default:base`.
 Hover and press derive shades of that fill. The resting fill chooses the
 higher-contrast text from Appearance's background and foreground once; interaction
 shades keep that choice.
@@ -128,8 +127,7 @@ Native properties and the forwarded ref target the outer Surface.
 
 Every input uses Appearance colors and the same five `size` levels as Button.
 `color` selects the fill independently from material. Input, Textarea, Select,
-and Button use `background:base` when it is omitted; selection indicators use
-`primary:base`. Invalid
+and Button use `default:base` when it is omitted. Invalid
 fields use danger instead. Text fields share Surface's glass edge. Interaction shades
 derive from the base color's lightness, and text or selection marks use whichever
 Appearance background or foreground has higher contrast against the base fill.

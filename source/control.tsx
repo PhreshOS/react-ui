@@ -47,7 +47,6 @@ export interface ControlTheme {
     readonly foreground: string
     readonly background: string
     readonly tint: string
-    readonly colored: boolean
     readonly danger: string
     readonly paints: {
         readonly palette: SolidColors
@@ -68,13 +67,14 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
     const colors = useThemedValue(appearance.colors)
     const foreground = colors.foreground
     const background = colors.background
-    const tint = useResolveSolidColor(color ?? "primary:base")
+    const tint = useResolveSolidColor(color ?? "default:base")
+    const neutral = useResolveSolidColor("default:base")
     const danger = useResolveSolidColor("danger:base")
     const paints = useMemo(() => ({
         palette: solidColors(tint, background, foreground),
-        neutral: solidColors(background, background, foreground),
+        neutral: solidColors(neutral, background, foreground),
         danger: solidColors(danger, background, foreground)
-    }), [tint, background, foreground, danger])
+    }), [tint, neutral, background, foreground, danger])
 
     return {
         transition,
@@ -82,7 +82,6 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
         foreground,
         background,
         tint,
-        colored: color !== undefined,
         danger,
         paints,
         radius: resolveRadius(radius, appearance),
@@ -109,7 +108,7 @@ export function fieldStyle(theme: ControlTheme, disabled = false, style?: CSSPro
 }
 
 export function controlPaint(theme: ControlTheme, focused: boolean, invalid: boolean, hovered = false) {
-    const paints = invalid ? theme.paints.danger : theme.colored ? theme.paints.palette : theme.paints.neutral
+    const paints = invalid ? theme.paints.danger : theme.paints.palette
     return focused ? paints.pressed : hovered ? paints.hover : paints.rest
 }
 

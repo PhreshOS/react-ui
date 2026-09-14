@@ -71,10 +71,10 @@ describe("Button", function () {
     expect(button.style.fontSize).toBe("15px")
   })
 
-  it("uses shared Surface material with a neutral control color by default", function () {
+  it("uses Appearance's default color by default", function () {
     renderButton(<Button>Continue</Button>)
     const button = screen.getByRole("button")
-    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.colors.light.background, "base")))
+    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
     expect(button.style.background).toBe("transparent")
     expect(button.style.height).toBe("36px")
     expect(button.style.fontSize).toBe("13px")
@@ -188,7 +188,7 @@ describe("Button", function () {
     expect(button.style.paddingBlock).toBe("12px")
     expect(button.style.textAlign).toBe("start")
     expect(button.style.flexShrink).toBe("0")
-    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.colors.light.background, "base")))
+    expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
     await userEvent.setup().click(button)
     expect(onPress).toHaveBeenCalledTimes(1)
   })

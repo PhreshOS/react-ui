@@ -10,7 +10,7 @@ import type { MaterialOverrides } from "./material-options.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
 
-/** A semantic color from Appearance; omission uses background and foreground. */
+/** A semantic color from Appearance; omission uses `default:base`. */
 export type ButtonColor = ControlColor
 
 /** Properties accepted by the shared interactive button. */
@@ -141,6 +141,6 @@ function buttonStyle({
 }
 
 function buttonPaint(theme: ControlTheme, interactive: boolean, hovered: boolean, pressed: boolean) {
-  const paints = theme.colored ? theme.paints.palette : theme.paints.neutral
+  const paints = theme.paints.palette
   return interactive && pressed ? paints.pressed : interactive && hovered ? paints.hover : paints.rest
 }
