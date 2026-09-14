@@ -136,7 +136,18 @@ function parseSemanticColor(value: string): { name: AppearanceColor, level: Colo
   return { name, level }
 }
 
+const appearanceColors = Object.freeze({
+  background: true,
+  foreground: true,
+  default: true,
+  primary: true,
+  secondary: true,
+  success: true,
+  warning: true,
+  danger: true,
+  info: true
+}) satisfies Readonly<Record<AppearanceColor, true>>
+
 function isAppearanceColor(value: string): value is AppearanceColor {
-  return value === "background" || value === "foreground" || value === "primary" || value === "secondary"
-    || value === "success" || value === "warning" || value === "danger" || value === "info"
+  return Object.hasOwn(appearanceColors, value)
 }
