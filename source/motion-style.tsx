@@ -37,7 +37,7 @@ export function useOverlayTransition(): CSSProperties {
 
 export const overlayMotionClass = "phreshos-ui-overlay"
 
-function useTransitionTiming(): CSSProperties {
+export function useTransitionTiming(): CSSProperties {
   const { duration, easing } = useAppearance().transaction
   return {
     transitionDuration: `${duration}ms`,

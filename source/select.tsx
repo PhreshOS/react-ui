@@ -7,6 +7,7 @@ import { SurfaceButton } from "./control-surface.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import type { RadiusProps } from "./radius.js"
 import { Surface } from "./surface.js"
+import { ScrollArea } from "./scroll-area.js"
 import type { MaterialOverrides } from "./material-options.js"
 import { overlayMotionClass, useControlTransition, useOverlayTransition } from "./motion-style.js"
 
@@ -53,21 +54,23 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
             </Button>
             <Popover className={overlayMotionClass} placement="bottom start" offset={theme.gap} maxHeight={280 + theme.gap * 2} style={{ ...overlayTransition, width: "var(--trigger-width)", maxWidth: "calc(100vw - 16px)" }}>
                 <Surface style={{ padding: theme.gap, display: "flex", flexDirection: "column", maxHeight: "inherit", boxSizing: "border-box" }}>
-                    <ListBox items={options} style={{ display: "grid", gap: theme.gap, minHeight: 0, overflow: "auto", outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
-                        {option => <ListBoxItem id={option.value} textValue={option.label} style={item => ({
-                            ...theme.transition,
-                            display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,
-                            minHeight: theme.height, paddingInline: Math.max(8, theme.spacing), boxSizing: "border-box",
-                            borderRadius: theme.radius,
-                            outline: item.isFocused && !item.isSelected ? `2px solid ${theme.foreground}` : "none", outlineOffset: -2,
-                            cursor: item.isDisabled ? "not-allowed" : "pointer",
-                            opacity: item.isDisabled ? 0.46 : 1,
-                            ...(item.isSelected ? item.isFocused ? theme.paints.palette.hover : theme.paints.palette.rest
-                                : { background: "transparent", color: theme.foreground })
-                        })}>
-                            {item => <>{option.label}<span aria-hidden="true">{item.isSelected ? "✓" : null}</span></>}
-                        </ListBoxItem>}
-                    </ListBox>
+                    <ScrollArea style={{ flex: "1 1 auto", minHeight: 0 }}>
+                        <ListBox items={options} style={{ display: "grid", gap: theme.gap, outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
+                            {option => <ListBoxItem id={option.value} textValue={option.label} style={item => ({
+                                ...theme.transition,
+                                display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,
+                                minHeight: theme.height, paddingInline: Math.max(8, theme.spacing), boxSizing: "border-box",
+                                borderRadius: theme.radius,
+                                outline: item.isFocused && !item.isSelected ? `2px solid ${theme.foreground}` : "none", outlineOffset: -2,
+                                cursor: item.isDisabled ? "not-allowed" : "pointer",
+                                opacity: item.isDisabled ? 0.46 : 1,
+                                ...(item.isSelected ? item.isFocused ? theme.paints.palette.hover : theme.paints.palette.rest
+                                    : { background: "transparent", color: theme.foreground })
+                            })}>
+                                {item => <>{option.label}<span aria-hidden="true">{item.isSelected ? "✓" : null}</span></>}
+                            </ListBoxItem>}
+                        </ListBox>
+                    </ScrollArea>
                 </Surface>
             </Popover>
             <FieldFeedback theme={theme} description={description} errorMessage={errorMessage} />

@@ -33,6 +33,7 @@ export { Radio, RadioGroup, type RadioProps, type RadioGroupProps } from "./radi
 export { Switch, type SwitchProps } from "./switch.js"
 export { Select, type SelectProps, type SelectOption } from "./select.js"
 export { Slider, type SliderProps } from "./slider.js"
+export { ScrollArea, type ScrollAreaAxis, type ScrollAreaProps } from "./scroll-area.js"
 export type { ControlColor } from "./control.js"
 export type { LayoutAlignment, LayoutGap, LayoutJustification } from "./layout.js"
 export { resolveRadius, type Radius, type RadiusProps } from "./radius.js"

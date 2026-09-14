@@ -1,6 +1,5 @@
 import type { ReactNode } from "react"
 import { type Appearance, type Theme } from "@phreshos/core"
-import DocumentScrollbars from "./document-scrollbars.js"
 import MotionStyle from "./motion-style.js"
 import { AppearanceContext, ThemeContext, useAppearance, useTheme } from "./appearance-context.js"
 
@@ -16,7 +15,6 @@ export function AppearanceProvider({ appearance, children, theme }: AppearancePr
   return <AppearanceContext.Provider value={resolvedAppearance}>
     <ThemeContext.Provider value={resolvedTheme}>
       <MotionStyle />
-      <DocumentScrollbars appearance={resolvedAppearance} theme={resolvedTheme} />
       {children}
     </ThemeContext.Provider>
   </AppearanceContext.Provider>

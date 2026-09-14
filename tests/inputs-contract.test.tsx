@@ -310,14 +310,16 @@ it("keeps a long controlled Select open across rerenders and constrains scrollin
 
     await user.click(trigger)
     const list = screen.getByRole("listbox")
-    const material = list.parentElement!
+    const scrollArea = list.closest<HTMLElement>("[data-phreshos-scroll-area]")!
+    const material = scrollArea.parentElement!
     const popover = material.parentElement!
     expect(material.style.maxHeight).toBe("inherit")
     expect(material.style.boxSizing).toBe("border-box")
     expect(material.style.display).toBe("flex")
     expect(material.style.flexDirection).toBe("column")
-    expect(list.style.minHeight).toBe("0px")
-    expect(list.style.overflow).toBe("auto")
+    expect(scrollArea.style.minHeight).toBe("0px")
+    expect(scrollArea.querySelector<HTMLElement>("[data-phreshos-scroll-area-viewport]")!.style.overflowY).toBe("scroll")
+    expect(list.style.overflow).toBe("")
     expect(list.style.maxHeight).toBe("")
     expect(popover.style.maxHeight).not.toBe("")
 
