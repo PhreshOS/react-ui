@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import type { AppearanceColor } from "@phreshos/core"
+import type { AppearanceColor, AppearanceColors } from "@phreshos/core"
 import { ColorSpace, mix, parse, serialize, to, toGamut, contrastWCAG21, sRGB, sRGB_Linear, HSL, HWB, Lab, LCH, OKLab, OKLCH, P3, A98RGB, ProPhoto, REC_2020, XYZ_D50, XYZ_D65 } from "colorjs.io/fn"
 import { useAppearance, useThemedValue } from "./appearance-provider.js"
 
@@ -59,19 +59,19 @@ export function useColor(value: string): ColorScale {
 /** Resolves a semantic Appearance color or preserves a direct CSS color. */
 export function useResolveColor(value: Color = defaultColor): string {
   const appearance = useAppearance()
-  const semantic = parseSemanticColor(value)
-  const source = useThemedValue(appearance.colors)[semantic?.name ?? "background"]
+  const colors = useThemedValue(appearance.colors)
+  const semantic = parseSemanticColor(value, colors)
 
-  return semantic ? color(source)[semantic.level] : value
+  return semantic ? color(semantic.source)[semantic.level] : value
 }
 
 /** Resolves a color to concrete opaque paint for solid interactive states. */
 export function useResolveSolidColor(value: Color): string {
   const appearance = useAppearance()
-  const semantic = parseSemanticColor(value)
-  const source = useThemedValue(appearance.colors)[semantic?.name ?? "background"]
+  const colors = useThemedValue(appearance.colors)
+  const semantic = parseSemanticColor(value, colors)
 
-  return semantic ? resolveColorLevel(source, semantic.level) : opaqueColor(value)
+  return semantic ? resolveColorLevel(semantic.source, semantic.level) : opaqueColor(value)
 }
 
 /** Applies material opacity without restricting the source CSS color syntax. */
@@ -127,27 +127,12 @@ export function solidColors(base: string, background: string, foreground: string
   }
 }
 
-function parseSemanticColor(value: string): { name: AppearanceColor, level: ColorLevel } | null {
+function parseSemanticColor(value: string, colors: AppearanceColors): { source: string, level: ColorLevel } | null {
   const separator = value.indexOf(":")
   if (separator < 0 || value.indexOf(":", separator + 1) >= 0) return null
   const name = value.slice(0, separator)
   const level = value.slice(separator + 1)
-  if (!isAppearanceColor(name) || !isColorLevel(level)) return null
-  return { name, level }
-}
-
-const appearanceColors = Object.freeze({
-  background: true,
-  foreground: true,
-  default: true,
-  primary: true,
-  secondary: true,
-  success: true,
-  warning: true,
-  danger: true,
-  info: true
-}) satisfies Readonly<Record<AppearanceColor, true>>
-
-function isAppearanceColor(value: string): value is AppearanceColor {
-  return Object.hasOwn(appearanceColors, value)
+  const source = Reflect.get(colors, name)
+  if (typeof source !== "string" || !isColorLevel(level)) return null
+  return { source, level }
 }
