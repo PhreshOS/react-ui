@@ -114,6 +114,7 @@ function buttonStyle({
     gridAutoFlow: "column",
     gridAutoColumns: "max-content",
     placeItems: "center",
+    justifyContent: "center",
     flexShrink: 0,
     minWidth: 0,
     height,

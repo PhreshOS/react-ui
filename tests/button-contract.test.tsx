@@ -83,6 +83,13 @@ describe("Button", function () {
     expect(button.style.backgroundImage).toBe("none")
   })
 
+  it("centers its content group when stretched", function () {
+    renderButton(<Button style={{ width: "100%" }}>Continue</Button>)
+    const button = screen.getByRole("button")
+    expect(button.style.justifyContent).toBe("center")
+    expect(button.style.placeItems).toBe("center")
+  })
+
   it.each(["primary", "secondary", "success", "warning", "danger", "info"] as const)("uses Appearance's %s color", function (role) {
     renderButton(<Button color={`${role}:base`}>Continue</Button>)
     const button = screen.getByRole("button")
