@@ -1,7 +1,7 @@
 import { defaultAppearance, type Easing } from "@phreshos/core"
 import type { CSSProperties } from "react"
 import type { Transition } from "motion/react"
-import { useAppearance } from "./appearance-context.js"
+import { useAppearance, usePreferences } from "./appearance-context.js"
 
 const visualProperties = "background-color, color, border-color, border-radius"
 const paintProperties = "fill, stroke, opacity"
@@ -17,11 +17,12 @@ export function usePaintTransition(): CSSProperties {
 }
 
 /** Motion timing for interactive geometry owned by React UI. */
-export function useControlTransition(reduced = false): Transition {
+export function useControlTransition(): Transition {
   const { duration, easing } = useAppearance().transaction
+  const { animations } = usePreferences()
   return {
     type: "tween",
-    duration: reduced ? 0 : duration / 1_000,
+    duration: animations ? duration / 1_000 : 0,
     ease: motionEasing(easing)
   }
 }
@@ -29,8 +30,9 @@ export function useControlTransition(reduced = false): Transition {
 /** Per-overlay variables consumed by the shared entrance keyframes. */
 export function useOverlayTransition(): CSSProperties {
   const { duration, easing } = useAppearance().transaction
+  const { animations } = usePreferences()
   return {
-    "--phreshos-ui-motion-duration": `${duration}ms`,
+    "--phreshos-ui-motion-duration": `${animations ? duration : 0}ms`,
     "--phreshos-ui-motion-easing": cssEasing(easing)
   } as CSSProperties
 }
@@ -39,8 +41,9 @@ export const overlayMotionClass = "phreshos-ui-overlay"
 
 export function useTransitionTiming(): CSSProperties {
   const { duration, easing } = useAppearance().transaction
+  const { animations } = usePreferences()
   return {
-    transitionDuration: `${duration}ms`,
+    transitionDuration: `${animations ? duration : 0}ms`,
     transitionTimingFunction: cssEasing(easing)
   }
 }
@@ -78,10 +81,6 @@ const stylesheet = `
 @keyframes phreshos-ui-overlay-enter {
   from { opacity: 0; translate: var(--phreshos-ui-overlay-x) var(--phreshos-ui-overlay-y); }
   to { opacity: 1; translate: 0 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  :root { --phreshos-ui-motion-duration: 0ms; }
-  .phreshos-ui-overlay[data-entering], .phreshos-ui-overlay[data-exiting] { animation: none; }
 }
 `
 

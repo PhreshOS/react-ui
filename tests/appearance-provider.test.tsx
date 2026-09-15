@@ -1,27 +1,28 @@
 import { act, cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
-import { AppearanceProvider, useAppearance, useThemedValue, useTheme } from "../source/main.js"
-import { defaultAppearance, type Appearance, type Theme } from "@phreshos/core"
+import { AppearanceProvider, useAppearance, useBrowserPreferences, usePreferences, useThemedValue } from "../source/main.js"
+import { defaultAppearance, type Appearance } from "@phreshos/core"
+import type { Preferences } from "../source/main.js"
 
 afterEach(cleanup)
 
 describe("AppearanceProvider", function () {
-  it("accepts independent Appearance and Theme overrides", function () {
-    const values: Array<Appearance | Theme | string> = []
+  it("falls back to complete browser Preferences", function () {
+    const values: Array<Appearance | Preferences | string> = []
 
     render(<AppearanceProvider><Read onRead={value => values.push(value)} /></AppearanceProvider>)
 
-    expect(values).toEqual([defaultAppearance, "light", defaultAppearance.colors.light.background])
+    expect(values).toEqual([defaultAppearance, { theme: "light", animations: true }, defaultAppearance.colors.light.background])
   })
 
-  it("provides unresolved Appearance and effective Theme directly", function () {
-    const values: Array<Appearance | Theme | string> = []
+  it("provides Appearance and complete Preferences directly", function () {
+    const values: Array<Appearance | Preferences | string> = []
 
-    render(<AppearanceProvider appearance={defaultAppearance} theme="dark">
+    render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "dark", animations: false }}>
       <Read onRead={value => values.push(value)} />
     </AppearanceProvider>)
 
-    expect(values).toEqual([defaultAppearance, "dark", defaultAppearance.colors.dark.background])
+    expect(values).toEqual([defaultAppearance, { theme: "dark", animations: false }, defaultAppearance.colors.dark.background])
   })
 
   it("inherits every omitted value from the nearest provider", function () {
@@ -32,17 +33,17 @@ describe("AppearanceProvider", function () {
         dark: { ...defaultAppearance.colors.dark, background: "#ddeeff" }
       }
     }
-    const values: Array<Appearance | Theme | string> = []
+    const values: Array<Appearance | Preferences | string> = []
 
-    render(<AppearanceProvider appearance={appearance} theme="dark">
+    render(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: false }}>
       <AppearanceProvider><Read onRead={value => values.push(value)} /></AppearanceProvider>
     </AppearanceProvider>)
 
-    expect(values).toEqual([appearance, "dark", appearance.colors.dark.background])
+    expect(values).toEqual([appearance, { theme: "dark", animations: false }, appearance.colors.dark.background])
   })
 
   it("does not alter arbitrary document scrollbars", function () {
-    render(<AppearanceProvider appearance={defaultAppearance} theme="light">
+    render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
       <span data-testid="content" />
     </AppearanceProvider>)
     expect(document.head.querySelector("style[data-phreshos-scrollbars]")).toBeNull()
@@ -50,23 +51,24 @@ describe("AppearanceProvider", function () {
   })
 
   it("uses Core defaults outside an AppearanceProvider", function () {
-    const values: Array<Appearance | Theme | string> = []
+    const values: Array<Appearance | Preferences | string> = []
 
     render(<Read onRead={value => values.push(value)} />)
 
-    expect(values).toEqual([defaultAppearance, "light", defaultAppearance.colors.light.background])
+    expect(values).toEqual([defaultAppearance, { theme: "light", animations: true }, defaultAppearance.colors.light.background])
   })
 
-  it("reacts to the browser Theme when no provider selects one", function () {
+  it("reacts to complete browser Preferences when no provider supplies them", function () {
     const listeners = new Set<() => void>()
     let dark = true
+    let reduced = false
     const original = window.matchMedia
 
     Object.defineProperty(window, "matchMedia", {
       configurable: true,
-      value: () => ({
-        matches: dark,
-        media: "(prefers-color-scheme: dark)",
+      value: (query: string) => ({
+        matches: query.includes("color-scheme") ? dark : reduced,
+        media: query,
         onchange: null,
         addEventListener: (_event: string, listener: () => void) => listeners.add(listener),
         removeEventListener: (_event: string, listener: () => void) => listeners.delete(listener),
@@ -76,30 +78,31 @@ describe("AppearanceProvider", function () {
       })
     })
 
-    const values: Theme[] = []
-    const rendered = render(<ReadTheme onRead={value => values.push(value)} />)
-    expect(values.at(-1)).toBe("dark")
+    const values: Preferences[] = []
+    const rendered = render(<ReadBrowserPreferences onRead={value => values.push(value)} />)
+    expect(values.at(-1)).toEqual({ theme: "dark", animations: true })
 
     act(() => {
       dark = false
+      reduced = true
       for (const listener of listeners) listener()
     })
 
-    expect(values.at(-1)).toBe("light")
+    expect(values.at(-1)).toEqual({ theme: "light", animations: false })
     rendered.unmount()
     Object.defineProperty(window, "matchMedia", { configurable: true, value: original })
   })
 })
 
-function Read({ onRead }: Readonly<{ onRead: (value: Appearance | Theme | string) => void }>) {
+function Read({ onRead }: Readonly<{ onRead: (value: Appearance | Preferences | string) => void }>) {
   const appearance = useAppearance()
   onRead(appearance)
-  onRead(useTheme())
+  onRead(usePreferences())
   onRead(useThemedValue(appearance.colors).background)
   return null
 }
 
-function ReadTheme({ onRead }: Readonly<{ onRead: (value: Theme) => void }>) {
-  onRead(useTheme())
+function ReadBrowserPreferences({ onRead }: Readonly<{ onRead: (value: Preferences) => void }>) {
+  onRead(useBrowserPreferences())
   return null
 }

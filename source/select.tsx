@@ -1,5 +1,5 @@
 import { forwardRef } from "react"
-import { motion, useReducedMotion } from "motion/react"
+import { motion } from "motion/react"
 import { Select as AriaSelect, Button, SelectValue, Popover, ListBox, ListBoxItem } from "react-aria-components"
 import type { SelectProps as AriaSelectProps } from "react-aria-components"
 import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
@@ -31,8 +31,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
 }, ref) {
 
     const theme = useControlTheme({ size, color, radius })
-    const reduced = useReducedMotion()
-    const transition = useControlTransition(Boolean(reduced))
+    const transition = useControlTransition()
     const overlayTransition = useOverlayTransition()
 
     return <AriaSelect {...properties} ref={ref} value={value} defaultValue={defaultValue}

@@ -1,10 +1,11 @@
 import { forwardRef, useId } from "react"
-import { motion, useReducedMotion } from "motion/react"
+import { motion } from "motion/react"
 import { Slider as AriaSlider, SliderTrack, SliderThumb, SliderFill, SliderOutput } from "react-aria-components"
 import type { SliderProps as AriaSliderProps } from "react-aria-components"
 import { FieldLabel, fieldStyle, useControlTheme } from "./control.js"
 import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import { useControlTransition } from "./motion-style.js"
+import { usePreferences } from "./appearance-provider.js"
 
 export interface SliderProps extends Omit<AriaSliderProps<number>, ControlOverrides>, ControlProps, Pick<FieldProps, "label" | "description"> {
     readonly name?: string
@@ -19,8 +20,8 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
     const descriptionId = useId()
     const vertical = orientation === "vertical"
     const diameter = theme.fontSize + 6
-    const reduced = useReducedMotion()
-    const transition = useControlTransition(Boolean(reduced))
+    const { animations } = usePreferences()
+    const transition = useControlTransition()
     const rail = Math.max(4, Math.round(diameter / 3))
 
     return <AriaSlider {...properties} ref={ref} isDisabled={disabled} orientation={orientation} style={fieldStyle(theme, disabled, style)}
@@ -51,7 +52,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
                 cursor: state.isDisabled ? "not-allowed" : state.isDragging ? "grabbing" : "grab"
             })}>
                 {state => <motion.span aria-hidden="true" initial={false}
-                    animate={{ scale: reduced || state.isDisabled ? 1 : state.isDragging ? 0.92 : state.isHovered ? 1.08 : 1 }}
+                    animate={{ scale: !animations || state.isDisabled ? 1 : state.isDragging ? 0.92 : state.isHovered ? 1.08 : 1 }}
                     transition={transition}
                     style={{ ...theme.transition, position: "absolute", inset: 0, borderRadius: "inherit", pointerEvents: "none",
                         background: (state.isDragging ? theme.paints.palette.pressed : state.isHovered ? theme.paints.palette.hover : theme.paints.palette.rest).color,

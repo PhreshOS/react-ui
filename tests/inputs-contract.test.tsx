@@ -132,7 +132,7 @@ it.each(["primary", "secondary", "success", "warning", "danger", "info"] as cons
     const view = renderUI(sample)
 
     for (const theme of ["light", "dark"] as const) {
-        view.rerender(<AppearanceProvider appearance={defaultAppearance} theme={theme}>{sample}</AppearanceProvider>)
+        view.rerender(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme, animations: true }}>{sample}</AppearanceProvider>)
         const tint = defaultAppearance.colors[theme][role]
         const paint = solidColors(tint, defaultAppearance.colors[theme].background, defaultAppearance.colors[theme].foreground).rest
 
@@ -167,11 +167,11 @@ it("shares Button height and responds to the nearest concrete theme colors", () 
         }
     }
     const sample = <><Input aria-label="Name" size="large" /><Button size="large">Save</Button></>
-    const view = render(<AppearanceProvider appearance={appearance} theme="light">{sample}</AppearanceProvider>)
+    const view = render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>{sample}</AppearanceProvider>)
     const field = screen.getByRole("textbox")
     expect(field.style.height).toBe(screen.getByRole("button").style.height)
     expect(materialColor(field)).toBe(css(resolveColorLevel("#223344", "base")))
-    view.rerender(<AppearanceProvider appearance={appearance} theme="dark">{sample}</AppearanceProvider>)
+    view.rerender(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>{sample}</AppearanceProvider>)
     expect(materialColor(field)).toBe(css(resolveColorLevel("#ccddee", "base")))
 })
 
@@ -407,7 +407,7 @@ it("Slider reports committed values and resets to the default without changing i
 })
 
 function wrap(children: ReactNode) {
-    return <AppearanceProvider appearance={defaultAppearance} theme="light">{children}</AppearanceProvider>
+    return <AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{children}</AppearanceProvider>
 }
 
 function renderUI(children: ReactNode) {

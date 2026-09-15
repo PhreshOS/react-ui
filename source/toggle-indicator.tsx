@@ -1,9 +1,10 @@
-import { motion, useReducedMotion } from "motion/react"
+import { motion } from "motion/react"
 import type { CSSProperties } from "react"
 import { useLocale } from "react-aria-components"
 import type { ControlTheme } from "./control.js"
 import type { MaterialOptions } from "./material-options.js"
 import { useControlTransition } from "./motion-style.js"
+import { usePreferences } from "./appearance-provider.js"
 import { Surface } from "./surface.js"
 
 /** Shared paint only. Selection, focus, validation, and native input behavior belong to React Aria. */
@@ -19,8 +20,8 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
     material?: MaterialOptions
 }>) {
 
-    const reduced = useReducedMotion()
-    const transition = useControlTransition(Boolean(reduced))
+    const { animations } = usePreferences()
+    const transition = useControlTransition()
     const { direction } = useLocale()
     const diameter = theme.fontSize + 6
     const active = selected || indeterminate
@@ -28,11 +29,11 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
     const paint = pressed ? paints.pressed : hovered ? paints.hover : paints.rest
     const radius = kind === "checkbox" ? Math.min(diameter / 4, typeof theme.radius === "number" ? theme.radius : diameter / 4) : diameter
     const switching = kind === "switch"
-    const thumbWidth = diameter - 6 + (pressed && !reduced ? 3 : 0)
+    const thumbWidth = diameter - 6 + (pressed && animations ? 3 : 0)
     const travel = (diameter * 2 - thumbWidth) / 2 - 3
 
     return <Surface as={motion.span} material={options} color={paint.background} aria-hidden="true" initial={false}
-        animate={{ scale: reduced || switching ? 1 : pressed ? 0.94 : hovered ? 1.03 : 1 }}
+        animate={{ scale: !animations || switching ? 1 : pressed ? 0.94 : hovered ? 1.03 : 1 }}
         transition={transition} style={{
         color: paint.color,
         ...theme.transition,

@@ -1,45 +1,53 @@
-import { createContext, useContext, useSyncExternalStore } from "react"
-import { defaultAppearance, type Appearance, type Theme, type ThemedValue } from "@phreshos/core"
+import { createContext, useContext, useMemo, useSyncExternalStore } from "react"
+import { defaultAppearance, type Appearance, type DesktopPreferences as Preferences, type ThemedValue } from "@phreshos/core"
 
 export const AppearanceContext = createContext<Appearance>(defaultAppearance)
-export const ThemeContext = createContext<Theme | null>(null)
+export const PreferencesContext = createContext<Preferences | null>(null)
 
 /** Returns the nearest unresolved Appearance, or Core's complete default. */
 export function useAppearance(): Appearance {
   return useContext(AppearanceContext)
 }
 
-/** Returns the nearest explicit Theme, or reactively follows the browser. */
-export function useTheme(): Theme {
-  const theme = useContext(ThemeContext)
-  const browserTheme = useBrowserTheme()
-  return theme ?? browserTheme
+/** Returns the nearest complete Preferences, or reactively follows the browser. */
+export function usePreferences(): Preferences {
+  const preferences = useContext(PreferencesContext)
+  const browserPreferences = useBrowserPreferences()
+  return preferences ?? browserPreferences
+}
+
+/** Reactively reads the browser's complete visual preferences. */
+export function useBrowserPreferences(): Preferences {
+  const theme = useMediaPreference(darkThemeQuery) ? "dark" : "light"
+  const animations = !useMediaPreference(reducedMotionQuery)
+  return useMemo(() => ({ theme, animations }), [animations, theme])
 }
 
 /** Selects the active branch of one complete ThemedValue. */
 export function useThemedValue<Value>(value: ThemedValue<Value>): Value {
-  return value[useTheme()]
+  return value[usePreferences().theme]
 }
 
-function useBrowserTheme(): Theme {
-  return useSyncExternalStore(subscribeBrowserTheme, browserTheme, serverTheme)
+function useMediaPreference(query: string): boolean {
+  return useSyncExternalStore(
+    change => subscribeMediaPreference(query, change),
+    () => browserMediaPreference(query),
+    () => false
+  )
 }
 
-function subscribeBrowserTheme(change: () => void) {
+function subscribeMediaPreference(query: string, change: () => void) {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") return () => undefined
-  const preference = window.matchMedia(darkThemeQuery)
+  const preference = window.matchMedia(query)
   preference.addEventListener("change", change)
   return () => preference.removeEventListener("change", change)
 }
 
-function browserTheme(): Theme {
-  return typeof window !== "undefined"
+function browserMediaPreference(query: string): boolean {
+  return Boolean(typeof window !== "undefined"
     && typeof window.matchMedia === "function"
-    && window.matchMedia(darkThemeQuery).matches
-    ? "dark"
-    : "light"
+    && window.matchMedia(query).matches)
 }
 
-function serverTheme(): Theme { return "light" }
-
 const darkThemeQuery = "(prefers-color-scheme: dark)"
+const reducedMotionQuery = "(prefers-reduced-motion: reduce)"

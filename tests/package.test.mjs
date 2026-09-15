@@ -95,11 +95,13 @@ test("package contract", async () => {
     defaultAppearance,
     resolveRadius,
     resolveSpacing,
+    useBrowserPreferences,
     useColor,
+    usePreferences,
     useScale
   } from "@phreshos/react-ui"
 
-  for (const exported of [AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useColor, useScale]) {
+  for (const exported of [AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, usePreferences, useScale]) {
     assert.notEqual(exported, undefined)
   }
   assert.equal(defaultAppearance, coreDefaultAppearance)
@@ -110,21 +112,26 @@ test("package contract", async () => {
 
     writeFileSync(
       join(consumer, "consumer.tsx"),
-      `import { AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useColor, useScale } from "@phreshos/react-ui"
+      `import { AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useBrowserPreferences, useColor, usePreferences, useScale, type Preferences } from "@phreshos/react-ui"
 
   const surface = <Surface as="button" type="button" color="background:soft" material={{ opacity: 0.4 }}>Surface</Surface>
-  const standalone = <Button>Default Appearance and browser Theme</Button>
-  const themed = <AppearanceProvider theme="dark"><Surface>Dark subtree</Surface></AppearanceProvider>
+  const standalone = <Button>Default Appearance and browser Preferences</Button>
+  const preferences: Preferences = { theme: "dark", animations: true }
+  const themed = <AppearanceProvider preferences={preferences}><Surface>Dark subtree</Surface></AppearanceProvider>
+  // @ts-expect-error Preferences is one complete value, not a partial override
+  const partialPreferences = <AppearanceProvider preferences={{ theme: "dark" }}><Surface /></AppearanceProvider>
 
   function Derived() {
+    const browser = useBrowserPreferences()
+    const resolved = usePreferences()
     const spacing = useScale(defaultAppearance.spacing)
     const primary = useColor(defaultAppearance.colors.light.primary)
 
-    return <span style={{ color: primary.base, padding: spacing.small }}>Derived</span>
+    return <span style={{ color: primary.base, padding: spacing.small }} data-browser-theme={browser.theme} data-animations={resolved.animations}>Derived</span>
   }
 
   const view = (
-    <AppearanceProvider appearance={defaultAppearance} theme="light">
+    <AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
       <Panel header={<h2>Example</h2>} contentProps={{ style: { padding: 12 } }}>
         <Grid columns={2} gap="small">
           <Flex align="center" justify="between">
@@ -148,6 +155,7 @@ test("package contract", async () => {
   void view
   void standalone
   void themed
+  void partialPreferences
   `
     )
     writeFileSync(

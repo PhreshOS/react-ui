@@ -155,13 +155,13 @@ describe("Button", function () {
         dark: { ...defaultAppearance.colors.dark, background: "#faf0e0", foreground: "#101820", primary: "#334455" }
       }
     }
-    const view = render(<AppearanceProvider appearance={defaultAppearance} theme="light">
-      <AppearanceProvider appearance={appearance} theme="light"><Button color="primary:base">Continue</Button></AppearanceProvider>
+    const view = render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+      <AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}><Button color="primary:base">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
     expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#aabbcc", "base")))
     expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#101820")))
-    view.rerender(<AppearanceProvider appearance={defaultAppearance} theme="light">
-      <AppearanceProvider appearance={appearance} theme="dark"><Button color="primary:base">Continue</Button></AppearanceProvider>
+    view.rerender(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+      <AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}><Button color="primary:base">Continue</Button></AppearanceProvider>
     </AppearanceProvider>)
     expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#334455", "base")))
     expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#faf0e0")))
@@ -195,7 +195,7 @@ describe("Button", function () {
 })
 
 function renderButton(button: ReactNode) {
-  return render(<AppearanceProvider appearance={defaultAppearance} theme="light">{button}</AppearanceProvider>)
+  return render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{button}</AppearanceProvider>)
 }
 
 function cssBackground(value: string) {

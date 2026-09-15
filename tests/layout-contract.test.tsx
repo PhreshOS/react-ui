@@ -48,7 +48,7 @@ describe("Flex", function () {
   })
 
   it("resolves semantic gaps from the nearest AppearanceProvider", function () {
-    render(<AppearanceProvider appearance={defaultAppearance} theme="light">
+    render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
       <Flex data-testid="xsmall" gap="xsmall" />
       <Flex data-testid="small" gap="small" />
       <Flex data-testid="medium" gap="medium" />

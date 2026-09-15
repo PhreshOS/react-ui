@@ -7,7 +7,7 @@ import { AppearanceProvider, Panel, Surface } from "../source/main.js"
 afterEach(cleanup)
 
 function provider(children: ReactNode, spacing = 12) {
-  return <AppearanceProvider appearance={{ ...defaultAppearance, spacing }} theme="light">{children}</AppearanceProvider>
+  return <AppearanceProvider appearance={{ ...defaultAppearance, spacing }} preferences={{ theme: "light", animations: true }}>{children}</AppearanceProvider>
 }
 
 describe("Panel", () => {

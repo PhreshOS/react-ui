@@ -8,10 +8,12 @@ export { defaultAppearance } from "@phreshos/core"
 export {
   AppearanceProvider,
   useAppearance,
+  useBrowserPreferences,
+  usePreferences,
   useThemedValue,
-  useTheme,
   type AppearanceProviderProps
 } from "./appearance-provider.js"
+export type { DesktopPreferences as Preferences } from "@phreshos/core"
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
 export {

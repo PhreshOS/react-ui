@@ -1,27 +1,27 @@
 import type { ReactNode } from "react"
-import { type Appearance, type Theme } from "@phreshos/core"
+import { type Appearance, type DesktopPreferences as Preferences } from "@phreshos/core"
 import MotionStyle from "./motion-style.js"
-import { AppearanceContext, ThemeContext, useAppearance, useTheme } from "./appearance-context.js"
+import { AppearanceContext, PreferencesContext, useAppearance, usePreferences } from "./appearance-context.js"
 
-export { useAppearance, useTheme, useThemedValue } from "./appearance-context.js"
+export { useAppearance, useBrowserPreferences, usePreferences, useThemedValue } from "./appearance-context.js"
 
-/** Optionally overrides unresolved Appearance and effective Theme for a React subtree. */
-export function AppearanceProvider({ appearance, children, theme }: AppearanceProviderProps) {
+/** Optionally overrides Appearance and complete visual Preferences for a React subtree. */
+export function AppearanceProvider({ appearance, children, preferences }: AppearanceProviderProps) {
   const inheritedAppearance = useAppearance()
-  const inheritedTheme = useTheme()
+  const inheritedPreferences = usePreferences()
   const resolvedAppearance = appearance ?? inheritedAppearance
-  const resolvedTheme = theme ?? inheritedTheme
+  const resolvedPreferences = preferences ?? inheritedPreferences
 
   return <AppearanceContext.Provider value={resolvedAppearance}>
-    <ThemeContext.Provider value={resolvedTheme}>
+    <PreferencesContext.Provider value={resolvedPreferences}>
       <MotionStyle />
       {children}
-    </ThemeContext.Provider>
+    </PreferencesContext.Provider>
   </AppearanceContext.Provider>
 }
 
 export interface AppearanceProviderProps {
   readonly appearance?: Appearance
   readonly children: ReactNode
-  readonly theme?: Theme
+  readonly preferences?: Preferences
 }

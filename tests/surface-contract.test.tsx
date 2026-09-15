@@ -19,12 +19,12 @@ describe("Surface", function () {
         dark: { ...defaultAppearance.colors.dark, background: "#123456" }
       }
     }
-    const view = render(<AppearanceProvider appearance={appearance} theme="light">
+    const view = render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
       <Surface data-testid="surface" color={`background:${level}`} />
     </AppearanceProvider>)
     const base = required(screen.getByTestId("surface").querySelector<SVGRectElement>("[data-material-base]"))
     expect(base.style.fill).toBe(cssFill(colorScale(appearance.colors.light.background)[level]))
-    view.rerender(<AppearanceProvider appearance={appearance} theme="dark">
+    view.rerender(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>
       <Surface data-testid="surface" color={`background:${level}`} />
     </AppearanceProvider>)
     expect(base.style.fill).toBe(cssFill(colorScale(appearance.colors.dark.background)[level]))
@@ -49,9 +49,9 @@ describe("Surface", function () {
 
   it("derives radius levels from the shared Appearance value across theme changes", function () {
     const appearance = { ...defaultAppearance, radius: 8 }
-    const view = render(<AppearanceProvider appearance={appearance} theme="light"><Surface data-testid="surface" radius="large" /></AppearanceProvider>)
+    const view = render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}><Surface data-testid="surface" radius="large" /></AppearanceProvider>)
     expect(screen.getByTestId("surface").style.borderRadius).toBe("12px")
-    view.rerender(<AppearanceProvider appearance={appearance} theme="dark"><Surface data-testid="surface" radius="large" /></AppearanceProvider>)
+    view.rerender(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}><Surface data-testid="surface" radius="large" /></AppearanceProvider>)
     expect(screen.getByTestId("surface").style.borderRadius).toBe("12px")
   })
 
@@ -63,17 +63,17 @@ describe("Surface", function () {
         dark: { x: 2, y: 6, blur: 18, spread: -1, opacity: 0 }
       }
     }
-    const view = render(<AppearanceProvider appearance={appearance} theme="light">
+    const view = render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
       <Surface data-testid="surface" />
     </AppearanceProvider>)
     expect(screen.getByTestId("surface").style.boxShadow).toBe("")
-    view.rerender(<AppearanceProvider appearance={appearance} theme="dark">
+    view.rerender(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>
       <Surface data-testid="surface" />
     </AppearanceProvider>)
     expect(screen.getByTestId("surface").style.boxShadow).toBe("")
   })
 
-  it("uses the default Appearance and browser Theme without a provider", function () {
+  it("uses the default Appearance and browser Preferences without a provider", function () {
     render(<Surface data-testid="surface" />)
 
     expect(screen.getByTestId("surface").style.color).toBe(cssColor(defaultAppearance.colors.light.foreground))
@@ -154,7 +154,7 @@ describe("Surface", function () {
   })
 
   it("uses the medium Appearance radius for its geometry and paint", function () {
-    render(<AppearanceProvider appearance={{ ...defaultAppearance, radius: 14 }} theme="light">
+    render(<AppearanceProvider appearance={{ ...defaultAppearance, radius: 14 }} preferences={{ theme: "light", animations: true }}>
       <Surface data-testid="surface" />
     </AppearanceProvider>)
 
@@ -171,7 +171,7 @@ describe("Surface", function () {
         light: { ...defaultAppearance.colors.light, background: "#123456" },
         dark: { ...defaultAppearance.colors.dark, background: "#123456" }
       }
-    }} theme="light">
+    }} preferences={{ theme: "light", animations: true }}>
       <Surface data-testid="surface" />
     </AppearanceProvider>)
 
@@ -219,7 +219,7 @@ describe("Surface", function () {
 
     expect(surface.querySelectorAll("[data-material-backdrop]")).toHaveLength(2)
 
-    rendered.rerender(<AppearanceProvider appearance={defaultAppearance} theme="light">
+    rendered.rerender(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
       <Surface data-testid="surface" material={{ backdrop: 0, distortion: 0, saturation: 1 }} />
     </AppearanceProvider>)
 
@@ -276,7 +276,7 @@ describe("Surface", function () {
         dark: { ...defaultAppearance.colors.dark, background: "#112233", foreground: "#ccddee" }
       }
     }
-    const rendered = render(<AppearanceProvider appearance={appearance} theme="light">
+    const rendered = render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
       <Surface data-testid="surface" material={{ opacity: 0.5 }} />
     </AppearanceProvider>)
     const border = required(screen.getByTestId("surface").querySelector<HTMLElement>("[data-surface-edge]"))
@@ -286,7 +286,7 @@ describe("Surface", function () {
     expect(light).toContain("rgb(255, 238, 204)")
     expect(light).toContain("rgb(68, 51, 34)")
     expect(light).not.toMatch(/\b(white|black)\b/)
-    rendered.rerender(<AppearanceProvider appearance={appearance} theme="dark">
+    rendered.rerender(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>
       <Surface data-testid="surface" material={{ opacity: 0.5 }} />
     </AppearanceProvider>)
 
@@ -304,7 +304,7 @@ describe("Surface", function () {
         dark: { ...defaultAppearance.colors.dark, background: "#ffeecc", foreground: "#112233" }
       }
     }
-    const rendered = render(<AppearanceProvider appearance={appearance} theme="light">
+    const rendered = render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
       <Surface data-testid="surface" material={{ opacity: 0.5 }} />
     </AppearanceProvider>)
     const surface = screen.getByTestId("surface")
@@ -313,7 +313,7 @@ describe("Surface", function () {
     const darkOpacity = Number(border.style.opacity)
     expect(gradient).toMatch(/^linear-gradient\(145deg, color-mix\(in srgb, rgb\(255, 238, 204\)/)
 
-    rendered.rerender(<AppearanceProvider appearance={appearance} theme="dark">
+    rendered.rerender(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>
       <Surface data-testid="surface" material={{ opacity: 0.5 }} />
     </AppearanceProvider>)
 
@@ -328,7 +328,7 @@ describe("Surface", function () {
         light: { ...defaultAppearance.colors.light, background: "color-mix(in srgb, #ffffff 80%, #000000)", foreground: "rgb(20 30 40)" },
         dark: { ...defaultAppearance.colors.dark, background: "#000000", foreground: "#ffffff" }
       }
-    }} theme="light"><Surface data-testid="surface" /></AppearanceProvider>)
+    }} preferences={{ theme: "light", animations: true }}><Surface data-testid="surface" /></AppearanceProvider>)
     const border = required(screen.getByTestId("surface").querySelector<HTMLElement>("[data-surface-edge]"))
     expect(border.style.background).toContain("color(srgb 0.8 0.8 0.8)")
   })
@@ -341,14 +341,14 @@ describe("Surface", function () {
         dark: { ...defaultAppearance.colors.dark, background: "oklch(50% 0 0)" }
       }
     }
-    const rendered = render(<AppearanceProvider appearance={appearance} theme={theme}>
+    const rendered = render(<AppearanceProvider appearance={appearance} preferences={{ theme, animations: true }}>
       <Surface data-testid="surface" material={{ opacity: 0.1 }} />
     </AppearanceProvider>)
     const surface = screen.getByTestId("surface")
     const border = required(surface.querySelector<HTMLElement>("[data-surface-edge]"))
     expect(Number(border.style.opacity)).toBeCloseTo(0.1)
 
-    rendered.rerender(<AppearanceProvider appearance={appearance} theme={theme}>
+    rendered.rerender(<AppearanceProvider appearance={appearance} preferences={{ theme, animations: true }}>
       <Surface data-testid="surface" material={{ opacity: 0.8 }} />
     </AppearanceProvider>)
 
@@ -363,7 +363,7 @@ describe("Surface", function () {
         light: { ...defaultAppearance.colors.light, background: `oklch(${lightness} 0 0)` },
         dark: { ...defaultAppearance.colors.dark, background: `oklch(${lightness} 0 0)` }
       }
-    }} theme="light"><Surface data-testid="surface" material={{ opacity: 0.2 }} /></AppearanceProvider>)
+    }} preferences={{ theme: "light", animations: true }}><Surface data-testid="surface" material={{ opacity: 0.2 }} /></AppearanceProvider>)
 
     const border = required(screen.getByTestId("surface").querySelector<HTMLElement>("[data-surface-edge]"))
     expect(Number(border.style.opacity)).toBeCloseTo(0.4 * lightness)
@@ -373,7 +373,7 @@ describe("Surface", function () {
     const rendered = renderSurface(<Surface data-testid="surface" material={{ distortion: 20 }} />)
     const surface = screen.getByTestId("surface")
 
-    rendered.rerender(<AppearanceProvider appearance={defaultAppearance} theme="light">
+    rendered.rerender(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
       <Surface data-testid="surface" material={{ distortion: 20, opacity: 0 }} />
     </AppearanceProvider>)
 
@@ -398,7 +398,7 @@ describe("Surface", function () {
 })
 
 function renderSurface(surface: ReactNode) {
-  return render(<AppearanceProvider appearance={defaultAppearance} theme="light">{surface}</AppearanceProvider>)
+  return render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{surface}</AppearanceProvider>)
 }
 
 function baseColor(testId: string) {

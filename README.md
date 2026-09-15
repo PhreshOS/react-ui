@@ -38,19 +38,23 @@ import { Button, Surface } from "@phreshos/react-ui"
 ```
 
 Without a provider, components use Core's `defaultAppearance` and reactively
-follow the browser color scheme. `AppearanceProvider` independently overrides
-either value for a subtree; omitted values inherit from the nearest provider.
+follow the browser's complete visual preferences. `AppearanceProvider` can replace
+Appearance or Preferences for a subtree; omitted values inherit from the nearest provider.
 React UI also exports that same canonical `defaultAppearance` value for callers
 that need it explicitly.
 See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
 interpreted by the provider and components.
 
 ```tsx
-import { AppearanceProvider, Button } from "@phreshos/react-ui"
+import { AppearanceProvider, Button, useBrowserPreferences } from "@phreshos/react-ui"
 
-<AppearanceProvider theme="dark">
-  <Button>Dark subtree</Button>
-</AppearanceProvider>
+function Example() {
+  const browser = useBrowserPreferences()
+
+  return <AppearanceProvider preferences={{ ...browser, theme: "dark" }}>
+    <Button>Dark subtree</Button>
+  </AppearanceProvider>
+}
 ```
 
 `Button`, `Input`, `Textarea`, `Select`, `Checkbox`, `Switch`, and `Radio`
@@ -140,14 +144,14 @@ Fields distinguish hover, pointer focus, keyboard focus, and invalid state.
 Shared CSS transitions use `appearance.transaction` for colors and corner
 radius. The material fill and opacity values transition on the painted layers, not on the
 Surface host. Select menus combine a small placement-aware slide with an overlay
-opacity fade for entry and exit, using React Aria's animation lifecycle. Reduced-motion preferences make
+opacity fade for entry and exit, using React Aria's animation lifecycle. Preferences with animations disabled make
 these changes immediate without changing the Appearance value.
 Blur, distortion, geometry, and Surface host opacity are not transitioned; gradients
 and structurally removed effects change directly rather than adding extra
 layers or keeping disabled effects alive.
 
 Motion animates toggle presses, selection marks, switch travel, the Select
-chevron, and Slider thumb feedback. Reduced-motion preferences remove spatial
+chevron, and Slider thumb feedback. Preferences with animations disabled remove spatial
 feedback and make state transitions immediate. Slider values and native input
 behavior are never delayed by visual animation.
 
@@ -201,7 +205,7 @@ import { Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider } 
 
 React Aria owns focus, keyboard, form, and selection behavior. Select's popup
 uses Surface defaults. Toggle indicators use Motion internally and respect
-reduced-motion preferences. The preview Program demonstrates each input's
+animation preferences. The preview Program demonstrates each input's
 sizes, colors, state, and interaction without overriding its visual defaults.
 
 ## Development

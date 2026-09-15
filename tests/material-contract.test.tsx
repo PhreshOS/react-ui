@@ -38,7 +38,7 @@ it("lets any ref-forwarding host that preserves style and children carry the Sur
   const grid = createRef<HTMLDivElement>()
   const outside = createRef<HTMLDivElement>()
 
-  render(<AppearanceProvider appearance={defaultAppearance} theme="light">
+  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <Surface as={Grid} ref={grid} data-testid="grid" columns={2}>Grid content</Surface>
     <Surface as={OutsideLayout} ref={outside} data-testid="outside" direction="column">Outside content</Surface>
   </AppearanceProvider>)
@@ -55,7 +55,7 @@ it("lets any ref-forwarding host that preserves style and children carry the Sur
 it("renders a div by default and preserves the selected host contract", () => {
   const div = createRef<HTMLDivElement>()
   const button = createRef<HTMLButtonElement>()
-  const { container } = render(<AppearanceProvider appearance={defaultAppearance} theme="light">
+  const { container } = render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <Surface ref={div} data-testid="surface">Content</Surface>
     <Surface as="button" ref={button} data-testid="button" type="button">Action</Surface>
   </AppearanceProvider>)
@@ -72,7 +72,7 @@ it("renders a div by default and preserves the selected host contract", () => {
 })
 
 it("accepts grouped material properties without another rendered entity", () => {
-  render(<AppearanceProvider appearance={defaultAppearance} theme="light">
+  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <Surface data-testid="geometry" color="#345678" material={{ opacity: 0.45, backdrop: 0 }}
       style={{ width: 80, height: 60 }} />
   </AppearanceProvider>)
@@ -98,7 +98,7 @@ it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"]
     : kind === "checkbox" ? <Checkbox label="Value" color="#345678" material={material} onChange={action} />
     : kind === "switch" ? <Switch label="Value" color="#345678" material={material} onChange={action} />
     : <RadioGroup label="Values" color="#345678" material={material} onChange={action}><Radio label="Value" value="one" /></RadioGroup>
-  const { container } = render(<AppearanceProvider appearance={defaultAppearance} theme="light">{example}</AppearanceProvider>)
+  const { container } = render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{example}</AppearanceProvider>)
   const base = container.querySelector<SVGRectElement>("[data-material-base]")
 
   expect(base).not.toBeNull()
@@ -117,7 +117,7 @@ it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"]
 })
 
 it("lets a Radio override its group's material independently from color and radius", () => {
-  render(<AppearanceProvider appearance={defaultAppearance} theme="light">
+  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <RadioGroup label="Choices" material={{ opacity: 0.6 }}>
       <Radio label="One" value="one" />
       <Radio label="Two" value="two" material={{ opacity: 0.3 }} />

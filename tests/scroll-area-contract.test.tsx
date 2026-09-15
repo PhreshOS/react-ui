@@ -42,13 +42,13 @@ describe("ScrollArea", function () {
   })
 
   it("resolves its colors from the nearest AppearanceProvider", function () {
-    const view = render(<AppearanceProvider theme="light">
+    const view = render(<AppearanceProvider preferences={{ theme: "light", animations: true }}>
       <ScrollArea><div>Content</div></ScrollArea>
     </AppearanceProvider>)
     const thumb = view.container.querySelector<HTMLElement>("[data-phreshos-scroll-area-thumb]")!
     expect(thumb.style.backgroundColor).toContain("rgb(24, 52, 71)")
 
-    view.rerender(<AppearanceProvider theme="dark">
+    view.rerender(<AppearanceProvider preferences={{ theme: "dark", animations: true }}>
       <ScrollArea><div>Content</div></ScrollArea>
     </AppearanceProvider>)
     expect(view.container.querySelector<HTMLElement>("[data-phreshos-scroll-area-thumb]")!.style.backgroundColor).toContain("rgb(237, 248, 252)")

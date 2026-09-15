@@ -10,7 +10,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks() })
 it("consumes Appearance timing and limits transitions to explicit visual properties", () => {
   const appearance = { ...defaultAppearance, transaction: { duration: 240, easing: "ease-in-out" as const } }
   let motion: ReturnType<typeof useControlTransition> | undefined
-  render(<AppearanceProvider appearance={appearance} theme="light">
+  render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
     <ReadMotion onRead={value => { motion = value }} />
     <Surface data-testid="surface">Content</Surface><Button>Action</Button><Input label="Name" />
   </AppearanceProvider>)
@@ -30,16 +30,14 @@ it("consumes Appearance timing and limits transitions to explicit visual propert
   expect(motion).toEqual({ type: "tween", duration: 0.24, ease: "easeInOut" })
 })
 
-it("hoists one scoped stylesheet for nested providers and declares reduced-motion behavior", () => {
-  render(<AppearanceProvider appearance={defaultAppearance} theme="light">
-    <AppearanceProvider appearance={defaultAppearance} theme="dark"><Surface /></AppearanceProvider>
+it("hoists one scoped stylesheet for nested providers", () => {
+  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    <AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "dark", animations: true }}><Surface /></AppearanceProvider>
   </AppearanceProvider>)
   const sheets = [...document.head.querySelectorAll("style")].filter(style => style.textContent?.includes("@keyframes phreshos-ui-overlay-enter"))
   expect(sheets).toHaveLength(1)
   const css = sheets[0]?.textContent
-  expect(css).toContain("@media (prefers-reduced-motion: reduce)")
-  expect(css).toContain("--phreshos-ui-motion-duration: 0ms")
-  expect(css).toContain("animation: none")
+  expect(css).not.toContain("prefers-reduced-motion")
   expect(css).toContain("[data-entering]")
   expect(css).toContain("[data-exiting]")
   expect(css).toContain("pointer-events: none")
@@ -53,6 +51,24 @@ it("hoists one scoped stylesheet for nested providers and declares reduced-motio
   expect(css).not.toContain("transition: all")
 })
 
+it("makes every React UI transition immediate when animations are disabled", async () => {
+  const appearance = { ...defaultAppearance, transaction: { duration: 240, easing: "ease-in-out" as const } }
+  let motion: ReturnType<typeof useControlTransition> | undefined
+  render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: false }}>
+    <ReadMotion onRead={value => { motion = value }} />
+    <Surface data-testid="surface" />
+    <Select label="Choice" options={[{ value: "one", label: "One" }]} />
+  </AppearanceProvider>)
+
+  expect(screen.getByTestId("surface").style.transitionDuration).toBe("0ms")
+  expect(screen.getByRole("button").style.transitionDuration).toBe("0ms")
+  expect(motion).toMatchObject({ duration: 0 })
+
+  await userEvent.setup().click(screen.getByRole("button"))
+  const overlay = (await screen.findByRole("listbox")).closest<HTMLElement>(`.${overlayMotionClass}`)
+  expect(overlay?.style.getPropertyValue("--phreshos-ui-motion-duration")).toBe("0ms")
+})
+
 function ReadMotion({ onRead }: Readonly<{ onRead: (value: ReturnType<typeof useControlTransition>) => void }>) {
   onRead(useControlTransition())
   return null
@@ -60,7 +76,7 @@ function ReadMotion({ onRead }: Readonly<{ onRead: (value: ReturnType<typeof use
 
 it("uses the shared overlay style without changing Select selection, dismissal, or focus return", async () => {
   const onChange = vi.fn()
-  render(<AppearanceProvider appearance={defaultAppearance} theme="light">
+  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <Select label="Choice" options={[{ value: "one", label: "One" }, { value: "two", label: "Two" }]} onChange={onChange} />
   </AppearanceProvider>)
   const user = userEvent.setup()
@@ -87,7 +103,7 @@ it("refreshes derived edge colors when the Surface palette finishes animating", 
       get: (target, property) => property === "fill" ? animatedFill : Reflect.get(target, property, target)
     }) : computed
   })
-  render(<AppearanceProvider appearance={defaultAppearance} theme="light"><Surface data-testid="surface" color="#ffeecc" /></AppearanceProvider>)
+  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}><Surface data-testid="surface" color="#ffeecc" /></AppearanceProvider>)
   const host = screen.getByTestId("surface")
   const border = host.querySelector<HTMLElement>("[data-surface-edge]")
   const base = host.querySelector("[data-surface-palette-base]")!
