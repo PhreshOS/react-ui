@@ -101,7 +101,7 @@ function buttonStyle({
   style: CSSProperties | undefined
 }>): CSSProperties {
   const fontSize = controlFontSizes[size]
-  const { spacing, foreground } = theme
+  const { spacing, focusColor } = theme
   const height = Math.max(24, 24 + spacing)
   const interactive = !disabled && !pending
   const paint = buttonPaint(theme, interactive, isHovered, isPressed)
@@ -123,8 +123,8 @@ function buttonStyle({
     gap: Math.max(4, spacing / 2),
     border: "none",
     borderRadius: theme.radius,
-    outline: isFocusVisible ? `2px solid ${foreground}` : "none",
-    outlineOffset: 2,
+    outline: isFocusVisible ? `1px solid ${focusColor}` : "none",
+    outlineOffset: 1,
     ...paint,
     opacity: disabled ? 0.46 : pending ? 0.68 : 1,
     cursor: disabled ? "not-allowed" : pending ? "progress" : "pointer",

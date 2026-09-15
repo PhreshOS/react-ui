@@ -60,7 +60,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
                                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,
                                 minHeight: theme.height, paddingInline: Math.max(8, theme.spacing), boxSizing: "border-box",
                                 borderRadius: theme.radius,
-                                outline: item.isFocused && !item.isSelected ? `2px solid ${theme.foreground}` : "none", outlineOffset: -2,
+                                outline: item.isFocused && !item.isSelected ? `1px solid ${theme.focusColor}` : "none", outlineOffset: 1,
                                 cursor: item.isDisabled ? "not-allowed" : "pointer",
                                 opacity: item.isDisabled ? 0.46 : 1,
                                 ...(item.isSelected ? item.isFocused ? theme.paints.palette.hover : theme.paints.palette.rest

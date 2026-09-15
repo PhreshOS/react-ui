@@ -4,7 +4,7 @@ import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { createRef, type ReactNode } from "react"
 import { defaultAppearance } from "@phreshos/core"
 import { AppearanceProvider, Button, type ButtonColor, type ButtonProps, type ScaleLevel } from "../source/main.js"
-import { resolveColorLevel, opaqueColor, solidColors } from "../source/color.js"
+import { colorOpacity, resolveColorLevel, opaqueColor, solidColors } from "../source/color.js"
 
 afterEach(cleanup)
 
@@ -135,7 +135,8 @@ describe("Button", function () {
     await userEvent.setup().tab()
     const button = screen.getByRole("button")
     expect(document.activeElement).toBe(button)
-    expect(button.style.outline).toBe(`2px solid ${defaultAppearance.colors.light.foreground}`)
+    expect(button.style.outline).toBe(`1px solid ${colorOpacity(opaqueColor(defaultAppearance.colors.light.warning), 0.2)}`)
+    expect(button.style.outlineOffset).toBe("1px")
     expect(button.style.boxShadow).toBe("")
   })
 

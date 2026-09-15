@@ -103,7 +103,8 @@ it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"]
 
   expect(base).not.toBeNull()
   expect(container.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.45")
-  expect(container.querySelector("[data-material-backdrop]")).toBeNull()
+  expect(container.querySelector<HTMLElement>("[data-material-backdrop='frost']")?.style.backdropFilter)
+    .toBe(`saturate(${defaultAppearance.material.light.saturation})`)
   expect(container.querySelector("[material]")).toBeNull()
 
   const user = userEvent.setup()

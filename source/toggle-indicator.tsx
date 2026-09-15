@@ -46,8 +46,8 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
         height: diameter,
         borderRadius: radius,
         border: "none",
-        outline: focused ? `2px solid ${theme.foreground}` : "none",
-        outlineOffset: 2,
+        outline: focused ? `1px solid ${theme.focusColor}` : "none",
+        outlineOffset: 1,
     }}>
         {switching ? <motion.span initial={false} animate={{ width: thumbWidth, x: (selected ? travel : -travel) * (direction === "rtl" ? -1 : 1) }}
             transition={transition} style={{

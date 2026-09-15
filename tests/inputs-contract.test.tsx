@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { createRef, useState, type ReactNode } from "react"
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
-import { resolveColorLevel, solidColors } from "../source/color.js"
+import { colorOpacity, opaqueColor, resolveColorLevel, solidColors } from "../source/color.js"
 import {
     AppearanceProvider, Button, Input, Textarea, Checkbox, Switch, Radio, RadioGroup, Select, Slider,
     type InputProps, type TextareaProps, type CheckboxProps, type SwitchProps, type RadioGroupProps,
@@ -286,7 +286,8 @@ it("spaces Select options and leaves unselected options transparent, including k
     await user.keyboard("[ArrowDown]")
     expect(third.getAttribute("data-focused")).toBe("true")
     expect(third.style.background).toBe("transparent")
-    expect(third.style.outline).toContain("2px solid")
+    expect(third.style.outline).toBe(`1px solid ${colorOpacity(opaqueColor(defaultAppearance.colors.light.warning), 0.2)}`)
+    expect(third.style.outlineOffset).toBe("1px")
 })
 
 it("Select typeahead changes a string value, closes, and restores trigger focus", async () => {

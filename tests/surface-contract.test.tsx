@@ -115,7 +115,7 @@ describe("Surface", function () {
     expect(surface.querySelector("canvas")).toBeNull()
   })
 
-  it("renders the translucent grain-free standard Theme material with frost", function () {
+  it("renders the standard light Theme material with frost and grain", function () {
     renderSurface(<Surface data-testid="surface" />)
 
     const surface = screen.getByTestId("surface")
@@ -131,7 +131,7 @@ describe("Surface", function () {
     expect(surface.style.boxSizing).toBe("")
     expect(surface.style.color).toBe("rgb(24, 52, 71)")
     expect(surface.style.backdropFilter).toBe("")
-    expect(surface.querySelector<HTMLElement>("[data-material-backdrop='frost']")?.style.backdropFilter).toBe("blur(12px)")
+    expect(surface.querySelector<HTMLElement>("[data-material-backdrop='frost']")?.style.backdropFilter).toBe("blur(12px) saturate(1.66)")
     expect(surface.style.position).toBe("relative")
     expect(surface.style.isolation).toBe("isolate")
     const border = required(surface.querySelector<HTMLElement>("[data-surface-edge]"))
@@ -144,12 +144,12 @@ describe("Surface", function () {
     expect(material.style.zIndex).toBe("-1")
     expect(border.style.zIndex).toBe("1")
     expect(border.style.maskComposite).toBe("exclude")
-    expect(Number(border.style.opacity)).toBeCloseTo(0.4)
+    expect(Number(border.style.opacity)).toBe(1)
     expect(border.style.background).toContain("linear-gradient(145deg,")
-    expect(material.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.2")
+    expect(material.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.55")
     expect(base.style.fill).toBe("rgb(255, 255, 255)")
-    expect(material.querySelector("[data-material-grain]")).toBeNull()
-    expect(material.querySelector("[data-material-grain-tone]")).toBeNull()
+    expect(material.querySelector("[data-material-grain]")).not.toBeNull()
+    expect(material.querySelector("[data-material-grain-tone]")).not.toBeNull()
     expect(material.querySelector("[data-material-distortion]")).toBeNull()
   })
 

@@ -33,7 +33,7 @@ describe("Panel", () => {
     for (const surface of [panel, body]) {
       expect(surface.style.borderRadius).toBe(reference.style.borderRadius)
       expect(surface.querySelector("[data-surface-edge]")?.getAttribute("style")).toBe(reference.querySelector("[data-surface-edge]")?.getAttribute("style"))
-      expect(surface.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.2")
+      expect(surface.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe(String(defaultAppearance.material.light.opacity))
     }
   })
 

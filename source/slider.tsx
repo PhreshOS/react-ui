@@ -48,7 +48,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
             <SliderThumb name={name} style={state => ({
                 width: diameter, height: diameter, borderRadius: "50%", boxSizing: "border-box",
                 ...(vertical ? { left: "50%" } : { top: "50%" }),
-                outline: state.isFocusVisible ? `2px solid ${theme.foreground}` : "none", outlineOffset: 2,
+                outline: state.isFocusVisible ? `1px solid ${theme.focusColor}` : "none", outlineOffset: 1,
                 cursor: state.isDisabled ? "not-allowed" : state.isDragging ? "grabbing" : "grab"
             })}>
                 {state => <motion.span aria-hidden="true" initial={false}

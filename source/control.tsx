@@ -4,7 +4,7 @@ import { FieldError, Label, Text } from "react-aria-components"
 import { useAppearance, useThemedValue } from "./appearance-provider.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { scale, type ScaleLevel } from "./scale.js"
-import { solidColors } from "./color.js"
+import { colorOpacity, solidColors } from "./color.js"
 import { useResolveSolidColor, type Color } from "./color.js"
 import { useVisualTransition } from "./motion-style.js"
 
@@ -47,6 +47,7 @@ export interface ControlTheme {
     readonly foreground: string
     readonly background: string
     readonly tint: string
+    readonly focusColor: string
     readonly danger: string
     readonly paints: {
         readonly palette: SolidColors
@@ -69,6 +70,7 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
     const background = colors.background
     const tint = useResolveSolidColor(color ?? "default:base")
     const neutral = useResolveSolidColor("default:base")
+    const focus = useResolveSolidColor("warning:base")
     const danger = useResolveSolidColor("danger:base")
     const paints = useMemo(() => ({
         palette: solidColors(tint, background, foreground),
@@ -82,6 +84,7 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
         foreground,
         background,
         tint,
+        focusColor: colorOpacity(focus, 0.2),
         danger,
         paints,
         radius: resolveRadius(radius, appearance),
@@ -127,8 +130,8 @@ export function controlStyle(theme: ControlTheme, focused: boolean, invalid: boo
         paddingInline: Math.max(8, theme.spacing),
         border: 0,
         borderRadius: theme.radius,
-        outline: focusVisible ? `2px solid ${theme.foreground}` : "none",
-        outlineOffset: 2,
+        outline: focusVisible ? `1px solid ${theme.focusColor}` : "none",
+        outlineOffset: 1,
         ...paint,
         caretColor: paint.color,
         font: "inherit",
