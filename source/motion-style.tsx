@@ -38,6 +38,7 @@ export function useOverlayTransition(): CSSProperties {
 }
 
 export const overlayMotionClass = "phreshos-ui-overlay"
+export const backdropMotionClass = "phreshos-ui-backdrop"
 
 export function useTransitionTiming(): CSSProperties {
   const { duration, easing } = useAppearance().transaction
@@ -74,9 +75,20 @@ const stylesheet = `
   animation: phreshos-ui-overlay-enter var(--phreshos-ui-motion-duration) var(--phreshos-ui-motion-easing) reverse both;
   pointer-events: none;
 }
+.phreshos-ui-backdrop[data-entering] {
+  animation: phreshos-ui-backdrop-enter var(--phreshos-ui-motion-duration) var(--phreshos-ui-motion-easing) both;
+}
+.phreshos-ui-backdrop[data-exiting] {
+  animation: phreshos-ui-backdrop-enter var(--phreshos-ui-motion-duration) var(--phreshos-ui-motion-easing) reverse both;
+  pointer-events: none;
+}
 @keyframes phreshos-ui-overlay-enter {
   from { opacity: 0; scale: 1.05; }
   to { opacity: 1; scale: 1; }
+}
+@keyframes phreshos-ui-backdrop-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 `
 

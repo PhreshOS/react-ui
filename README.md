@@ -125,13 +125,41 @@ Appearance spacing. Positioning, modality, and lifecycle belong to the caller.
 ```tsx
 import { Panel } from "@phreshos/react-ui"
 
-<Panel header={<h2>Title</h2>} contentProps={{ style: { padding: 16 } }}>
-  Content
+<Panel>
+  <Panel.Header><h2>Title</h2></Panel.Header>
+  <Panel.Content style={{ padding: 16 }}>Content</Panel.Content>
 </Panel>
 ```
 
-Native properties and the forwarded ref target the outer Surface.
-`contentProps` targets the inner Surface; `children` supplies its content.
+Native properties and the root ref target the outer Surface. `Panel.Header`
+owns the optional leading region, while `Panel.Content` is the independently
+configurable inner Surface.
+
+## Overlays
+
+Overlay components expose each behavioral role as a named part. Roots own open
+state, triggers own activation, positioned content owns its Surface, and the
+semantic content remains explicit.
+
+```tsx
+<DropdownMenu>
+  <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
+  <DropdownMenu.Content>
+    <Menu aria-label="Document actions">
+      <Menu.Item onAction={open}>Open</Menu.Item>
+      <Menu.Item color="danger:base" onAction={remove}>Delete</Menu.Item>
+    </Menu>
+  </DropdownMenu.Content>
+</DropdownMenu>
+```
+
+`Popover` presents anchored non-modal content. `DropdownMenu` and
+`ContextMenu` open the same `Menu` contract through different interactions.
+`Dialog` blocks interaction behind it and may be dismissable, while
+`AlertDialog` requires an explicit decision by default. `Tooltip` supplies a
+short description on focus or hover. Portal cleanup, focus restoration,
+keyboard behavior, nested ownership, and entrance and exit transactions remain
+component-owned.
 
 ## Inputs
 

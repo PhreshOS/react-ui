@@ -34,7 +34,7 @@ test("package contract", async () => {
     assert(paths.has("dist/main.d.ts"), "the package has no declaration entry point")
     assert(paths.has("dist/panel.js"), "the package has no Panel implementation")
     assert(paths.has("dist/panel.d.ts"), "the package has no Panel contract")
-    for (const name of ["input", "textarea", "checkbox", "radio", "switch", "select", "slider"]) {
+    for (const name of ["input", "textarea", "checkbox", "radio", "switch", "select", "slider", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
       assert(paths.has(`dist/${name}.js`), `the package has no ${name} implementation`)
       assert(paths.has(`dist/${name}.d.ts`), `the package has no ${name} contract`)
     }
@@ -85,11 +85,12 @@ test("package contract", async () => {
   import { defaultAppearance as coreDefaultAppearance } from "@phreshos/core"
   import * as icons from "@phreshos/react-ui/icons"
   import {
-    Button,
+    AlertDialog, Button, ContextMenu, Dialog, DropdownMenu,
     Flex,
     Grid,
-    Panel,
+    Menu, Panel, Popover,
     Surface,
+    Tooltip,
     Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider,
     AppearanceProvider,
     defaultAppearance,
@@ -101,7 +102,7 @@ test("package contract", async () => {
     useScale
   } from "@phreshos/react-ui"
 
-  for (const exported of [AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, usePreferences, useScale]) {
+  for (const exported of [AppearanceProvider, AlertDialog, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, usePreferences, useScale]) {
     assert.notEqual(exported, undefined)
   }
   assert.equal(defaultAppearance, coreDefaultAppearance)
@@ -112,7 +113,7 @@ test("package contract", async () => {
 
     writeFileSync(
       join(consumer, "consumer.tsx"),
-      `import { AppearanceProvider, Button, Flex, Grid, Panel, Surface, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useBrowserPreferences, useColor, usePreferences, useScale, type Preferences } from "@phreshos/react-ui"
+      `import { AlertDialog, AppearanceProvider, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useBrowserPreferences, useColor, usePreferences, useScale, type Preferences } from "@phreshos/react-ui"
 
   const surface = <Surface as="button" type="button" color="background:soft" material={{ opacity: 0.4 }}>Surface</Surface>
   const standalone = <Button>Default Appearance and browser Preferences</Button>
@@ -130,10 +131,13 @@ test("package contract", async () => {
     return <span style={{ color: primary.base, padding: spacing.small }} data-browser-theme={browser.theme} data-animations={resolved.animations}>Derived</span>
   }
 
+  const commands = [{ id: "open", label: "Open" }]
+
   const view = (
     <AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
-      <Panel header={<h2>Example</h2>} contentProps={{ style: { padding: 12 } }}>
-        <Grid columns={2} gap="small">
+      <Panel>
+        <Panel.Header><h2>Example</h2></Panel.Header>
+        <Panel.Content style={{ padding: 12 }}><Grid columns={2} gap="small">
           <Flex align="center" justify="between">
             <Button onPress={() => undefined} material={{ opacity: "large" }}>Save</Button>
             {surface}
@@ -147,8 +151,15 @@ test("package contract", async () => {
             <Select label="Choice" options={[{value: "one", label: "One"}]} onChange={value => value?.toUpperCase()} />
             <Slider label="Volume" onChange={value => value.toFixed(0)} />
           </Flex>
-        </Grid>
+        </Grid></Panel.Content>
       </Panel>
+      <Popover><Popover.Trigger>Info</Popover.Trigger><Popover.Content><Popover.Dialog aria-label="Info"><Popover.Close>Close</Popover.Close></Popover.Dialog></Popover.Content></Popover>
+      <DropdownMenu><DropdownMenu.Trigger>Actions</DropdownMenu.Trigger><DropdownMenu.Content><Menu aria-label="Actions"><Menu.Item>Open</Menu.Item></Menu></DropdownMenu.Content></DropdownMenu>
+      <Menu aria-label="Dynamic actions" items={commands}>{command => <Menu.Item id={command.id}>{command.label}</Menu.Item>}</Menu>
+      <ContextMenu><ContextMenu.Trigger><button>Target</button></ContextMenu.Trigger><ContextMenu.Content><Menu aria-label="Context actions"><Menu.Item>Open</Menu.Item></Menu></ContextMenu.Content></ContextMenu>
+      <Dialog><Dialog.Trigger>Open</Dialog.Trigger><Dialog.Backdrop><Dialog.Content><Dialog.Title>Dialog</Dialog.Title><Dialog.Close>Close</Dialog.Close></Dialog.Content></Dialog.Backdrop></Dialog>
+      <AlertDialog><AlertDialog.Trigger>Delete</AlertDialog.Trigger><AlertDialog.Backdrop><AlertDialog.Content><AlertDialog.Title>Delete?</AlertDialog.Title><AlertDialog.Close>Cancel</AlertDialog.Close></AlertDialog.Content></AlertDialog.Backdrop></AlertDialog>
+      <Tooltip><Tooltip.Trigger>Help</Tooltip.Trigger><Tooltip.Content>Help text</Tooltip.Content></Tooltip>
     </AppearanceProvider>
   )
 
