@@ -11,7 +11,7 @@ import { ScrollArea } from "./scroll-area.js"
 import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
 import { overlayMotionClass, useControlTransition, useOverlayTransition } from "./motion-style.js"
-import { useDirection } from "./direction.js"
+import { resolveDirection, useDirection } from "./direction.js"
 import { resolveDirectionalPlacement } from "./overlay-placement.js"
 
 export interface SelectOption {
@@ -36,7 +36,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
     const theme = useControlTheme({ size, color, radius })
     const transition = useControlTransition()
     const overlayTransition = useOverlayTransition()
-    const direction = useDirection()
+    const direction = resolveDirection(properties.dir, useDirection())
     const optionDependencies = [
         theme.transition.transitionDuration,
         theme.transition.transitionTimingFunction,
@@ -53,7 +53,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
         theme.paints.palette.hover.color
     ]
 
-    return <AriaSelect {...properties} dir={properties.dir ?? direction} ref={ref} value={value} defaultValue={defaultValue}
+    return <AriaSelect {...properties} ref={ref} value={value} defaultValue={defaultValue}
         onChange={key => onChange?.(key == null ? null : String(key))}
         disabledKeys={options.filter(option => option.disabled).map(option => option.value)}
         isDisabled={disabled} isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>

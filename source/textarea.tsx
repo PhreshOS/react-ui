@@ -4,7 +4,6 @@ import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useC
 import { SurfaceField } from "./control-surface.js"
 import FieldStyle, { textControlClass } from "./field-style.js"
 import type { TextControlProps } from "./text-control.js"
-import { useDirection } from "./direction.js"
 
 export interface TextareaProps extends Omit<TextControlProps, "type" | "pattern"> {
     readonly rows?: number
@@ -17,9 +16,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
 }, ref) {
 
     const theme = useControlTheme({ size, color, radius })
-    const direction = useDirection()
-
-    return <TextField {...properties} dir={properties.dir ?? direction} className={className} isDisabled={disabled} isReadOnly={readOnly}
+    return <TextField {...properties} className={className} isDisabled={disabled} isReadOnly={readOnly}
         isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
         <FieldStyle />
         <FieldLabel label={label} />

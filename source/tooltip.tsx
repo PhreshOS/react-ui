@@ -5,13 +5,13 @@ import type {
   TooltipProps as AriaTooltipProps,
   TooltipTriggerComponentProps as AriaTooltipTriggerProps
 } from "react-aria-components"
-import { useAppearance } from "./appearance-provider.js"
+import { useAppearance } from "./ui-provider.js"
 import { Button, type ButtonProps } from "./button.js"
 import { controlFontSizes } from "./control.js"
 import { overlayMotionClass, useOverlayTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceOwnProps } from "./surface.js"
-import { useDirection } from "./direction.js"
+import { resolveDirection, useDirection } from "./direction.js"
 import { resolveDirectionalPlacement } from "./overlay-placement.js"
 
 export type TooltipRootProps = AriaTooltipTriggerProps
@@ -48,7 +48,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
 }, ref) {
   const inset = scale(useAppearance().spacing, "small")
   const transition = useOverlayTransition()
-  const direction = useDirection()
+  const direction = resolveDirection(properties.dir, useDirection())
 
   return <AriaTooltip
     {...properties}

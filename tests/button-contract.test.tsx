@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { createRef, type ReactNode } from "react"
 import { defaultAppearance } from "@phreshos/core"
-import { AppearanceProvider, Button, type ButtonColor, type ButtonProps, type ScaleLevel } from "../source/main.js"
+import { UIProvider, Button, type ButtonColor, type ButtonProps, type ScaleLevel } from "../source/main.js"
 import { colorOpacity, resolveColorLevel, opaqueColor, solidColors } from "../source/color.js"
 import { shadowStyle } from "../source/shadow-options.js"
 
@@ -157,14 +157,14 @@ describe("Button", function () {
         dark: { ...defaultAppearance.colors.dark, background: "#faf0e0", foreground: "#101820", primary: "#334455" }
       }
     }
-    const view = render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
-      <AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}><Button color="primary:base">Continue</Button></AppearanceProvider>
-    </AppearanceProvider>)
+    const view = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+      <UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}><Button color="primary:base">Continue</Button></UIProvider>
+    </UIProvider>)
     expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#aabbcc", "base")))
     expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#101820")))
-    view.rerender(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
-      <AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}><Button color="primary:base">Continue</Button></AppearanceProvider>
-    </AppearanceProvider>)
+    view.rerender(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+      <UIProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}><Button color="primary:base">Continue</Button></UIProvider>
+    </UIProvider>)
     expect(materialColor(screen.getByRole("button"))).toBe(cssBackground(resolveColorLevel("#334455", "base")))
     expect(screen.getByRole("button").style.color).toBe(cssBackground(opaqueColor("#faf0e0")))
   })
@@ -197,7 +197,7 @@ describe("Button", function () {
 })
 
 function renderButton(button: ReactNode) {
-  return render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{button}</AppearanceProvider>)
+  return render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{button}</UIProvider>)
 }
 
 function cssBackground(value: string) {

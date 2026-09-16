@@ -1,16 +1,16 @@
 import { act, cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
-import { AppearanceProvider, useAppearance, useBrowserPreferences, usePreferences, useThemedValue } from "../source/main.js"
+import { UIProvider, useAppearance, useBrowserPreferences, usePreferences, useThemedValue } from "../source/main.js"
 import { defaultAppearance, type Appearance } from "@phreshos/core"
 import type { Preferences } from "../source/main.js"
 
 afterEach(cleanup)
 
-describe("AppearanceProvider", function () {
+describe("UIProvider", function () {
   it("falls back to complete browser Preferences", function () {
     const values: Array<Appearance | Preferences | string> = []
 
-    render(<AppearanceProvider><Read onRead={value => values.push(value)} /></AppearanceProvider>)
+    render(<UIProvider><Read onRead={value => values.push(value)} /></UIProvider>)
 
     expect(values).toEqual([defaultAppearance, { theme: "light", animations: true }, defaultAppearance.colors.light.background])
   })
@@ -18,9 +18,9 @@ describe("AppearanceProvider", function () {
   it("provides Appearance and complete Preferences directly", function () {
     const values: Array<Appearance | Preferences | string> = []
 
-    render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "dark", animations: false }}>
+    render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "dark", animations: false }}>
       <Read onRead={value => values.push(value)} />
-    </AppearanceProvider>)
+    </UIProvider>)
 
     expect(values).toEqual([defaultAppearance, { theme: "dark", animations: false }, defaultAppearance.colors.dark.background])
   })
@@ -35,22 +35,22 @@ describe("AppearanceProvider", function () {
     }
     const values: Array<Appearance | Preferences | string> = []
 
-    render(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: false }}>
-      <AppearanceProvider><Read onRead={value => values.push(value)} /></AppearanceProvider>
-    </AppearanceProvider>)
+    render(<UIProvider appearance={appearance} preferences={{ theme: "dark", animations: false }}>
+      <UIProvider><Read onRead={value => values.push(value)} /></UIProvider>
+    </UIProvider>)
 
     expect(values).toEqual([appearance, { theme: "dark", animations: false }, appearance.colors.dark.background])
   })
 
   it("does not alter arbitrary document scrollbars", function () {
-    render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
       <span data-testid="content" />
-    </AppearanceProvider>)
+    </UIProvider>)
     expect(document.head.querySelector("style[data-phreshos-scrollbars]")).toBeNull()
     expect(document.documentElement.getAttribute("style")).toBeNull()
   })
 
-  it("uses Core defaults outside an AppearanceProvider", function () {
+  it("uses Core defaults outside a UIProvider", function () {
     const values: Array<Appearance | Preferences | string> = []
 
     render(<Read onRead={value => values.push(value)} />)

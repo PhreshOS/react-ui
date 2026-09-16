@@ -1,9 +1,10 @@
 import { Slider as BaseSlider } from "@base-ui/react/slider"
+import { DirectionProvider as BaseDirectionProvider } from "@base-ui/react/direction-provider"
 import { forwardRef, useEffect, useId, useRef, useState } from "react"
 import type { HTMLAttributes } from "react"
 import { fieldStyle, useControlTheme } from "./control.js"
 import type { ControlProps, FieldProps } from "./control.js"
-import { useDirection } from "./direction.js"
+import { resolveDirection, useDirection } from "./direction.js"
 
 export interface SliderProps extends
   Omit<HTMLAttributes<HTMLDivElement>, "children" | "className" | "color" | "defaultValue" | "onChange" | "style">,
@@ -44,7 +45,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
   ...properties
 }, ref) {
   const theme = useControlTheme({ size, color })
-  const direction = useDirection()
+  const direction = resolveDirection(properties.dir, useDirection())
   const descriptionId = useId()
   const input = useRef<HTMLInputElement>(null)
   const initialValue = useRef(defaultValue ?? minValue)
@@ -66,9 +67,8 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
     return () => formElement.removeEventListener("reset", reset)
   }, [controlled])
 
-  return <BaseSlider.Root
+  const root = <BaseSlider.Root
     {...properties}
-    dir={properties.dir ?? direction}
     ref={ref}
     value={resolvedValue}
     min={minValue}
@@ -140,4 +140,6 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
     </BaseSlider.Control>
     {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: 0.7 }}>{description}</span>}
   </BaseSlider.Root>
+
+  return <BaseDirectionProvider direction={direction}>{root}</BaseDirectionProvider>
 })

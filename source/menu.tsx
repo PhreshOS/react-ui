@@ -17,7 +17,6 @@ import type {
 import { colorOpacity } from "./color.js"
 import { useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
 import type { ScaleLevel } from "./scale.js"
-import { useDirection } from "./direction.js"
 
 type MenuTheme = Readonly<{
   color?: ControlColor
@@ -39,12 +38,9 @@ const MenuRootImplementation = forwardRef(function MenuRoot<T extends object = o
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
   const theme = useControlTheme({ color, size })
-  const direction = useDirection()
-
   return <MenuThemeContext.Provider value={{ color, size, theme }}>
     <AriaMenu
       {...properties}
-      dir={properties.dir ?? direction}
       ref={ref}
       className={className}
       style={{

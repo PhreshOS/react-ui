@@ -6,7 +6,7 @@ import { defaultAppearance } from "@phreshos/core"
 import { colorOpacity, opaqueColor, resolveColorLevel, solidColors } from "../source/color.js"
 import { shadowStyle } from "../source/shadow-options.js"
 import {
-    AppearanceProvider, Button, Input, Textarea, Checkbox, Switch, Radio, RadioGroup, Select, Slider,
+    UIProvider, Button, Input, Textarea, Checkbox, Switch, Radio, RadioGroup, Select, Slider,
     type InputProps, type TextareaProps, type CheckboxProps, type SwitchProps, type RadioGroupProps,
     type SelectProps, type SliderProps, type ControlColor, type ScaleLevel
 } from "../source/main.js"
@@ -133,7 +133,7 @@ it.each(["primary", "secondary", "success", "warning", "danger", "info"] as cons
     const view = renderUI(sample)
 
     for (const theme of ["light", "dark"] as const) {
-        view.rerender(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme, animations: true }}>{sample}</AppearanceProvider>)
+        view.rerender(<UIProvider appearance={defaultAppearance} preferences={{ theme, animations: true }}>{sample}</UIProvider>)
         const tint = defaultAppearance.colors[theme][role]
         const paint = solidColors(tint, defaultAppearance.colors[theme].background, defaultAppearance.colors[theme].foreground).rest
 
@@ -168,11 +168,11 @@ it("shares Button height and responds to the nearest concrete theme colors", () 
         }
     }
     const sample = <><Input aria-label="Name" size="large" /><Button size="large">Save</Button></>
-    const view = render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>{sample}</AppearanceProvider>)
+    const view = render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>{sample}</UIProvider>)
     const field = screen.getByRole("textbox")
     expect(field.style.height).toBe(screen.getByRole("button").style.height)
     expect(materialColor(field)).toBe(css(resolveColorLevel("#223344", "base")))
-    view.rerender(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>{sample}</AppearanceProvider>)
+    view.rerender(<UIProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>{sample}</UIProvider>)
     expect(materialColor(field)).toBe(css(resolveColorLevel("#ccddee", "base")))
 })
 
@@ -272,6 +272,8 @@ it("RadioGroup follows controlled props without repeating its validation error f
     expect(screen.getAllByText("Choose another mode")).toHaveLength(1)
     view.rerender(wrap(<RadioGroup label="Mode" value="two"><Radio label="One" value="one" /><Radio label="Two" value="two" /></RadioGroup>))
     expect(screen.getByRole("radio", { name: "Two" }).getAttribute("aria-checked")).toBe("true")
+    view.rerender(wrap(<RadioGroup label="Mode" value={null}><Radio label="One" value="one" /><Radio label="Two" value="two" /></RadioGroup>))
+    expect(screen.getAllByRole("radio").every(radio => radio.getAttribute("aria-checked") === "false")).toBe(true)
 })
 
 const options = [{ value: "one", label: "One" }, { value: "two", label: "Two", disabled: true }, { value: "three", label: "Three" }]
@@ -306,12 +308,12 @@ it("refreshes Select option paint when the theme changes while its collection re
         }
     }
     const select = <Select label="Choice" options={options} defaultValue="one" />
-    const view = render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>{select}</AppearanceProvider>)
+    const view = render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>{select}</UIProvider>)
     await userEvent.setup().click(screen.getByRole("button"))
 
     expect(screen.getByRole("option", { name: "Three" }).style.color).toBe("rgb(18, 52, 86)")
 
-    view.rerender(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>{select}</AppearanceProvider>)
+    view.rerender(<UIProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>{select}</UIProvider>)
 
     expect(screen.getByRole("option", { name: "Three" }).style.color).toBe("rgb(254, 220, 186)")
     expect(screen.getByRole("listbox")).not.toBeNull()
@@ -435,7 +437,7 @@ it("Slider reports committed values and resets to the default without changing i
 })
 
 function wrap(children: ReactNode) {
-    return <AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{children}</AppearanceProvider>
+    return <UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{children}</UIProvider>
 }
 
 function renderUI(children: ReactNode) {

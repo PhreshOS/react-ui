@@ -14,7 +14,7 @@ export function resolveRadius(value: Radius | undefined, appearance: Appearance 
 
   if (!isScaleLevel(value)) return value
 
-  if (!appearance) throw new Error("A semantic radius requires an AppearanceProvider")
+  if (!appearance) throw new Error("A semantic radius requires a UIProvider")
 
   return scale(appearance.radius, value)
 }

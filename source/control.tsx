@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react"
 import { useMemo } from "react"
 import { FieldError, Label, Text } from "react-aria-components"
-import { useAppearance, useThemedValue } from "./appearance-provider.js"
+import { useAppearance, useThemedValue } from "./ui-provider.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { scale, type ScaleLevel } from "./scale.js"
 import { colorOpacity, solidColors } from "./color.js"

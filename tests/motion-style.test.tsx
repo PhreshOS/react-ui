@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
-import { AppearanceProvider, Button, Input, Surface, Select } from "../source/main.js"
+import { UIProvider, Button, Input, Surface, Select } from "../source/main.js"
 import { overlayMotionClass, useControlTransition } from "../source/motion-style.js"
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
@@ -10,10 +10,10 @@ afterEach(() => { cleanup(); vi.restoreAllMocks() })
 it("consumes Appearance timing and limits transitions to explicit visual properties", () => {
   const appearance = { ...defaultAppearance, transaction: { duration: 240, easing: "ease-in-out" as const } }
   let motion: ReturnType<typeof useControlTransition> | undefined
-  render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
+  render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
     <ReadMotion onRead={value => { motion = value }} />
     <Surface data-testid="surface">Content</Surface><Button>Action</Button><Input label="Name" />
-  </AppearanceProvider>)
+  </UIProvider>)
   const host = screen.getByTestId("surface")
   for (const element of [host, screen.getByRole("button"), screen.getByRole("textbox")]) {
     expect(element.style.transitionProperty).toBe("background-color, color, border-color, border-radius, box-shadow")
@@ -38,9 +38,9 @@ it("consumes Appearance timing and limits transitions to explicit visual propert
 })
 
 it("hoists one scoped stylesheet for nested providers", () => {
-  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
-    <AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "dark", animations: true }}><Surface /></AppearanceProvider>
-  </AppearanceProvider>)
+  render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    <UIProvider appearance={defaultAppearance} preferences={{ theme: "dark", animations: true }}><Surface /></UIProvider>
+  </UIProvider>)
   const sheets = [...document.head.querySelectorAll("style")].filter(style => style.textContent?.includes("@keyframes phreshos-ui-overlay-enter"))
   expect(sheets).toHaveLength(1)
   const css = sheets[0]?.textContent
@@ -62,11 +62,11 @@ it("hoists one scoped stylesheet for nested providers", () => {
 it("makes every React UI transition immediate when animations are disabled", async () => {
   const appearance = { ...defaultAppearance, transaction: { duration: 240, easing: "ease-in-out" as const } }
   let motion: ReturnType<typeof useControlTransition> | undefined
-  render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: false }}>
+  render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: false }}>
     <ReadMotion onRead={value => { motion = value }} />
     <Surface data-testid="surface" />
     <Select label="Choice" options={[{ value: "one", label: "One" }]} />
-  </AppearanceProvider>)
+  </UIProvider>)
 
   expect(screen.getByTestId("surface").style.transitionDuration).toBe("0ms")
   expect(screen.getByRole("button").style.transitionDuration).toBe("0ms")
@@ -84,9 +84,9 @@ function ReadMotion({ onRead }: Readonly<{ onRead: (value: ReturnType<typeof use
 
 it("uses the shared overlay style without changing Select selection, dismissal, or focus return", async () => {
   const onChange = vi.fn()
-  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+  render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <Select label="Choice" options={[{ value: "one", label: "One" }, { value: "two", label: "Two" }]} onChange={onChange} />
-  </AppearanceProvider>)
+  </UIProvider>)
   const user = userEvent.setup()
   const trigger = screen.getByRole("button")
   await user.click(trigger)
@@ -103,9 +103,9 @@ it("uses the shared overlay style without changing Select selection, dismissal, 
 })
 
 it("derives dark and illuminated edge layers directly from Material paint", () => {
-  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+  render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <Surface data-testid="surface" color="#ffeecc" material={{ opacity: 0.25 }} />
-  </AppearanceProvider>)
+  </UIProvider>)
   const host = screen.getByTestId("surface")
   const border = host.querySelector<HTMLElement>("[data-surface-edge]")
   const light = host.querySelector<HTMLElement>("[data-surface-edge-light]")

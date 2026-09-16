@@ -1,6 +1,6 @@
 import { Children, createContext, forwardRef, isValidElement, useContext } from "react"
 import type { ComponentProps, HTMLAttributes } from "react"
-import { useAppearance } from "./appearance-provider.js"
+import { useAppearance } from "./ui-provider.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceProps } from "./surface.js"
 

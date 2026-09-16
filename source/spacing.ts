@@ -11,7 +11,7 @@ export function resolveSpacing(value: Spacing | undefined, appearance: Appearanc
 export function resolveSpacing(value: Spacing | undefined, appearance: Appearance | null): CSSProperties["gap"] {
   if (!isScaleLevel(value)) return value
 
-  if (!appearance) throw new Error("Semantic spacing requires an AppearanceProvider")
+  if (!appearance) throw new Error("Semantic spacing requires a UIProvider")
 
   return scale(appearance.spacing, value)
 }

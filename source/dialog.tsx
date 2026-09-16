@@ -15,12 +15,12 @@ import type {
   ModalOverlayProps as AriaModalOverlayProps,
   TextProps as AriaTextProps
 } from "react-aria-components"
-import { useAppearance } from "./appearance-provider.js"
+import { useAppearance } from "./ui-provider.js"
 import { Button, type ButtonProps } from "./button.js"
 import { backdropMotionClass, overlayMotionClass, useOverlayTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceOwnProps } from "./surface.js"
-import { useDirection } from "./direction.js"
+import { resolveDirection, useDirection } from "./direction.js"
 
 export type DialogRootProps = AriaDialogTriggerProps
 
@@ -47,7 +47,7 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
 }, ref) {
   const inset = scale(useAppearance().spacing, "medium")
   const transition = useOverlayTransition()
-  const direction = useDirection()
+  const direction = resolveDirection(properties.dir, useDirection())
 
   return <AriaModalOverlay
     {...properties}
@@ -90,7 +90,7 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
 }, ref) {
   const inset = scale(useAppearance().spacing, "medium")
   const transition = useOverlayTransition()
-  const direction = useDirection()
+  const direction = resolveDirection(properties.dir, useDirection())
 
   return <AriaModal
     dir={direction}

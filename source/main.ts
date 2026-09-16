@@ -6,15 +6,15 @@
  */
 export { defaultAppearance } from "@phreshos/core"
 export {
-  AppearanceProvider,
+  UIProvider,
   useAppearance,
   useBrowserPreferences,
   useDirection,
   useDocumentDirection,
   usePreferences,
   useThemedValue,
-  type AppearanceProviderProps
-} from "./appearance-provider.js"
+  type UIProviderProps
+} from "./ui-provider.js"
 export type { DesktopPreferences as Preferences } from "@phreshos/core"
 export type { Direction } from "./direction.js"
 export { Flex, type FlexProps } from "./flex.js"

@@ -1,10 +1,11 @@
 import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area"
+import { DirectionProvider as BaseDirectionProvider } from "@base-ui/react/direction-provider"
 import { forwardRef, useState } from "react"
 import type { ComponentPropsWithoutRef, Ref, ReactNode, UIEventHandler } from "react"
-import { useAppearance, useThemedValue } from "./appearance-provider.js"
+import { useAppearance, useThemedValue } from "./ui-provider.js"
 import { colorOpacity } from "./color.js"
 import { useTransitionTiming } from "./motion-style.js"
-import { useDirection } from "./direction.js"
+import { resolveDirection, useDirection } from "./direction.js"
 
 export type ScrollAreaAxis = "vertical" | "horizontal" | "both"
 
@@ -25,45 +26,46 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
   ...properties
 }, ref) {
   const appearance = useAppearance()
-  const direction = useDirection()
+  const direction = resolveDirection(properties.dir, useDirection())
   const foreground = useThemedValue(appearance.colors).foreground
   const radius = Math.min(appearance.radius, 8)
   const vertical = axis === "vertical" || axis === "both"
   const horizontal = axis === "horizontal" || axis === "both"
 
-  return <BaseScrollArea.Root
-      {...properties}
-      dir={properties.dir ?? direction}
-      data-phreshos-scroll-area=""
-      ref={ref}
+  const root = <BaseScrollArea.Root
+    {...properties}
+    data-phreshos-scroll-area=""
+    ref={ref}
+    style={{
+      ...style,
+      position: style?.position ?? "relative",
+      minWidth: style?.minWidth ?? 0,
+      minHeight: style?.minHeight ?? 0,
+      overflow: "hidden"
+    }}
+  >
+    <BaseScrollArea.Viewport
+      data-phreshos-scroll-area-viewport=""
+      ref={viewportRef}
+      onScroll={onScroll}
       style={{
-        ...style,
-        position: style?.position ?? "relative",
-        minWidth: style?.minWidth ?? 0,
-        minHeight: style?.minHeight ?? 0,
-        overflow: "hidden"
+        width: "100%",
+        height: "100%",
+        overflowX: horizontal ? "scroll" : "hidden",
+        overflowY: vertical ? "scroll" : "hidden"
       }}
     >
-      <BaseScrollArea.Viewport
-        data-phreshos-scroll-area-viewport=""
-        ref={viewportRef}
-        onScroll={onScroll}
-        style={{
-          width: "100%",
-          height: "100%",
-          overflowX: horizontal ? "scroll" : "hidden",
-          overflowY: vertical ? "scroll" : "hidden"
-        }}
-      >
-        <BaseScrollArea.Content data-phreshos-scroll-area-content="" style={vertical && !horizontal ? { minWidth: "100%", width: "100%" } : undefined}>
-          {children}
-        </BaseScrollArea.Content>
-      </BaseScrollArea.Viewport>
+      <BaseScrollArea.Content data-phreshos-scroll-area-content="" style={vertical && !horizontal ? { minWidth: "100%", width: "100%" } : undefined}>
+        {children}
+      </BaseScrollArea.Content>
+    </BaseScrollArea.Viewport>
 
-      {vertical && <Scrollbar orientation="vertical" foreground={foreground} radius={radius} />}
-      {horizontal && <Scrollbar orientation="horizontal" foreground={foreground} radius={radius} />}
-      {vertical && horizontal && <BaseScrollArea.Corner style={{ background: "transparent" }} />}
-    </BaseScrollArea.Root>
+    {vertical && <Scrollbar orientation="vertical" foreground={foreground} radius={radius} />}
+    {horizontal && <Scrollbar orientation="horizontal" foreground={foreground} radius={radius} />}
+    {vertical && horizontal && <BaseScrollArea.Corner style={{ background: "transparent" }} />}
+  </BaseScrollArea.Root>
+
+  return <BaseDirectionProvider direction={direction}>{root}</BaseDirectionProvider>
 })
 
 function Scrollbar({ orientation, foreground, radius }: Readonly<{

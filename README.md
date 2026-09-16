@@ -38,35 +38,38 @@ import { Button, Surface } from "@phreshos/react-ui"
 ```
 
 Without a provider, components use Core's `defaultAppearance` and reactively
-follow the browser's complete visual preferences. `AppearanceProvider` can replace
-Appearance or Preferences for a subtree; omitted values inherit from the nearest provider.
+follow the browser's complete visual preferences. `UIProvider` supplies the
+Appearance, Preferences, and direction shared by a React UI subtree. Omitted
+Appearance and Preferences values inherit from the nearest provider.
 React UI also exports that same canonical `defaultAppearance` value for callers
 that need it explicitly.
 See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
 interpreted by the provider and components.
 
 React UI is neutral between left-to-right and right-to-left interfaces.
-`AppearanceProvider` guarantees one direction across DOM layout, keyboard
-behavior, overlays, scrolling, and direction-sensitive animation. It follows
-the `<html dir>` value unless `direction` supplies an explicit override.
+`UIProvider` creates a direction boundary that participates in native DOM
+inheritance without creating a layout box. Its direction follows `<html dir>`
+unless `direction` supplies an explicit override. React UI reads that same
+resolved value only for JavaScript behavior and portals that cannot rely on
+native inheritance.
 
 ```tsx
-import { AppearanceProvider, Select } from "@phreshos/react-ui"
+import { UIProvider, Select } from "@phreshos/react-ui"
 
-<AppearanceProvider direction="rtl">
+<UIProvider direction="rtl">
   <Select label="Choice" options={[{ value: "one", label: "One" }]} />
-</AppearanceProvider>
+</UIProvider>
 ```
 
 ```tsx
-import { AppearanceProvider, Button, useBrowserPreferences } from "@phreshos/react-ui"
+import { UIProvider, Button, useBrowserPreferences } from "@phreshos/react-ui"
 
 function Example() {
   const browser = useBrowserPreferences()
 
-  return <AppearanceProvider preferences={{ ...browser, theme: "dark" }}>
+  return <UIProvider preferences={{ ...browser, theme: "dark" }}>
     <Button>Dark subtree</Button>
-  </AppearanceProvider>
+  </UIProvider>
 }
 ```
 

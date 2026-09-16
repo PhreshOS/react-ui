@@ -1,5 +1,6 @@
 import { Radio as BaseRadio } from "@base-ui/react/radio"
 import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group"
+import { DirectionProvider as BaseDirectionProvider } from "@base-ui/react/direction-provider"
 import type { RadioRootProps as BaseRadioProps } from "@base-ui/react/radio"
 import type { RadioGroupProps as BaseRadioGroupProps } from "@base-ui/react/radio-group"
 import { createContext, forwardRef, useContext, useId, useState } from "react"
@@ -9,7 +10,7 @@ import type { ControlProps, FieldProps } from "./control.js"
 import { ToggleIndicator, toggleStyle } from "./toggle-indicator.js"
 import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
-import { useDirection } from "./direction.js"
+import { resolveDirection, useDirection } from "./direction.js"
 
 type RadioStyle = Pick<ControlProps, "size" | "color" | "disabled"> & MaterialOverrides & ShadowOverrides & Readonly<{
   invalid: boolean
@@ -19,14 +20,14 @@ type RadioStyle = Pick<ControlProps, "size" | "color" | "disabled"> & MaterialOv
 const RadioStyleContext = createContext<RadioStyle | null>(null)
 
 export interface RadioGroupProps extends
-  Omit<BaseRadioGroupProps<string>, "children" | "className" | "defaultValue" | "disabled" | "onChange" | "onValueChange" | "readOnly" | "required" | "style" | "value">,
+  Omit<BaseRadioGroupProps<string | null>, "children" | "className" | "defaultValue" | "disabled" | "onChange" | "onValueChange" | "readOnly" | "required" | "style" | "value">,
   ControlProps,
   FieldProps,
   MaterialOverrides,
   ShadowOverrides {
   readonly children: ReactNode
-  readonly value?: string
-  readonly defaultValue?: string
+  readonly value?: string | null
+  readonly defaultValue?: string | null
   readonly onChange?: (value: string) => void
   readonly readOnly?: boolean
   readonly orientation?: "horizontal" | "vertical"
@@ -66,20 +67,21 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(function R
   ...properties
 }, ref) {
   const theme = useControlTheme({ size, color })
-  const direction = useDirection()
+  const direction = resolveDirection(properties.dir, useDirection())
   const labelId = useId()
   const descriptionId = useId()
   const errorId = useId()
   const describedBy = [ariaDescribedBy, description != null ? descriptionId : null, invalid && errorMessage != null ? errorId : null].filter(Boolean).join(" ") || undefined
 
-  return <BaseRadioGroup
+  const root = <BaseRadioGroup
     {...properties}
     ref={ref}
-    dir={properties.dir ?? direction}
     className={className}
     value={value}
     defaultValue={defaultValue}
-    onValueChange={next => onChange?.(next)}
+    onValueChange={next => {
+      if (next != null) onChange?.(next)
+    }}
     disabled={disabled}
     readOnly={readOnly}
     required={required}
@@ -97,6 +99,8 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(function R
     {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: 0.7 }}>{description}</span>}
     {invalid && errorMessage != null && <span id={errorId} style={{ fontSize: "0.92em", color: theme.danger }}>{errorMessage}</span>}
   </BaseRadioGroup>
+
+  return <BaseDirectionProvider direction={direction}>{root}</BaseDirectionProvider>
 })
 
 /** An option in a RadioGroup. Selection and validation belong to the group. */

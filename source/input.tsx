@@ -4,7 +4,6 @@ import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useC
 import { SurfaceField } from "./control-surface.js"
 import FieldStyle, { textControlClass } from "./field-style.js"
 import type { TextControlProps } from "./text-control.js"
-import { useDirection } from "./direction.js"
 
 export type InputProps = TextControlProps
 
@@ -15,9 +14,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
 }, ref) {
 
     const theme = useControlTheme({ size, color, radius })
-    const direction = useDirection()
-
-    return <TextField {...properties} dir={properties.dir ?? direction} className={className} isDisabled={disabled} isReadOnly={readOnly}
+    return <TextField {...properties} className={className} isDisabled={disabled} isReadOnly={readOnly}
         isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
         <FieldStyle />
         <FieldLabel label={label} />

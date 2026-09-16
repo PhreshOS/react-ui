@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it } from "vitest"
-import { AppearanceProvider, Radio, RadioGroup, Select, Slider, Surface, useDirection, useDocumentDirection } from "../source/main.js"
+import { UIProvider, Radio, RadioGroup, Select, Slider, useDirection, useDocumentDirection } from "../source/main.js"
 
 afterEach(function () {
   document.documentElement.removeAttribute("dir")
@@ -31,26 +31,39 @@ it("reacts when the HTML direction changes", async function () {
   await waitFor(() => expect(screen.getByTestId("document-direction").textContent).toBe("rtl"))
 })
 
-it("lets AppearanceProvider inherit and override direction", async function () {
+it("always establishes a DOM boundary from its resolved direction", async function () {
   document.documentElement.dir = "rtl"
-  render(<AppearanceProvider>
-    <DirectionProbe name="inherited" />
-    <AppearanceProvider direction="ltr"><DirectionProbe name="overridden" /></AppearanceProvider>
-  </AppearanceProvider>)
+  render(<UIProvider>
+    <main data-testid="content"><DirectionProbe name="direction" /></main>
+  </UIProvider>)
 
-  expect(screen.getByTestId("inherited").textContent).toBe("rtl")
-  expect(screen.getByTestId("inherited").getAttribute("dir")).toBe("rtl")
-  expect(screen.getByTestId("overridden").textContent).toBe("ltr")
-  expect(screen.getByTestId("overridden").getAttribute("dir")).toBe("ltr")
+  const boundary = screen.getByTestId("content").parentElement
+  expect(boundary?.dir).toBe("rtl")
+  expect(boundary?.style.display).toBe("contents")
+  expect(screen.getByTestId("content").hasAttribute("dir")).toBe(false)
+  expect(screen.getByTestId("direction").textContent).toBe("rtl")
 
   document.documentElement.dir = "ltr"
-  await waitFor(() => expect(screen.getByTestId("inherited").textContent).toBe("ltr"))
-  expect(screen.getByTestId("overridden").textContent).toBe("ltr")
+  await waitFor(() => expect(boundary?.dir).toBe("ltr"))
+  expect(screen.getByTestId("direction").textContent).toBe("ltr")
+})
+
+it("resolves each omitted provider direction from the document", function () {
+  document.documentElement.dir = "ltr"
+  render(<UIProvider direction="rtl">
+    <DirectionProbe name="outer" />
+    <UIProvider><DirectionProbe name="inner" /></UIProvider>
+  </UIProvider>)
+
+  expect(screen.getByTestId("outer").textContent).toBe("rtl")
+  expect(screen.getByTestId("inner").textContent).toBe("ltr")
+  expect(screen.getByTestId("outer").closest("[dir=rtl]")).not.toBeNull()
+  expect(screen.getByTestId("inner").closest("[dir=ltr]")).not.toBeNull()
 })
 
 it("keeps directional keyboard behavior and portalled layout in RTL", async function () {
   const user = userEvent.setup()
-  render(<AppearanceProvider direction="rtl">
+  render(<UIProvider direction="rtl">
     <Slider aria-label="Value" minValue={10} maxValue={30} step={5} defaultValue={20} />
     <RadioGroup aria-label="Choice" orientation="horizontal" defaultValue="two">
       <Radio value="one" label="One" />
@@ -58,7 +71,7 @@ it("keeps directional keyboard behavior and portalled layout in RTL", async func
       <Radio value="three" label="Three" />
     </RadioGroup>
     <Select aria-label="Choice" options={[{ value: "one", label: "One" }]} />
-  </AppearanceProvider>)
+  </UIProvider>)
 
   const slider = screen.getByRole("slider") as HTMLInputElement
   slider.focus()
@@ -79,5 +92,5 @@ function DocumentDirectionProbe() {
 }
 
 function DirectionProbe({ name }: Readonly<{ name: string }>) {
-  return <Surface as="output" data-testid={name} material={false} shadow={false}>{useDirection()}</Surface>
+  return <output data-testid={name}>{useDirection()}</output>
 }

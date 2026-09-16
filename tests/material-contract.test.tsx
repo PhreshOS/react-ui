@@ -5,7 +5,7 @@ import type { ComponentPropsWithoutRef } from "react"
 import { afterEach, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
 import {
-  AppearanceProvider, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Radio, Grid,
+  UIProvider, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Radio, Grid,
   type MaterialOptions, type ShadowOptions, type SurfaceHost, type SurfaceProps,
   type ButtonProps, type InputProps, type CheckboxProps, type SwitchProps, type RadioProps, type SelectProps
 } from "../source/main.js"
@@ -43,7 +43,7 @@ it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"]
     : kind === "checkbox" ? <Checkbox label="Value" material={false} shadow={false} />
     : kind === "switch" ? <Switch label="Value" material={false} shadow={false} />
     : <RadioGroup label="Values" material={false} shadow={false}><Radio label="Value" value="one" /></RadioGroup>
-  const { container } = render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{example}</AppearanceProvider>)
+  const { container } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{example}</UIProvider>)
   const host = [...container.querySelectorAll<HTMLElement>("*")]
     .find(element => element.style.boxShadow === "none")
 
@@ -63,10 +63,10 @@ it("lets any ref-forwarding host that preserves style and children carry the Sur
   const grid = createRef<HTMLDivElement>()
   const outside = createRef<HTMLDivElement>()
 
-  render(<AppearanceProvider appearance={defaultAppearance} direction="rtl" preferences={{ theme: "light", animations: true }}>
-    <Surface as={Grid} ref={grid} data-testid="grid" columns={2}>Grid content</Surface>
-    <Surface as={OutsideLayout} ref={outside} data-testid="outside" direction="column">Outside content</Surface>
-  </AppearanceProvider>)
+  render(<UIProvider appearance={defaultAppearance} direction="rtl" preferences={{ theme: "light", animations: true }}>
+    <Surface as={Grid} ref={grid} data-testid="grid" dir="rtl" columns={2}>Grid content</Surface>
+    <Surface as={OutsideLayout} ref={outside} data-testid="outside" dir="rtl" direction="column">Outside content</Surface>
+  </UIProvider>)
 
   expect(grid.current).toBe(screen.getByTestId("grid"))
   expect(grid.current?.style.display).toBe("grid")
@@ -82,15 +82,17 @@ it("lets any ref-forwarding host that preserves style and children carry the Sur
 it("renders a div by default and preserves the selected host contract", () => {
   const div = createRef<HTMLDivElement>()
   const button = createRef<HTMLButtonElement>()
-  const { container } = render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+  const { container } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <Surface ref={div} data-testid="surface">Content</Surface>
     <Surface as="button" ref={button} data-testid="button" type="button">Action</Surface>
-  </AppearanceProvider>)
+  </UIProvider>)
   const surface = screen.getByTestId("surface")
 
   expect(div.current).toBe(surface)
   expect(surface.tagName).toBe("DIV")
-  expect(surface.parentElement).toBe(container)
+  expect(surface.parentElement?.dir).toBe("ltr")
+  expect(surface.parentElement?.style.display).toBe("contents")
+  expect(surface.parentElement?.parentElement).toBe(container)
   expect(surface.querySelector("[data-material]")).not.toBeNull()
   expect(screen.getByText("Content")).toBe(surface)
   expect(button.current).toBe(screen.getByTestId("button"))
@@ -99,10 +101,10 @@ it("renders a div by default and preserves the selected host contract", () => {
 })
 
 it("accepts grouped material properties without another rendered entity", () => {
-  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+  render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <Surface data-testid="geometry" color="#345678" material={{ opacity: 0.45, backdrop: 0 }}
       style={{ width: 80, height: 60 }} />
-  </AppearanceProvider>)
+  </UIProvider>)
   const geometry = screen.getByTestId("geometry")
   const material = geometry.querySelector<HTMLElement>("[data-material]")
 
@@ -125,7 +127,7 @@ it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"]
     : kind === "checkbox" ? <Checkbox label="Value" color="#345678" material={material} onChange={action} />
     : kind === "switch" ? <Switch label="Value" color="#345678" material={material} onChange={action} />
     : <RadioGroup label="Values" color="#345678" material={material} onChange={action}><Radio label="Value" value="one" /></RadioGroup>
-  const { container } = render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{example}</AppearanceProvider>)
+  const { container } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{example}</UIProvider>)
   const base = container.querySelector<SVGRectElement>("[data-material-base]")
 
   expect(base).not.toBeNull()
@@ -145,13 +147,13 @@ it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"]
 })
 
 it("lets a Radio override its group's material independently from color and radius", () => {
-  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+  render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <RadioGroup label="Choices" material={{ opacity: 0.6 }}>
       <Radio label="One" value="one" />
       <Radio label="Two" value="two" material={{ opacity: 0.3 }} />
     </RadioGroup>
     <Button data-testid="button" color="danger:base" radius="small" material={{ opacity: 0.4 }}>Action</Button>
-  </AppearanceProvider>)
+  </UIProvider>)
 
   expect([...document.querySelectorAll("[data-material-fill]")].slice(0, 2).map(element => element.getAttribute("opacity"))).toEqual(["0.6", "0.3"])
   expect(screen.getByTestId("button").style.borderRadius).toBe("5px")

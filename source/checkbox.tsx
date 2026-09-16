@@ -6,7 +6,6 @@ import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import { ToggleIndicator, toggleStyle } from "./toggle-indicator.js"
 import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
-import { useDirection } from "./direction.js"
 
 export interface CheckboxProps extends Omit<CheckboxFieldProps, ControlOverrides | "isReadOnly" | "isSelected" | "defaultSelected" | "isIndeterminate">, ControlProps, FieldProps, MaterialOverrides, ShadowOverrides {
     readonly checked?: boolean
@@ -22,9 +21,7 @@ export const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(function Check
 }, ref) {
 
     const theme = useControlTheme({ size, color })
-    const direction = useDirection()
-
-    return <CheckboxField {...properties} dir={properties.dir ?? direction} ref={ref} isDisabled={disabled} isRequired={required} isInvalid={invalid}
+    return <CheckboxField {...properties} ref={ref} isDisabled={disabled} isRequired={required} isInvalid={invalid}
         isReadOnly={readOnly} isSelected={checked} defaultSelected={defaultChecked} isIndeterminate={indeterminate}
         style={state => fieldStyle(theme, state.isDisabled, style)}>
         <CheckboxButton style={state => toggleStyle(theme, state.isDisabled, state.isReadOnly)}>

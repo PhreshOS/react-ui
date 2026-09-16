@@ -5,6 +5,11 @@ export type Direction = "ltr" | "rtl"
 
 export const DirectionContext = createContext<Direction | null>(null)
 
+/** Resolves a concrete element override before falling back to its React UI environment. */
+export function resolveDirection(value: string | undefined, fallback: Direction): Direction {
+  return value === "ltr" || value === "rtl" ? value : fallback
+}
+
 /** Returns the nearest guaranteed React UI direction, or the document direction. */
 export function useDirection(): Direction {
   const direction = useContext(DirectionContext)

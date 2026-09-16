@@ -8,7 +8,6 @@ import { controlFontSizes, useControlTheme, type ControlColor, type ControlTheme
 import { SurfaceButton } from "./control-surface.js"
 import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
-import { useDirection } from "./direction.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
 
@@ -62,11 +61,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
   ref
 ) {
   const theme = useControlTheme({ color, radius, size })
-  const direction = useDirection()
-
   return <AriaButton
     {...properties}
-    dir={properties.dir ?? direction}
     ref={ref}
     type={type}
     isDisabled={disabled}

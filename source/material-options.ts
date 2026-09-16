@@ -1,5 +1,5 @@
 import { appearanceLimits, type AppearanceRange } from "@phreshos/core"
-import { useAppearance, useThemedValue } from "./appearance-provider.js"
+import { useAppearance, useThemedValue } from "./ui-provider.js"
 import { isScaleLevel, scale, scaleMultiplier, type ScaleLevel } from "./scale.js"
 
 /** Optional values of visual substance, expressed directly or relative to Appearance. */

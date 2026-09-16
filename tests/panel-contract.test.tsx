@@ -2,12 +2,12 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { createRef, type ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
-import { AppearanceProvider, Panel, Surface } from "../source/main.js"
+import { UIProvider, Panel, Surface } from "../source/main.js"
 
 afterEach(cleanup)
 
 function provider(children: ReactNode, spacing = 12) {
-  return <AppearanceProvider appearance={{ ...defaultAppearance, spacing }} preferences={{ theme: "light", animations: true }}>{children}</AppearanceProvider>
+  return <UIProvider appearance={{ ...defaultAppearance, spacing }} preferences={{ theme: "light", animations: true }}>{children}</UIProvider>
 }
 
 describe("Panel", () => {

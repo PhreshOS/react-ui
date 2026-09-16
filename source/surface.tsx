@@ -1,6 +1,6 @@
 import { createElement, forwardRef, useId } from "react"
 import type { ComponentPropsWithRef, ComponentPropsWithoutRef, CSSProperties, ElementType, ReactElement, ReactNode } from "react"
-import { useAppearance, useThemedValue } from "./appearance-provider.js"
+import { useAppearance, useThemedValue } from "./ui-provider.js"
 import { useResolveColor, type Color } from "./color.js"
 import { useMaterialOptions, type MaterialOptions, type MaterialOverrides } from "./material-options.js"
 import { MaterialPaint } from "./material-paint.js"
@@ -8,7 +8,7 @@ import MotionStyle, { useVisualTransition } from "./motion-style.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { shadowStyle, useShadowOptions, type ShadowOverrides } from "./shadow-options.js"
 import { SurfaceEdge } from "./surface-edge.js"
-import { useDirection, type Direction } from "./direction.js"
+import type { Direction } from "./direction.js"
 
 export type { MaterialOptions } from "./material-options.js"
 export type { ShadowOptions } from "./shadow-options.js"
@@ -54,7 +54,6 @@ const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Sur
   ...properties
 }, ref) {
   const appearance = useAppearance()
-  const direction = useDirection()
   const transition = useVisualTransition()
   const material = useResolvedSurface(color, options)
   const resolvedShadow = useShadowOptions(typeof shadowOptions === "object" ? shadowOptions : undefined)
@@ -63,7 +62,6 @@ const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Sur
 
   return createElement(Element, {
     ...properties,
-    dir: properties.dir ?? direction,
     ref,
     style: {
       ...transition,

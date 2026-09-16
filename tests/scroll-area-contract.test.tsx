@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { createRef } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { AppearanceProvider, ScrollArea } from "../source/main.js"
+import { UIProvider, ScrollArea } from "../source/main.js"
 
 afterEach(cleanup)
 
@@ -41,16 +41,16 @@ describe("ScrollArea", function () {
     expect(document.documentElement.getAttribute("style")).toBeNull()
   })
 
-  it("resolves its colors from the nearest AppearanceProvider", function () {
-    const view = render(<AppearanceProvider preferences={{ theme: "light", animations: true }}>
+  it("resolves its colors from the nearest UIProvider", function () {
+    const view = render(<UIProvider preferences={{ theme: "light", animations: true }}>
       <ScrollArea><div>Content</div></ScrollArea>
-    </AppearanceProvider>)
+    </UIProvider>)
     const thumb = view.container.querySelector<HTMLElement>("[data-phreshos-scroll-area-thumb]")!
     expect(thumb.style.backgroundColor).toContain("rgb(24, 52, 71)")
 
-    view.rerender(<AppearanceProvider preferences={{ theme: "dark", animations: true }}>
+    view.rerender(<UIProvider preferences={{ theme: "dark", animations: true }}>
       <ScrollArea><div>Content</div></ScrollArea>
-    </AppearanceProvider>)
+    </UIProvider>)
     expect(view.container.querySelector<HTMLElement>("[data-phreshos-scroll-area-thumb]")!.style.backgroundColor).toContain("rgb(237, 248, 252)")
   })
 })
