@@ -294,6 +294,26 @@ it("spaces Select options and leaves unselected options transparent, including k
     expect(third.style.outlineOffset).toBe("1px")
 })
 
+it("refreshes Select option paint when the theme changes while its collection remains open", async () => {
+    const appearance = {
+        ...defaultAppearance,
+        colors: {
+            light: { ...defaultAppearance.colors.light, foreground: "#123456" },
+            dark: { ...defaultAppearance.colors.dark, foreground: "#fedcba" }
+        }
+    }
+    const select = <Select label="Choice" options={options} defaultValue="one" />
+    const view = render(<AppearanceProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>{select}</AppearanceProvider>)
+    await userEvent.setup().click(screen.getByRole("button"))
+
+    expect(screen.getByRole("option", { name: "Three" }).style.color).toBe("rgb(18, 52, 86)")
+
+    view.rerender(<AppearanceProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>{select}</AppearanceProvider>)
+
+    expect(screen.getByRole("option", { name: "Three" }).style.color).toBe("rgb(254, 220, 186)")
+    expect(screen.getByRole("listbox")).not.toBeNull()
+})
+
 it("Select typeahead changes a string value, closes, and restores trigger focus", async () => {
     const onChange = vi.fn()
     const user = userEvent.setup()

@@ -34,6 +34,21 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
     const theme = useControlTheme({ size, color, radius })
     const transition = useControlTransition()
     const overlayTransition = useOverlayTransition()
+    const optionDependencies = [
+        theme.transition.transitionDuration,
+        theme.transition.transitionTimingFunction,
+        theme.transition.transitionProperty,
+        theme.gap,
+        theme.height,
+        theme.spacing,
+        theme.radius,
+        theme.focusColor,
+        theme.foreground,
+        theme.paints.palette.rest.background,
+        theme.paints.palette.rest.color,
+        theme.paints.palette.hover.background,
+        theme.paints.palette.hover.color
+    ]
 
     return <AriaSelect {...properties} ref={ref} value={value} defaultValue={defaultValue}
         onChange={key => onChange?.(key == null ? null : String(key))}
@@ -55,7 +70,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
             <Popover className={overlayMotionClass} placement="bottom start" offset={theme.gap} maxHeight={280 + theme.gap * 2} style={{ ...overlayTransition, width: "var(--trigger-width)", maxWidth: "calc(100vw - 16px)" }}>
                 <Surface style={{ padding: theme.gap, display: "flex", flexDirection: "column", maxHeight: "inherit", boxSizing: "border-box" }}>
                     <ScrollArea style={{ flex: "1 1 auto", minHeight: 0 }}>
-                        <ListBox items={options} shouldFocusOnHover={false} style={{ display: "grid", gap: theme.gap, outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
+                        <ListBox items={options} dependencies={optionDependencies} shouldFocusOnHover={false} style={{ display: "grid", gap: theme.gap, outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
                             {option => <ListBoxItem id={option.value} textValue={option.label} style={item => ({
                                 ...theme.transition,
                                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,

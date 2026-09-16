@@ -102,7 +102,7 @@ it("uses the shared overlay style without changing Select selection, dismissal, 
   await waitFor(() => expect(document.activeElement).toBe(trigger))
 })
 
-it("derives a directional edge directly from Material paint", () => {
+it("derives dark and illuminated edge layers directly from Material paint", () => {
   render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <Surface data-testid="surface" color="#ffeecc" material={{ opacity: 0.25 }} />
   </AppearanceProvider>)
@@ -115,7 +115,9 @@ it("derives a directional edge directly from Material paint", () => {
   expect(border?.style.borderWidth).toBe("0.8px")
   expect(border?.style.borderColor).toBe("var(--phreshos-surface-edge-dark)")
   expect(light?.style.background).toContain("linear-gradient(90deg")
-  expect(light?.style.background).not.toContain("black")
+  expect(light?.style.getPropertyValue("--phreshos-surface-edge-light-peak")).toContain("#ffeecc")
+  expect(light?.style.getPropertyValue("--phreshos-surface-edge-light-peak")).not.toContain("black")
+  expect(host.querySelector("[data-surface-edge-glow]")).toBeNull()
   expect(border?.style.opacity).toBe("0.5")
   expect(light?.style.opacity).toBe("0.5")
 })

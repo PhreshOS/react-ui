@@ -16,10 +16,9 @@ const edgeLayer = {
 const edgeScale = 0.8
 const outerEdgeThickness = edgeScale
 const illuminatedEdgeThickness = 0.3
-const illuminatedEdgeBoundary = outerEdgeThickness + illuminatedEdgeThickness
+const illuminatedEdgeBoundary = Math.round((outerEdgeThickness + illuminatedEdgeThickness) * 100) / 100
 
 const horizontalIllumination = "linear-gradient(90deg, var(--phreshos-surface-edge-light-minimum) 0%, var(--phreshos-surface-edge-light-minimum) 12%, var(--phreshos-surface-edge-light-soft) 34%, var(--phreshos-surface-edge-light-peak) 50%, var(--phreshos-surface-edge-light-soft) 66%, var(--phreshos-surface-edge-light-minimum) 88%, var(--phreshos-surface-edge-light-minimum) 100%)"
-const inwardIllumination = "radial-gradient(ellipse 38% clamp(12px, 14%, 40px) at 50% 0%, var(--phreshos-surface-edge-glow-peak) 0%, var(--phreshos-surface-edge-glow-soft) 35%, transparent 100%), radial-gradient(ellipse 38% clamp(12px, 14%, 40px) at 50% 100%, var(--phreshos-surface-edge-glow-peak) 0%, var(--phreshos-surface-edge-glow-soft) 35%, transparent 100%)"
 const edgeMask = "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)"
 
 /** Paints the boundary owned by one Surface from the material it contains. */
@@ -30,22 +29,9 @@ export function SurfaceEdge({ material }: Readonly<{ material: EdgeMaterial }>) 
   if (!visible) return null
 
   const opacity = Math.min(1, scale(material.opacity, "xlarge"))
+  const peak = illumination(material.color, 92)
 
   return <Fragment>
-    <span
-      data-surface-edge-glow=""
-      aria-hidden="true"
-      style={{
-        ...timing,
-        ...edgeLayer,
-        transitionProperty: "opacity",
-        background: inwardIllumination,
-        filter: "blur(0.85px)",
-        opacity,
-        "--phreshos-surface-edge-glow-peak": illumination(material.color, 12),
-        "--phreshos-surface-edge-glow-soft": illumination(material.color, 4)
-      } as CSSProperties}
-    />
     <span
       data-surface-edge-light=""
       aria-hidden="true"
@@ -60,9 +46,9 @@ export function SurfaceEdge({ material }: Readonly<{ material: EdgeMaterial }>) 
         WebkitMaskComposite: "xor",
         mask: edgeMask,
         maskComposite: "exclude",
-        "--phreshos-surface-edge-light-peak": illumination(material.color, 68),
-        "--phreshos-surface-edge-light-soft": illumination(material.color, 44),
-        "--phreshos-surface-edge-light-minimum": illumination(material.color, 18)
+        "--phreshos-surface-edge-light-peak": peak,
+        "--phreshos-surface-edge-light-soft": illumination(material.color, 56),
+        "--phreshos-surface-edge-light-minimum": illumination(material.color, 24)
       } as CSSProperties}
     />
     <span
