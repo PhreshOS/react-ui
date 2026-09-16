@@ -14,7 +14,8 @@ export interface MaterialOptions {
 
 /** Grouped material customization exposed by components built on Surface. */
 export interface MaterialOverrides {
-  readonly material?: MaterialOptions
+  /** Omission or true uses Appearance defaults; false uses the resolved color as a normal background. */
+  readonly material?: boolean | MaterialOptions
 }
 
 /** Resolves material values from the current Appearance without knowing any host geometry. */

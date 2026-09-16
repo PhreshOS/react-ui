@@ -10,7 +10,7 @@ export type InputProps = TextControlProps
 /** A labeled single-line text control. onChange receives the string value. */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
     label, description, errorMessage, disabled, readOnly, required, invalid,
-    size, color, radius, style, className, placeholder, material, ...properties
+    size, color, radius, style, className, placeholder, material, shadow, ...properties
 }, ref) {
 
     const theme = useControlTheme({ size, color, radius })
@@ -20,7 +20,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input({
         <FieldStyle />
         <FieldLabel label={label} />
         <AriaInput ref={ref} placeholder={placeholder} className={textControlClass}
-            render={(native, state) => <SurfaceField material={material} radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
+            render={(native, state) => <SurfaceField material={material} shadow={shadow} radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
                 <input {...native} style={{ ...native.style, borderRadius: "inherit", background: "transparent" }} />
             </SurfaceField>}
             style={state => controlStyle(theme, state.isFocused, state.isInvalid, state.isHovered, state.isFocusVisible)} />

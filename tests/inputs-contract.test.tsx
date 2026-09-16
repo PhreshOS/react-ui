@@ -4,6 +4,7 @@ import { createRef, useState, type ReactNode } from "react"
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
 import { colorOpacity, opaqueColor, resolveColorLevel, solidColors } from "../source/color.js"
+import { shadowStyle } from "../source/shadow-options.js"
 import {
     AppearanceProvider, Button, Input, Textarea, Checkbox, Switch, Radio, RadioGroup, Select, Slider,
     type InputProps, type TextareaProps, type CheckboxProps, type SwitchProps, type RadioGroupProps,
@@ -24,7 +25,7 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on th
     expect(base).not.toBeNull()
     expect(indicator?.tagName).toBe("SPAN")
     expect(indicator?.style.background).toBe("transparent")
-    expect(indicator?.style.boxShadow).toBe("")
+    expect(indicator?.style.boxShadow).toBe(shadowStyle(defaultAppearance.shadow.light))
     expect(material?.getAttribute("opacity")).toBe(String(defaultAppearance.material.light.opacity))
     expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
 
@@ -283,6 +284,9 @@ it("spaces Select options and leaves unselected options transparent, including k
     expect(screen.getByRole("option", { name: "Two" }).style.background).toBe("transparent")
     const third = screen.getByRole("option", { name: "Three" })
     expect(third.style.background).toBe("transparent")
+    await user.hover(third)
+    expect(third.getAttribute("data-focused")).toBeNull()
+    expect(third.style.outline).toBe("none")
     await user.keyboard("[ArrowDown]")
     expect(third.getAttribute("data-focused")).toBe("true")
     expect(third.style.background).toBe("transparent")

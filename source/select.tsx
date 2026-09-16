@@ -9,6 +9,7 @@ import type { RadiusProps } from "./radius.js"
 import { Surface } from "./surface.js"
 import { ScrollArea } from "./scroll-area.js"
 import type { MaterialOverrides } from "./material-options.js"
+import type { ShadowOverrides } from "./shadow-options.js"
 import { overlayMotionClass, useControlTransition, useOverlayTransition } from "./motion-style.js"
 
 export interface SelectOption {
@@ -17,7 +18,7 @@ export interface SelectOption {
     readonly disabled?: boolean
 }
 
-export interface SelectProps extends Omit<AriaSelectProps<SelectOption>, ControlOverrides | "value" | "defaultValue" | "onChange" | "selectedKey" | "defaultSelectedKey" | "onSelectionChange" | "disabledKeys" | "selectionMode">, ControlProps, FieldProps, RadiusProps, MaterialOverrides {
+export interface SelectProps extends Omit<AriaSelectProps<SelectOption>, ControlOverrides | "value" | "defaultValue" | "onChange" | "selectedKey" | "defaultSelectedKey" | "onSelectionChange" | "disabledKeys" | "selectionMode">, ControlProps, FieldProps, RadiusProps, MaterialOverrides, ShadowOverrides {
     readonly options: readonly SelectOption[]
     readonly value?: string | null
     readonly defaultValue?: string | null
@@ -27,7 +28,7 @@ export interface SelectProps extends Omit<AriaSelectProps<SelectOption>, Control
 /** Single selection from string-valued options; keyboard navigation and typeahead stay native to React Aria. */
 export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
     label, description, errorMessage, disabled, required, invalid, options, value, defaultValue, onChange,
-    size, color, radius, style, material, ...properties
+    size, color, radius, style, material, shadow, ...properties
 }, ref) {
 
     const theme = useControlTheme({ size, color, radius })
@@ -40,7 +41,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
         isDisabled={disabled} isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
         {state => <>
             <FieldLabel label={label} />
-            <Button render={(native, button) => <SurfaceButton native={native} material={material} paint={controlPaint(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered)} />}
+            <Button render={(native, button) => <SurfaceButton native={native} material={material} shadow={shadow} paint={controlPaint(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered)} />}
                 style={button => ({
                 ...controlStyle(theme, state.isOpen || button.isFocused, state.isInvalid, button.isHovered, button.isFocusVisible),
                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,
@@ -54,7 +55,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
             <Popover className={overlayMotionClass} placement="bottom start" offset={theme.gap} maxHeight={280 + theme.gap * 2} style={{ ...overlayTransition, width: "var(--trigger-width)", maxWidth: "calc(100vw - 16px)" }}>
                 <Surface style={{ padding: theme.gap, display: "flex", flexDirection: "column", maxHeight: "inherit", boxSizing: "border-box" }}>
                     <ScrollArea style={{ flex: "1 1 auto", minHeight: 0 }}>
-                        <ListBox items={options} style={{ display: "grid", gap: theme.gap, outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
+                        <ListBox items={options} shouldFocusOnHover={false} style={{ display: "grid", gap: theme.gap, outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
                             {option => <ListBoxItem id={option.value} textValue={option.label} style={item => ({
                                 ...theme.transition,
                                 display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,

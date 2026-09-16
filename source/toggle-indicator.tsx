@@ -2,13 +2,14 @@ import { motion } from "motion/react"
 import type { CSSProperties } from "react"
 import { useLocale } from "react-aria-components"
 import type { ControlTheme } from "./control.js"
-import type { MaterialOptions } from "./material-options.js"
+import type { MaterialOverrides } from "./material-options.js"
+import type { ShadowOverrides } from "./shadow-options.js"
 import { useControlTransition } from "./motion-style.js"
 import { usePreferences } from "./appearance-provider.js"
 import { Surface } from "./surface.js"
 
 /** Shared paint only. Selection, focus, validation, and native input behavior belong to React Aria. */
-export function ToggleIndicator({ kind, selected, indeterminate = false, focused, invalid = false, hovered = false, pressed = false, theme, material: options }: Readonly<{
+export function ToggleIndicator({ kind, selected, indeterminate = false, focused, invalid = false, hovered = false, pressed = false, theme, material: options, shadow }: Readonly<{
     kind: "checkbox" | "radio" | "switch"
     selected: boolean
     indeterminate?: boolean
@@ -17,8 +18,7 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
     hovered?: boolean
     pressed?: boolean
     theme: ControlTheme
-    material?: MaterialOptions
-}>) {
+} & MaterialOverrides & ShadowOverrides>) {
 
     const { animations } = usePreferences()
     const transition = useControlTransition()
@@ -32,7 +32,7 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
     const thumbWidth = diameter - 6 + (pressed && animations ? 3 : 0)
     const travel = (diameter * 2 - thumbWidth) / 2 - 3
 
-    return <Surface as={motion.span} material={options} color={paint.background} aria-hidden="true" initial={false}
+    return <Surface as={motion.span} material={options} shadow={shadow} color={paint.background} aria-hidden="true" initial={false}
         animate={{ scale: !animations || switching ? 1 : pressed ? 0.94 : hovered ? 1.03 : 1 }}
         transition={transition} style={{
         color: paint.color,

@@ -12,7 +12,7 @@ export interface TextareaProps extends Omit<TextControlProps, "type" | "pattern"
 /** A labeled multiline text control, vertically resizable without escaping its width. */
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea({
     label, description, errorMessage, disabled, readOnly, required, invalid,
-    size, color, radius, style, className, placeholder, rows = 4, material, ...properties
+    size, color, radius, style, className, placeholder, rows = 4, material, shadow, ...properties
 }, ref) {
 
     const theme = useControlTheme({ size, color, radius })
@@ -22,7 +22,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function 
         <FieldStyle />
         <FieldLabel label={label} />
         <AriaTextarea ref={ref} placeholder={placeholder} rows={rows} className={textControlClass}
-            render={(native, state) => <SurfaceField material={material} radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
+            render={(native, state) => <SurfaceField material={material} shadow={shadow} radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
                 <textarea {...native} style={{ ...native.style, borderRadius: "inherit", background: "transparent" }} />
             </SurfaceField>}
             style={state => ({

@@ -6,11 +6,13 @@ import { useMaterialOptions, type MaterialOptions, type MaterialOverrides } from
 import { MaterialPaint } from "./material-paint.js"
 import MotionStyle, { useVisualTransition } from "./motion-style.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
+import { shadowStyle, useShadowOptions, type ShadowOverrides } from "./shadow-options.js"
 import { SurfaceEdge } from "./surface-edge.js"
 
 export type { MaterialOptions } from "./material-options.js"
+export type { ShadowOptions } from "./shadow-options.js"
 
-export interface SurfaceOwnProps extends MaterialOverrides, RadiusProps {
+export interface SurfaceOwnProps extends MaterialOverrides, ShadowOverrides, RadiusProps {
   readonly color?: Color
 }
 
@@ -38,11 +40,12 @@ type SurfaceImplementationProps = SurfaceOwnProps
   & Readonly<{ as?: ElementType }>
   & Omit<ComponentPropsWithoutRef<"div">, keyof SurfaceOwnProps | "as" | "color">
 
-/** One material-owning element. The host is a div unless `as` selects another element. */
+/** One material- and shadow-owning element. The host is a div unless `as` selects another element. */
 const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Surface({
   as: Element = "div",
   color,
   material: options,
+  shadow: shadowOptions,
   radius,
   children,
   style,
@@ -51,6 +54,8 @@ const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Sur
   const appearance = useAppearance()
   const transition = useVisualTransition()
   const material = useResolvedSurface(color, options)
+  const resolvedShadow = useShadowOptions(typeof shadowOptions === "object" ? shadowOptions : undefined)
+  const shadow = shadowOptions === false ? "none" : shadowStyle(resolvedShadow)
   const resolvedRadius = resolveRadius(radius ?? "medium", appearance)
 
   return createElement(Element, {
@@ -59,23 +64,25 @@ const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Sur
     style: {
       ...transition,
       ...style,
-      background: "transparent",
+      background: material.enabled ? "transparent" : material.color,
+      boxShadow: shadow,
       color: style?.color ?? material.foreground,
       borderRadius: radius === undefined ? style?.borderRadius ?? resolvedRadius : resolvedRadius,
       position: style?.position ?? "relative",
       isolation: "isolate"
     }
-  }, <SurfaceLayers material={material} />, <SurfaceEdge material={material} />, children)
+  }, material.enabled && <SurfaceLayers material={material} />, material.enabled && <SurfaceEdge material={material} />, children)
 })
 
 export const Surface = SurfaceRoot as SurfaceComponent
 
-function useResolvedSurface(color: Color | undefined, options?: MaterialOptions) {
+function useResolvedSurface(color: Color | undefined, options?: boolean | MaterialOptions) {
   const appearance = useAppearance()
-  const material = useMaterialOptions(options)
+  const material = useMaterialOptions(typeof options === "object" ? options : undefined)
 
   return {
     ...material,
+    enabled: options !== false,
     color: useResolveColor(color),
     foreground: useThemedValue(appearance.colors).foreground
   }

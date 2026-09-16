@@ -3,7 +3,7 @@ import type { CSSProperties } from "react"
 import type { Transition } from "motion/react"
 import { useAppearance, usePreferences } from "./appearance-context.js"
 
-const visualProperties = "background-color, color, border-color, border-radius"
+const visualProperties = "background-color, color, border-color, border-radius, box-shadow"
 const paintProperties = "fill, stroke, opacity"
 
 /** CSS timing for values painted directly by React UI. */
@@ -67,10 +67,6 @@ const stylesheet = `
   --phreshos-ui-motion-easing: ${cssEasing(defaultAppearance.transaction.easing)};
 }
 
-.phreshos-ui-overlay { --phreshos-ui-overlay-x: 0px; --phreshos-ui-overlay-y: -4px; }
-.phreshos-ui-overlay[data-placement="top"] { --phreshos-ui-overlay-y: 4px; }
-.phreshos-ui-overlay[data-placement="left"] { --phreshos-ui-overlay-x: 4px; --phreshos-ui-overlay-y: 0px; }
-.phreshos-ui-overlay[data-placement="right"] { --phreshos-ui-overlay-x: -4px; --phreshos-ui-overlay-y: 0px; }
 .phreshos-ui-overlay[data-entering] {
   animation: phreshos-ui-overlay-enter var(--phreshos-ui-motion-duration) var(--phreshos-ui-motion-easing) both;
 }
@@ -79,8 +75,8 @@ const stylesheet = `
   pointer-events: none;
 }
 @keyframes phreshos-ui-overlay-enter {
-  from { opacity: 0; translate: var(--phreshos-ui-overlay-x) var(--phreshos-ui-overlay-y); }
-  to { opacity: 1; translate: 0 0; }
+  from { opacity: 0; scale: 1.05; }
+  to { opacity: 1; scale: 1; }
 }
 `
 

@@ -19,6 +19,7 @@ export { Grid, type GridProps } from "./grid.js"
 export {
   Surface,
   type MaterialOptions,
+  type ShadowOptions,
   type SurfaceComponent,
   type SurfaceHost,
   type SurfaceHostProps,

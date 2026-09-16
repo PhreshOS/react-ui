@@ -7,6 +7,7 @@ import type { RadiusProps } from "./radius.js"
 import { controlFontSizes, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
 import { SurfaceButton } from "./control-surface.js"
 import type { MaterialOverrides } from "./material-options.js"
+import type { ShadowOverrides } from "./shadow-options.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
 
@@ -14,7 +15,7 @@ type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color
 export type ButtonColor = ControlColor
 
 /** Properties accepted by the shared interactive button. */
-export interface ButtonProps extends NativeButtonProps, RadiusProps, MaterialOverrides {
+export interface ButtonProps extends NativeButtonProps, RadiusProps, MaterialOverrides, ShadowOverrides {
   /** Visible Button content. */
   readonly children?: ReactNode
 
@@ -53,6 +54,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     size = "medium",
     style,
     material,
+    shadow,
     type = "button",
     ...properties
   },
@@ -67,7 +69,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     isDisabled={disabled}
     isPending={pending}
     onPress={onPress}
-    render={(native, state) => <SurfaceButton native={native} material={material} paint={buttonPaint(theme, !disabled && !pending, state.isHovered, state.isPressed)} />}
+    render={(native, state) => <SurfaceButton native={native} material={material} shadow={shadow} paint={buttonPaint(theme, !disabled && !pending, state.isHovered, state.isPressed)} />}
     style={({ isFocusVisible, isHovered, isPressed }) => buttonStyle({
       theme,
       disabled,

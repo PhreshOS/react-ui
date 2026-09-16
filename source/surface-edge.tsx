@@ -1,78 +1,91 @@
-import { Fragment, useCallback, useLayoutEffect, useRef, useState } from "react"
-import { colorLightness, colorOpacity, orderColors } from "./color.js"
-import { usePaintTransition } from "./motion-style.js"
+import { Fragment, type CSSProperties } from "react"
+import { useTransitionTiming } from "./motion-style.js"
 import { scale } from "./scale.js"
 
-type EdgeMaterial = Readonly<{ color: string, foreground: string, opacity: number }>
+type EdgeMaterial = Readonly<{ color: string, opacity: number }>
+
+const edgeLayer = {
+  position: "absolute",
+  zIndex: 1,
+  inset: 0,
+  boxSizing: "border-box",
+  borderRadius: "inherit",
+  pointerEvents: "none"
+} satisfies CSSProperties
+
+const edgeScale = 0.8
+const outerEdgeThickness = edgeScale
+const illuminatedEdgeThickness = 0.3
+const illuminatedEdgeBoundary = outerEdgeThickness + illuminatedEdgeThickness
+
+const horizontalIllumination = "linear-gradient(90deg, var(--phreshos-surface-edge-light-minimum) 0%, var(--phreshos-surface-edge-light-minimum) 12%, var(--phreshos-surface-edge-light-soft) 34%, var(--phreshos-surface-edge-light-peak) 50%, var(--phreshos-surface-edge-light-soft) 66%, var(--phreshos-surface-edge-light-minimum) 88%, var(--phreshos-surface-edge-light-minimum) 100%)"
+const inwardIllumination = "radial-gradient(ellipse 38% clamp(12px, 14%, 40px) at 50% 0%, var(--phreshos-surface-edge-glow-peak) 0%, var(--phreshos-surface-edge-glow-soft) 35%, transparent 100%), radial-gradient(ellipse 38% clamp(12px, 14%, 40px) at 50% 100%, var(--phreshos-surface-edge-glow-peak) 0%, var(--phreshos-surface-edge-glow-soft) 35%, transparent 100%)"
+const edgeMask = "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)"
 
 /** Paints the boundary owned by one Surface from the material it contains. */
 export function SurfaceEdge({ material }: Readonly<{ material: EdgeMaterial }>) {
-  const paintTransition = usePaintTransition()
+  const timing = useTransitionTiming()
   const visible = material.opacity > 0
-  const palette = useRef<SVGRectElement>(null)
-  const [colors, setColors] = useState<(ReturnType<typeof orderColors> & {
-    background: string
-    foreground: string
-    lightness: number
-  }) | null>(null)
-
-  const updatePalette = useCallback(() => {
-    const base = palette.current
-    const view = base?.ownerDocument.defaultView
-    if (!base || !view) return
-    const computed = view.getComputedStyle(base)
-    const background = computed.fill
-    const foreground = computed.color
-    setColors(previous => previous?.background === background && previous.foreground === foreground ? previous : {
-      ...orderColors(background, foreground),
-      background,
-      foreground,
-      lightness: Math.max(0, Math.min(1, colorLightness(background)))
-    })
-  }, [])
-
-  useLayoutEffect(updatePalette)
-
-  useLayoutEffect(() => {
-    const base = palette.current
-    if (!base) return
-    const complete = (event: TransitionEvent) => {
-      if (event.target === base && (event.propertyName === "fill" || event.propertyName === "color")) updatePalette()
-    }
-    base.addEventListener("transitionend", complete)
-    return () => base.removeEventListener("transitionend", complete)
-  }, [updatePalette, visible])
 
   if (!visible) return null
 
+  const opacity = Math.min(1, scale(material.opacity, "xlarge"))
+
   return <Fragment>
-    <svg data-surface-palette="" aria-hidden="true" width="0" height="0" style={{ position: "absolute", pointerEvents: "none" }}>
-      <rect ref={palette} data-surface-palette-base="" style={{ ...paintTransition, fill: material.color, color: material.foreground }} />
-    </svg>
+    <span
+      data-surface-edge-glow=""
+      aria-hidden="true"
+      style={{
+        ...timing,
+        ...edgeLayer,
+        transitionProperty: "opacity",
+        background: inwardIllumination,
+        filter: "blur(0.85px)",
+        opacity,
+        "--phreshos-surface-edge-glow-peak": illumination(material.color, 12),
+        "--phreshos-surface-edge-glow-soft": illumination(material.color, 4)
+      } as CSSProperties}
+    />
+    <span
+      data-surface-edge-light=""
+      aria-hidden="true"
+      style={{
+        ...timing,
+        ...edgeLayer,
+        transitionProperty: "opacity",
+        padding: illuminatedEdgeBoundary,
+        background: horizontalIllumination,
+        opacity,
+        WebkitMask: edgeMask,
+        WebkitMaskComposite: "xor",
+        mask: edgeMask,
+        maskComposite: "exclude",
+        "--phreshos-surface-edge-light-peak": illumination(material.color, 68),
+        "--phreshos-surface-edge-light-soft": illumination(material.color, 44),
+        "--phreshos-surface-edge-light-minimum": illumination(material.color, 18)
+      } as CSSProperties}
+    />
     <span
       data-surface-edge=""
       aria-hidden="true"
       style={{
-        ...paintTransition,
-        position: "absolute",
-        zIndex: 1,
-        inset: 0,
-        padding: 1,
-        borderRadius: "inherit",
-        pointerEvents: "none",
-        opacity: Math.min(1, scale(material.opacity, "xlarge")) * (colors?.lightness ?? 0),
-        background: colors ? glassEdge(colors.lighter, colors.darker) : undefined,
-        WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
-        WebkitMaskComposite: "xor",
-        mask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
-        maskComposite: "exclude"
-      }}
+        ...timing,
+        ...edgeLayer,
+        transitionProperty: "border-color, opacity",
+        borderStyle: "solid",
+        borderWidth: outerEdgeThickness,
+        borderColor: "var(--phreshos-surface-edge-dark)",
+        opacity,
+        "--phreshos-surface-edge-dark": darkEdge(material.color)
+      } as CSSProperties}
     />
   </Fragment>
 }
 
-function glassEdge(light: string, dark: string) {
-  const edge = `color-mix(in oklch, ${dark} 20%, ${light})`
+function darkEdge(color: string) {
+  return `color-mix(in srgb, color-mix(in oklch, ${color} 72%, black) 38%, transparent)`
+}
 
-  return `linear-gradient(145deg, ${colorOpacity(light, 0.92)}, ${colorOpacity(light, 0.4)} 35%, ${colorOpacity(edge, 0.18)} 55%, ${colorOpacity(light, 0.6)} 85%, ${colorOpacity(light, 0.3)})`
+function illumination(color: string, opacity: number) {
+  return `color-mix(in srgb, color-mix(in oklch, ${color} 64%, white) ${opacity}%, transparent)`
 }

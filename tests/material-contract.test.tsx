@@ -6,7 +6,7 @@ import { afterEach, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
 import {
   AppearanceProvider, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Radio, Grid,
-  type MaterialOptions, type SurfaceHost, type SurfaceProps,
+  type MaterialOptions, type ShadowOptions, type SurfaceHost, type SurfaceProps,
   type ButtonProps, type InputProps, type CheckboxProps, type SwitchProps, type RadioProps, type SelectProps
 } from "../source/main.js"
 
@@ -20,13 +20,38 @@ it("groups material customization uniformly across Surface and controls", () => 
   expectTypeOf<"color" extends keyof MaterialOptions ? true : false>().toEqualTypeOf<false>()
   expectTypeOf<"material" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<true>()
   expectTypeOf<"opacity" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<false>()
-  expectTypeOf<SurfaceProps["material"]>().toEqualTypeOf<MaterialOptions | undefined>()
-  expectTypeOf<ButtonProps["material"]>().toEqualTypeOf<MaterialOptions | undefined>()
+  expectTypeOf<SurfaceProps["material"]>().toEqualTypeOf<boolean | MaterialOptions | undefined>()
+  expectTypeOf<SurfaceProps["shadow"]>().toEqualTypeOf<boolean | ShadowOptions | undefined>()
+  expectTypeOf<ButtonProps["material"]>().toEqualTypeOf<boolean | MaterialOptions | undefined>()
   expectTypeOf<InputProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<CheckboxProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<SwitchProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<RadioProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<SelectProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
+  expectTypeOf<InputProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
+  expectTypeOf<CheckboxProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
+  expectTypeOf<SwitchProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
+  expectTypeOf<RadioProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
+  expectTypeOf<SelectProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
+})
+
+it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"] as const)("exposes the shared material and shadow switches on %s", kind => {
+  const example = kind === "button" ? <Button material={false} shadow={false}>Action</Button>
+    : kind === "input" ? <Input label="Value" material={false} shadow={false} />
+    : kind === "textarea" ? <Textarea label="Value" material={false} shadow={false} />
+    : kind === "select" ? <Select label="Value" material={false} shadow={false} options={[{ value: "one", label: "One" }]} />
+    : kind === "checkbox" ? <Checkbox label="Value" material={false} shadow={false} />
+    : kind === "switch" ? <Switch label="Value" material={false} shadow={false} />
+    : <RadioGroup label="Values" material={false} shadow={false}><Radio label="Value" value="one" /></RadioGroup>
+  const { container } = render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{example}</AppearanceProvider>)
+  const host = [...container.querySelectorAll<HTMLElement>("*")]
+    .find(element => element.style.boxShadow === "none")
+
+  expect(host).not.toBeNull()
+  expect(host?.style.boxShadow).toBe("none")
+  expect(host?.style.background).not.toBe("transparent")
+  expect(host?.querySelector("[data-material]")).toBeNull()
+  expect(host?.querySelector("[data-surface-edge]")).toBeNull()
 })
 
 it("lets any ref-forwarding host that preserves style and children carry the Surface", () => {

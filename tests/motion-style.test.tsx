@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
+import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it, vi } from "vitest"
 import { defaultAppearance } from "@phreshos/core"
@@ -16,15 +16,22 @@ it("consumes Appearance timing and limits transitions to explicit visual propert
   </AppearanceProvider>)
   const host = screen.getByTestId("surface")
   for (const element of [host, screen.getByRole("button"), screen.getByRole("textbox")]) {
-    expect(element.style.transitionProperty).toBe("background-color, color, border-color, border-radius")
+    expect(element.style.transitionProperty).toBe("background-color, color, border-color, border-radius, box-shadow")
     expect(element.style.transitionDuration).toBe("240ms")
     expect(element.style.transitionTimingFunction).toBe("ease-in-out")
   }
-  for (const selector of ["[data-material-fill]", "[data-material-base]", "[data-surface-palette-base]", "[data-surface-edge]"]) {
+  for (const selector of ["[data-material-fill]", "[data-material-base]"]) {
     const layer = host.querySelector<HTMLElement | SVGElement>(selector)
     expect(layer?.style.transitionProperty).toBe("fill, stroke, opacity")
     expect(layer?.style.transitionDuration).toBe(host.style.transitionDuration)
   }
+  const edge = host.querySelector<HTMLElement>("[data-surface-edge]")
+  const light = host.querySelector<HTMLElement>("[data-surface-edge-light]")
+  expect(edge?.style.transitionProperty).toBe("border-color, opacity")
+  expect(edge?.style.transitionDuration).toBe(host.style.transitionDuration)
+  expect(light?.style.transitionProperty).toBe("opacity")
+  expect(light?.style.transitionDuration).toBe(host.style.transitionDuration)
+  expect(host.querySelector("[data-surface-palette]")).toBeNull()
   expect(host.style.transitionProperty).not.toMatch(/opacity|filter|transform|width|height|all/)
   expect(host.querySelector<HTMLElement>("[data-material-backdrop]")?.style.transitionProperty).toBe("")
   expect(motion).toEqual({ type: "tween", duration: 0.24, ease: "easeInOut" })
@@ -45,8 +52,9 @@ it("hoists one scoped stylesheet for nested providers", () => {
   expect(css).toContain("--phreshos-ui-motion-easing: ease-out")
   expect(css).toContain("var(--phreshos-ui-motion-easing) both")
   expect(css).toContain("var(--phreshos-ui-motion-easing) reverse both")
-  expect(css).toContain("from { opacity: 0; translate:")
-  expect(css).toContain("to { opacity: 1; translate: 0 0;")
+  expect(css).toContain("from { opacity: 0; scale: 1.05;")
+  expect(css).toContain("to { opacity: 1; scale: 1;")
+  expect(css).not.toContain("translate:")
   expect(css).not.toContain("filter:")
   expect(css).not.toContain("transition: all")
 })
@@ -94,24 +102,20 @@ it("uses the shared overlay style without changing Select selection, dismissal, 
   await waitFor(() => expect(document.activeElement).toBe(trigger))
 })
 
-it("refreshes derived edge colors when the Surface palette finishes animating", () => {
-  const original = window.getComputedStyle.bind(window)
-  let animatedFill = "rgb(17, 34, 51)"
-  vi.spyOn(window, "getComputedStyle").mockImplementation((element, pseudo) => {
-    const computed = original(element, pseudo)
-    return element.hasAttribute("data-surface-palette-base") ? new Proxy(computed, {
-      get: (target, property) => property === "fill" ? animatedFill : Reflect.get(target, property, target)
-    }) : computed
-  })
-  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}><Surface data-testid="surface" color="#ffeecc" /></AppearanceProvider>)
+it("derives a directional edge directly from Material paint", () => {
+  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    <Surface data-testid="surface" color="#ffeecc" material={{ opacity: 0.25 }} />
+  </AppearanceProvider>)
   const host = screen.getByTestId("surface")
   const border = host.querySelector<HTMLElement>("[data-surface-edge]")
-  const base = host.querySelector("[data-surface-palette-base]")!
-  expect(border?.style.background).toContain("rgb(17, 34, 51)")
-  animatedFill = "rgb(255, 238, 204)"
-  const complete = new Event("transitionend", { bubbles: true })
-  Object.defineProperty(complete, "propertyName", { value: "fill" })
-  act(() => fireEvent(base, complete))
-  expect(border?.style.background).toContain("rgb(255, 238, 204)")
-  expect(border?.style.background).not.toContain("rgb(17, 34, 51)")
+  const light = host.querySelector<HTMLElement>("[data-surface-edge-light]")
+
+  expect(host.querySelector("[data-surface-palette]")).toBeNull()
+  expect(border?.style.borderStyle).toBe("solid")
+  expect(border?.style.borderWidth).toBe("0.8px")
+  expect(border?.style.borderColor).toBe("var(--phreshos-surface-edge-dark)")
+  expect(light?.style.background).toContain("linear-gradient(90deg")
+  expect(light?.style.background).not.toContain("black")
+  expect(border?.style.opacity).toBe("0.5")
+  expect(light?.style.opacity).toBe("0.5")
 })

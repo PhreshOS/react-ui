@@ -75,11 +75,10 @@ spacing and radius follow Appearance. `disabled` prevents activation and focus;
 <Button color="danger:soft" size="small">Delete</Button>
 ```
 
-`Surface` is the material-owning element. It renders a `div` by default, while
+`Surface` is the material- and shadow-owning element. It renders a `div` by default, while
 `as` selects another React element and preserves that element's native properties
 and ref type. Surface owns its paint, opacity, frost, refraction, grain, edge,
-radius, and clipping requirements. It never creates or consumes a shadow; shadow
-remains an independent visual concern. `radius` accepts a size level, a number in
+outer shadow, radius, and clipping requirements. `radius` accepts a size level, a number in
 pixels, or a CSS radius and defaults to `medium`.
 
 ```tsx
@@ -92,24 +91,31 @@ pixels, or a CSS radius and defaults to `medium`.
 the `style` and `children` it receives on one host element and forwards its ref
 to that same element. This lets layout components carry the material without a
 wrapper. The host retains ownership of its own behavior and layout properties;
-Surface retains ownership of material, edge, radius, and required geometry.
+Surface retains ownership of material, edge, shadow, radius, and required geometry.
 
 `MaterialOptions` defines `opacity`, `backdrop`, `grain`, `grainAmount`,
 `distortion`, and `saturation`. Every material-bearing component, including
 Surface, exposes these values through its `material` prop. Color remains a
-separate property. Omitted material values follow
-`appearance.material`. Effect options accept a scale level or a direct number;
+separate property. Omission or `true` uses `appearance.material`; `false`
+removes the material and paints the resolved color as a normal background.
+Effect options accept a scale level or a direct number;
 opacity affects Surface paint only, never its content. The material edge is part
 of the same Surface rather than a second public entity.
 
 Surface-based controls expose the same separate `color` and `material` props.
+`ShadowOptions` similarly groups `x`, `y`, `blur`, `spread`, and `opacity` under
+the `shadow` prop. Omission or `true` follows the active `appearance.shadow`
+branch, while `false` removes the shadow. Each option accepts a scale level or
+direct number. The shadow is a neutral black
+outer shadow. Surface-based controls expose the same `shadow` prop.
 For text fields and Select, `material` targets the field or trigger; for Checkbox,
 Switch, and Radio, it targets the indicator. RadioGroup supplies material defaults
-to its options, and a Radio can override them.
+to its options, and a Radio can override them. Shadow follows the same targets and
+inheritance path.
 
 ```tsx
 <Button color="primary:base" material={{ opacity: 0.6, backdrop: 0 }}>Save</Button>
-<Input label="Name" radius="large" material={{ grain: "small" }} />
+<Input label="Name" radius="large" material={{ grain: "small" }} shadow={{ blur: "small" }} />
 ```
 
 `Panel` composes an outer `Surface`, an optional header, and an inset content
@@ -143,8 +149,8 @@ Server SDK.
 Fields distinguish hover, pointer focus, keyboard focus, and invalid state.
 Shared CSS transitions use `appearance.transaction` for colors and corner
 radius. The material fill and opacity values transition on the painted layers, not on the
-Surface host. Select menus combine a small placement-aware slide with an overlay
-opacity fade for entry and exit, using React Aria's animation lifecycle. Preferences with animations disabled make
+Surface host. Select menus scale from `1.05` to `1` while fading in, and reverse
+that motion when exiting, using React Aria's animation lifecycle. Preferences with animations disabled make
 these changes immediate without changing the Appearance value.
 Blur, distortion, geometry, and Surface host opacity are not transitioned; gradients
 and structurally removed effects change directly rather than adding extra
