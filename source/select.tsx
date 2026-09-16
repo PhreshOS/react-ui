@@ -11,6 +11,8 @@ import { ScrollArea } from "./scroll-area.js"
 import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
 import { overlayMotionClass, useControlTransition, useOverlayTransition } from "./motion-style.js"
+import { useDirection } from "./direction.js"
+import { resolveDirectionalPlacement } from "./overlay-placement.js"
 
 export interface SelectOption {
     readonly value: string
@@ -34,6 +36,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
     const theme = useControlTheme({ size, color, radius })
     const transition = useControlTransition()
     const overlayTransition = useOverlayTransition()
+    const direction = useDirection()
     const optionDependencies = [
         theme.transition.transitionDuration,
         theme.transition.transitionTimingFunction,
@@ -50,7 +53,7 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
         theme.paints.palette.hover.color
     ]
 
-    return <AriaSelect {...properties} ref={ref} value={value} defaultValue={defaultValue}
+    return <AriaSelect {...properties} dir={properties.dir ?? direction} ref={ref} value={value} defaultValue={defaultValue}
         onChange={key => onChange?.(key == null ? null : String(key))}
         disabledKeys={options.filter(option => option.disabled).map(option => option.value)}
         isDisabled={disabled} isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
@@ -67,8 +70,8 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
                     initial={false} animate={{ rotate: state.isOpen ? 180 : 0 }} transition={transition}
                     style={{ flexShrink: 0 }}><path d="m2 4 4 4 4-4" /></motion.svg>
             </Button>
-            <Popover className={overlayMotionClass} placement="bottom start" offset={theme.gap} maxHeight={280 + theme.gap * 2} style={{ ...overlayTransition, width: "var(--trigger-width)", maxWidth: "calc(100vw - 16px)" }}>
-                <Surface style={{ padding: theme.gap, display: "flex", flexDirection: "column", maxHeight: "inherit", boxSizing: "border-box" }}>
+            <Popover dir={direction} className={overlayMotionClass} placement={resolveDirectionalPlacement("bottom start", direction)} offset={theme.gap} maxHeight={280 + theme.gap * 2} style={{ ...overlayTransition, width: "var(--trigger-width)", maxWidth: "calc(100vw - 16px)" }}>
+                <Surface dir={direction} style={{ padding: theme.gap, display: "flex", flexDirection: "column", maxHeight: "inherit", boxSizing: "border-box" }}>
                     <ScrollArea style={{ flex: "1 1 auto", minHeight: 0 }}>
                         <ListBox items={options} dependencies={optionDependencies} shouldFocusOnHover={false} style={{ display: "grid", gap: theme.gap, outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
                             {option => <ListBoxItem id={option.value} textValue={option.label} style={item => ({

@@ -3,6 +3,7 @@ import type { ComponentPropsWithoutRef, CSSProperties } from "react"
 import { alignment, justification, resolveGap, tracks } from "./layout.js"
 import type { LayoutAlignment, LayoutGap, LayoutJustification } from "./layout.js"
 import { useAppearance } from "./appearance-provider.js"
+import { useDirection } from "./direction.js"
 
 /** Properties accepted by the Grid layout primitive. */
 export interface GridProps extends ComponentPropsWithoutRef<"div"> {
@@ -34,9 +35,11 @@ export const Grid = forwardRef<HTMLDivElement, GridProps>(function Grid(
   ref
 ) {
   const appearance = useAppearance()
+  const direction = useDirection()
 
   return <div
     {...properties}
+    dir={properties.dir ?? direction}
     ref={ref}
     style={{
       ...style,

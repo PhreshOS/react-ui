@@ -6,6 +6,7 @@ import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
 import { ToggleIndicator, toggleStyle } from "./toggle-indicator.js"
 import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
+import { useDirection } from "./direction.js"
 
 export interface SwitchProps extends Omit<SwitchFieldProps, ControlOverrides | "isReadOnly" | "isSelected" | "defaultSelected">, ControlProps, FieldProps, MaterialOverrides, ShadowOverrides {
     readonly checked?: boolean
@@ -20,8 +21,9 @@ export const Switch = forwardRef<HTMLDivElement, SwitchProps>(function Switch({
 }, ref) {
 
     const theme = useControlTheme({ size, color })
+    const direction = useDirection()
 
-    return <SwitchField {...properties} ref={ref} isDisabled={disabled} isRequired={required} isInvalid={invalid}
+    return <SwitchField {...properties} dir={properties.dir ?? direction} ref={ref} isDisabled={disabled} isRequired={required} isInvalid={invalid}
         isReadOnly={readOnly} isSelected={checked} defaultSelected={defaultChecked}
         style={state => fieldStyle(theme, state.isDisabled, style)}>
         <SwitchButton style={state => toggleStyle(theme, state.isDisabled, state.isReadOnly)}>

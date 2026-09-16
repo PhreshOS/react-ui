@@ -17,6 +17,8 @@ import { Button, type ButtonProps } from "./button.js"
 import { overlayMotionClass, useOverlayTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceOwnProps } from "./surface.js"
+import { useDirection } from "./direction.js"
+import { resolveDirectionalPlacement } from "./overlay-placement.js"
 
 export type PopoverRootProps = AriaDialogTriggerProps
 
@@ -47,19 +49,24 @@ export const PopoverContent = forwardRef<HTMLElement, PopoverContentProps>(funct
   shadow,
   style,
   offset,
+  placement = "bottom",
   ...properties
 }, ref) {
   const inset = scale(useAppearance().spacing, "small")
   const transition = useOverlayTransition()
+  const direction = useDirection()
 
   return <AriaPopover
     {...properties}
     ref={ref}
+    dir={direction}
     offset={offset ?? inset}
+    placement={resolveDirectionalPlacement(placement, direction)}
     className={overlayMotionClass}
     style={transition}
   >
     <Surface
+      dir={direction}
       className={className}
       color={color}
       material={material}

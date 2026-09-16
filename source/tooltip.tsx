@@ -11,6 +11,8 @@ import { controlFontSizes } from "./control.js"
 import { overlayMotionClass, useOverlayTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceOwnProps } from "./surface.js"
+import { useDirection } from "./direction.js"
+import { resolveDirectionalPlacement } from "./overlay-placement.js"
 
 export type TooltipRootProps = AriaTooltipTriggerProps
 
@@ -41,19 +43,24 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
   shadow,
   style,
   offset,
+  placement = "top",
   ...properties
 }, ref) {
   const inset = scale(useAppearance().spacing, "small")
   const transition = useOverlayTransition()
+  const direction = useDirection()
 
   return <AriaTooltip
     {...properties}
     ref={ref}
+    dir={direction}
     offset={offset ?? inset}
+    placement={resolveDirectionalPlacement(placement, direction)}
     className={overlayMotionClass}
     style={transition}
   >
     <Surface
+      dir={direction}
       className={className}
       color={color}
       material={material}

@@ -63,17 +63,19 @@ it("lets any ref-forwarding host that preserves style and children carry the Sur
   const grid = createRef<HTMLDivElement>()
   const outside = createRef<HTMLDivElement>()
 
-  render(<AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+  render(<AppearanceProvider appearance={defaultAppearance} direction="rtl" preferences={{ theme: "light", animations: true }}>
     <Surface as={Grid} ref={grid} data-testid="grid" columns={2}>Grid content</Surface>
     <Surface as={OutsideLayout} ref={outside} data-testid="outside" direction="column">Outside content</Surface>
   </AppearanceProvider>)
 
   expect(grid.current).toBe(screen.getByTestId("grid"))
   expect(grid.current?.style.display).toBe("grid")
+  expect(grid.current?.dir).toBe("rtl")
   expect(grid.current?.querySelector(":scope > [data-material]")).not.toBeNull()
   expect(outside.current).toBe(screen.getByTestId("outside"))
   expect(outside.current?.style.display).toBe("flex")
   expect(outside.current?.style.flexDirection).toBe("column")
+  expect(outside.current?.dir).toBe("rtl")
   expect(outside.current?.querySelector(":scope > [data-material]")).not.toBeNull()
 })
 

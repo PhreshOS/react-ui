@@ -3,6 +3,7 @@ import type { ComponentPropsWithoutRef } from "react"
 import { alignment, justification, resolveGap } from "./layout.js"
 import type { LayoutAlignment, LayoutGap, LayoutJustification } from "./layout.js"
 import { useAppearance } from "./appearance-provider.js"
+import { useDirection } from "./direction.js"
 
 /** Properties accepted by the Flex layout primitive. */
 export interface FlexProps extends ComponentPropsWithoutRef<"div"> {
@@ -31,9 +32,11 @@ export const Flex = forwardRef<HTMLDivElement, FlexProps>(function Flex(
   ref
 ) {
   const appearance = useAppearance()
+  const textDirection = useDirection()
 
   return <div
     {...properties}
+    dir={properties.dir ?? textDirection}
     ref={ref}
     style={{
       ...style,

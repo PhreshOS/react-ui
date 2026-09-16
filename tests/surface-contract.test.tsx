@@ -40,7 +40,7 @@ describe("Surface", function () {
   })
 
   it.each([
-    ["xsmall", "2.5px"], ["small", "5px"], ["medium", "10px"], ["large", "15px"], ["xlarge", "20px"],
+    ["xsmall", "2.5px"], ["small", "5px"], ["medium", "10px"], ["large", "15px"], ["xlarge", "20px"], ["full", "9999px"],
     [0, "0px"], [18, "18px"], ["50%", "50%"], ["1rem 2rem", "1rem 2rem"]
   ] as const)("accepts radius %s without forwarding it to the DOM", function (radius, expected) {
     renderSurface(<Surface data-testid="surface" radius={radius} />)

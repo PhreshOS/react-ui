@@ -34,7 +34,7 @@ test("package contract", async () => {
     assert(paths.has("dist/main.d.ts"), "the package has no declaration entry point")
     assert(paths.has("dist/panel.js"), "the package has no Panel implementation")
     assert(paths.has("dist/panel.d.ts"), "the package has no Panel contract")
-    for (const name of ["input", "textarea", "checkbox", "radio", "switch", "select", "slider", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
+    for (const name of ["direction", "input", "textarea", "checkbox", "radio", "switch", "select", "slider", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
       assert(paths.has(`dist/${name}.js`), `the package has no ${name} implementation`)
       assert(paths.has(`dist/${name}.d.ts`), `the package has no ${name} contract`)
     }
@@ -98,11 +98,13 @@ test("package contract", async () => {
     resolveSpacing,
     useBrowserPreferences,
     useColor,
+    useDirection,
+    useDocumentDirection,
     usePreferences,
     useScale
   } from "@phreshos/react-ui"
 
-  for (const exported of [AppearanceProvider, AlertDialog, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, usePreferences, useScale]) {
+  for (const exported of [AppearanceProvider, AlertDialog, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale]) {
     assert.notEqual(exported, undefined)
   }
   assert.equal(defaultAppearance, coreDefaultAppearance)
@@ -113,7 +115,7 @@ test("package contract", async () => {
 
     writeFileSync(
       join(consumer, "consumer.tsx"),
-      `import { AlertDialog, AppearanceProvider, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useBrowserPreferences, useColor, usePreferences, useScale, type Preferences } from "@phreshos/react-ui"
+      `import { AlertDialog, AppearanceProvider, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, type Preferences } from "@phreshos/react-ui"
 
   const surface = <Surface as="button" type="button" color="background:soft" material={{ opacity: 0.4 }}>Surface</Surface>
   const standalone = <Button>Default Appearance and browser Preferences</Button>
@@ -131,10 +133,15 @@ test("package contract", async () => {
     return <span style={{ color: primary.base, padding: spacing.small }} data-browser-theme={browser.theme} data-animations={resolved.animations}>Derived</span>
   }
 
+  function Direction() {
+    const direction = useDirection()
+    return <span data-direction={direction} data-document-direction={useDocumentDirection()} />
+  }
+
   const commands = [{ id: "open", label: "Open" }]
 
   const view = (
-    <AppearanceProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    <AppearanceProvider appearance={defaultAppearance} direction="rtl" preferences={{ theme: "light", animations: true }}>
       <Panel>
         <Panel.Header><h2>Example</h2></Panel.Header>
         <Panel.Content style={{ padding: 12 }}><Grid columns={2} gap="small">
@@ -160,6 +167,7 @@ test("package contract", async () => {
       <Dialog><Dialog.Trigger>Open</Dialog.Trigger><Dialog.Backdrop><Dialog.Content><Dialog.Title>Dialog</Dialog.Title><Dialog.Close>Close</Dialog.Close></Dialog.Content></Dialog.Backdrop></Dialog>
       <AlertDialog><AlertDialog.Trigger>Delete</AlertDialog.Trigger><AlertDialog.Backdrop><AlertDialog.Content><AlertDialog.Title>Delete?</AlertDialog.Title><AlertDialog.Close>Cancel</AlertDialog.Close></AlertDialog.Content></AlertDialog.Backdrop></AlertDialog>
       <Tooltip><Tooltip.Trigger>Help</Tooltip.Trigger><Tooltip.Content>Help text</Tooltip.Content></Tooltip>
+      <Direction />
     </AppearanceProvider>
   )
 

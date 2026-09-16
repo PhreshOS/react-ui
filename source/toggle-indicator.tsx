@@ -1,12 +1,12 @@
 import { motion } from "motion/react"
 import type { CSSProperties } from "react"
-import { useLocale } from "react-aria-components"
 import type { ControlTheme } from "./control.js"
 import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
 import { useControlTransition } from "./motion-style.js"
 import { usePreferences } from "./appearance-provider.js"
 import { Surface } from "./surface.js"
+import { useDirection } from "./direction.js"
 
 /** Shared paint only. Selection, focus, validation, and native input behavior belong to React Aria. */
 export function ToggleIndicator({ kind, selected, indeterminate = false, focused, invalid = false, hovered = false, pressed = false, theme, material: options, shadow }: Readonly<{
@@ -22,7 +22,7 @@ export function ToggleIndicator({ kind, selected, indeterminate = false, focused
 
     const { animations } = usePreferences()
     const transition = useControlTransition()
-    const { direction } = useLocale()
+    const direction = useDirection()
     const diameter = theme.fontSize + 6
     const active = selected || indeterminate
     const paints = invalid ? theme.paints.danger : active ? theme.paints.palette : theme.paints.neutral

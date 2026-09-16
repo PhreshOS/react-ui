@@ -32,7 +32,7 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on th
     const user = userEvent.setup()
     await user.click(screen.getByRole(kind, { name: "Choice" }))
     await user.unhover(screen.getByRole(kind, { name: "Choice" }))
-    expect((screen.getByRole(kind) as HTMLInputElement).checked).toBe(true)
+    expect(kind === "radio" ? screen.getByRole(kind).getAttribute("aria-checked") === "true" : (screen.getByRole(kind) as HTMLInputElement).checked).toBe(true)
     expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.secondary, "base")))
     expect(indicator?.style.borderRadius).toBe(kind === "checkbox" ? "4.75px" : "19px")
 })
@@ -239,14 +239,17 @@ it("keeps sibling field descriptions and validation messages separate", () => {
 
 it("keeps RadioGroup selection exclusive, skips disabled options, and submits the value", async () => {
     const onChange = vi.fn()
+    const firstInput = createRef<HTMLInputElement>()
     renderUI(<form data-testid="form"><RadioGroup label="Mode" name="mode" defaultValue="one" onChange={onChange}>
-        <Radio label="One" value="one" /><Radio label="Two" value="two" disabled /><Radio label="Three" value="three" />
+        <Radio label="One" value="one" inputRef={firstInput} /><Radio label="Two" value="two" disabled /><Radio label="Three" value="three" />
     </RadioGroup></form>)
     expect(screen.getByRole("radiogroup", { name: "Mode" })).toBeTruthy()
+    expect(firstInput.current?.checked).toBe(true)
     screen.getByRole("radio", { name: "One" }).focus()
     await userEvent.setup().keyboard("[ArrowDown]")
     expect(onChange).toHaveBeenLastCalledWith("three")
-    expect((screen.getByRole("radio", { name: "One" }) as HTMLInputElement).checked).toBe(false)
+    expect(screen.getByRole("radio", { name: "One" }).getAttribute("aria-checked")).toBe("false")
+    expect(firstInput.current?.checked).toBe(false)
     expect(new FormData(screen.getByTestId("form") as HTMLFormElement).get("mode")).toBe("three")
 })
 
@@ -268,7 +271,7 @@ it("RadioGroup follows controlled props without repeating its validation error f
     </RadioGroup>)
     expect(screen.getAllByText("Choose another mode")).toHaveLength(1)
     view.rerender(wrap(<RadioGroup label="Mode" value="two"><Radio label="One" value="one" /><Radio label="Two" value="two" /></RadioGroup>))
-    expect((screen.getByRole("radio", { name: "Two" }) as HTMLInputElement).checked).toBe(true)
+    expect(screen.getByRole("radio", { name: "Two" }).getAttribute("aria-checked")).toBe("true")
 })
 
 const options = [{ value: "one", label: "One" }, { value: "two", label: "Two", disabled: true }, { value: "three", label: "Three" }]

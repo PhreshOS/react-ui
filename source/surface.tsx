@@ -8,6 +8,7 @@ import MotionStyle, { useVisualTransition } from "./motion-style.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { shadowStyle, useShadowOptions, type ShadowOverrides } from "./shadow-options.js"
 import { SurfaceEdge } from "./surface-edge.js"
+import { useDirection, type Direction } from "./direction.js"
 
 export type { MaterialOptions } from "./material-options.js"
 export type { ShadowOptions } from "./shadow-options.js"
@@ -23,6 +24,7 @@ export interface SurfaceOwnProps extends MaterialOverrides, ShadowOverrides, Rad
  */
 export interface SurfaceHostProps {
   readonly children?: ReactNode
+  readonly dir?: Direction
   readonly style?: CSSProperties
 }
 
@@ -52,6 +54,7 @@ const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Sur
   ...properties
 }, ref) {
   const appearance = useAppearance()
+  const direction = useDirection()
   const transition = useVisualTransition()
   const material = useResolvedSurface(color, options)
   const resolvedShadow = useShadowOptions(typeof shadowOptions === "object" ? shadowOptions : undefined)
@@ -60,6 +63,7 @@ const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Sur
 
   return createElement(Element, {
     ...properties,
+    dir: properties.dir ?? direction,
     ref,
     style: {
       ...transition,

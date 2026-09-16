@@ -45,6 +45,19 @@ that need it explicitly.
 See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
 interpreted by the provider and components.
 
+React UI is neutral between left-to-right and right-to-left interfaces.
+`AppearanceProvider` guarantees one direction across DOM layout, keyboard
+behavior, overlays, scrolling, and direction-sensitive animation. It follows
+the `<html dir>` value unless `direction` supplies an explicit override.
+
+```tsx
+import { AppearanceProvider, Select } from "@phreshos/react-ui"
+
+<AppearanceProvider direction="rtl">
+  <Select label="Choice" options={[{ value: "one", label: "One" }]} />
+</AppearanceProvider>
+```
+
 ```tsx
 import { AppearanceProvider, Button, useBrowserPreferences } from "@phreshos/react-ui"
 
@@ -78,8 +91,8 @@ spacing and radius follow Appearance. `disabled` prevents activation and focus;
 `Surface` is the material- and shadow-owning element. It renders a `div` by default, while
 `as` selects another React element and preserves that element's native properties
 and ref type. Surface owns its paint, opacity, frost, refraction, grain, edge,
-outer shadow, radius, and clipping requirements. `radius` accepts a size level, a number in
-pixels, or a CSS radius and defaults to `medium`.
+outer shadow, radius, and clipping requirements. `radius` accepts a size level, `full`, a
+number in pixels, or a CSS radius and defaults to `medium`.
 
 ```tsx
 <Surface color="background:soft" radius="large">Derived values</Surface>
@@ -88,10 +101,11 @@ pixels, or a CSS radius and defaults to `medium`.
 ```
 
 `as` can also select an outside React component. A valid Surface host preserves
-the `style` and `children` it receives on one host element and forwards its ref
-to that same element. This lets layout components carry the material without a
-wrapper. The host retains ownership of its own behavior and layout properties;
-Surface retains ownership of material, edge, shadow, radius, and required geometry.
+the `style`, `dir`, and `children` it receives on one host element and forwards
+its ref to that same element. This lets layout components carry the material
+without a wrapper. The host retains ownership of its own behavior and layout
+properties; Surface retains ownership of material, edge, shadow, radius, and
+required geometry.
 
 `MaterialOptions` defines `opacity`, `backdrop`, `grain`, `grainAmount`,
 `distortion`, and `saturation`. Every material-bearing component, including

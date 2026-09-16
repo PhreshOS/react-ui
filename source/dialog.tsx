@@ -20,6 +20,7 @@ import { Button, type ButtonProps } from "./button.js"
 import { backdropMotionClass, overlayMotionClass, useOverlayTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceOwnProps } from "./surface.js"
+import { useDirection } from "./direction.js"
 
 export type DialogRootProps = AriaDialogTriggerProps
 
@@ -46,10 +47,12 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
 }, ref) {
   const inset = scale(useAppearance().spacing, "medium")
   const transition = useOverlayTransition()
+  const direction = useDirection()
 
   return <AriaModalOverlay
     {...properties}
     ref={ref}
+    dir={direction}
     className={[backdropMotionClass, className].filter(Boolean).join(" ")}
     style={{
       ...transition,
@@ -87,8 +90,10 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
 }, ref) {
   const inset = scale(useAppearance().spacing, "medium")
   const transition = useOverlayTransition()
+  const direction = useDirection()
 
   return <AriaModal
+    dir={direction}
     className={overlayMotionClass}
     style={{
       ...transition,

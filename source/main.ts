@@ -9,11 +9,14 @@ export {
   AppearanceProvider,
   useAppearance,
   useBrowserPreferences,
+  useDirection,
+  useDocumentDirection,
   usePreferences,
   useThemedValue,
   type AppearanceProviderProps
 } from "./appearance-provider.js"
 export type { DesktopPreferences as Preferences } from "@phreshos/core"
+export type { Direction } from "./direction.js"
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
 export {
