@@ -90,9 +90,7 @@ it("renders a div by default and preserves the selected host contract", () => {
 
   expect(div.current).toBe(surface)
   expect(surface.tagName).toBe("DIV")
-  expect(surface.parentElement?.dir).toBe("ltr")
-  expect(surface.parentElement?.style.display).toBe("contents")
-  expect(surface.parentElement?.parentElement).toBe(container)
+  expect(surface.parentElement).toBe(container)
   expect(surface.querySelector("[data-material]")).not.toBeNull()
   expect(screen.getByText("Content")).toBe(surface)
   expect(button.current).toBe(screen.getByTestId("button"))

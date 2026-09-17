@@ -39,19 +39,21 @@ import { Button, Surface } from "@phreshos/react-ui"
 
 Without a provider, components use Core's `defaultAppearance` and reactively
 follow the browser's complete visual preferences. `UIProvider` supplies the
-Appearance, Preferences, and direction shared by a React UI subtree. Omitted
-Appearance and Preferences values inherit from the nearest provider.
+Appearance, Preferences, and direction explicitly established for a React UI
+subtree. Each omitted property inherits independently from the nearest provider
+or follows its own default resolution. A provider with no properties introduces
+no boundary or behavior.
 React UI also exports that same canonical `defaultAppearance` value for callers
 that need it explicitly.
 See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
 interpreted by the provider and components.
 
 React UI is neutral between left-to-right and right-to-left interfaces.
-`UIProvider` creates a direction boundary that participates in native DOM
-inheritance without creating a layout box. Its direction follows `<html dir>`
-unless `direction` supplies an explicit override. React UI reads that same
-resolved value only for JavaScript behavior and portals that cannot rely on
-native inheritance.
+An explicit `UIProvider` direction creates a boundary that participates in
+native DOM inheritance without creating a layout box. When direction is
+omitted, the provider leaves DOM inheritance unchanged. React UI reads the
+nearest explicit direction—or `<html dir>` when there is none—only for
+JavaScript behavior and portals that cannot rely on native inheritance.
 
 ```tsx
 import { UIProvider, Select } from "@phreshos/react-ui"

@@ -7,11 +7,12 @@ import type { Preferences } from "../source/main.js"
 afterEach(cleanup)
 
 describe("UIProvider", function () {
-  it("falls back to complete browser Preferences", function () {
+  it("introduces no boundary when every property is omitted", function () {
     const values: Array<Appearance | Preferences | string> = []
 
-    render(<UIProvider><Read onRead={value => values.push(value)} /></UIProvider>)
+    const view = render(<UIProvider><main data-testid="content"><Read onRead={value => values.push(value)} /></main></UIProvider>)
 
+    expect(view.container.firstElementChild).toBe(view.getByTestId("content"))
     expect(values).toEqual([defaultAppearance, { theme: "light", animations: true }, defaultAppearance.colors.light.background])
   })
 
@@ -25,7 +26,7 @@ describe("UIProvider", function () {
     expect(values).toEqual([defaultAppearance, { theme: "dark", animations: false }, defaultAppearance.colors.dark.background])
   })
 
-  it("inherits every omitted value from the nearest provider", function () {
+  it("inherits every omitted property from the nearest provider", function () {
     const appearance = {
       ...defaultAppearance,
       colors: {
@@ -40,6 +41,22 @@ describe("UIProvider", function () {
     </UIProvider>)
 
     expect(values).toEqual([appearance, { theme: "dark", animations: false }, appearance.colors.dark.background])
+  })
+
+  it("overrides only the property that is supplied", function () {
+    const appearance = {
+      ...defaultAppearance,
+      spacing: defaultAppearance.spacing + 1
+    }
+    const values: Array<Appearance | Preferences | string> = []
+
+    render(<UIProvider appearance={appearance} preferences={{ theme: "dark", animations: false }}>
+      <UIProvider preferences={{ theme: "light", animations: true }}>
+        <Read onRead={value => values.push(value)} />
+      </UIProvider>
+    </UIProvider>)
+
+    expect(values).toEqual([appearance, { theme: "light", animations: true }, appearance.colors.light.background])
   })
 
   it("does not alter arbitrary document scrollbars", function () {

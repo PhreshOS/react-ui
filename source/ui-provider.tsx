@@ -1,33 +1,32 @@
 import type { CSSProperties, ReactNode } from "react"
 import { type Appearance, type DesktopPreferences as Preferences } from "@phreshos/core"
-import MotionStyle from "./motion-style.js"
-import { AppearanceContext, PreferencesContext, useAppearance, usePreferences } from "./appearance-context.js"
-import { DirectionContext, useDocumentDirection, type Direction } from "./direction.js"
+import { AppearanceContext, PreferencesContext } from "./appearance-context.js"
+import { DirectionContext, type Direction } from "./direction.js"
 
 export { useAppearance, useBrowserPreferences, usePreferences, useThemedValue } from "./appearance-context.js"
 export { useDirection, useDocumentDirection } from "./direction.js"
 
 const directionBoundaryStyle = { display: "contents" } satisfies CSSProperties
 
-/** Supplies the complete shared environment of a React UI subtree. */
+/** Establishes only the explicitly supplied UI values for a React subtree. */
 export function UIProvider({ appearance, children, direction, preferences }: UIProviderProps) {
-  const inheritedAppearance = useAppearance()
-  const inheritedPreferences = usePreferences()
-  const documentDirection = useDocumentDirection()
-  const resolvedAppearance = appearance ?? inheritedAppearance
-  const resolvedDirection = direction ?? documentDirection
-  const resolvedPreferences = preferences ?? inheritedPreferences
+  let subtree = children
 
-  return <DirectionContext.Provider value={resolvedDirection}>
-    <div dir={resolvedDirection} style={directionBoundaryStyle}>
-      <AppearanceContext.Provider value={resolvedAppearance}>
-        <PreferencesContext.Provider value={resolvedPreferences}>
-          <MotionStyle />
-          {children}
-        </PreferencesContext.Provider>
-      </AppearanceContext.Provider>
-    </div>
-  </DirectionContext.Provider>
+  if (preferences !== undefined) {
+    subtree = <PreferencesContext.Provider value={preferences}>{subtree}</PreferencesContext.Provider>
+  }
+
+  if (appearance !== undefined) {
+    subtree = <AppearanceContext.Provider value={appearance}>{subtree}</AppearanceContext.Provider>
+  }
+
+  if (direction !== undefined) {
+    subtree = <DirectionContext.Provider value={direction}>
+      <div dir={direction} style={directionBoundaryStyle}>{subtree}</div>
+    </DirectionContext.Provider>
+  }
+
+  return subtree
 }
 
 export interface UIProviderProps {

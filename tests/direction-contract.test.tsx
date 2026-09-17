@@ -31,9 +31,21 @@ it("reacts when the HTML direction changes", async function () {
   await waitFor(() => expect(screen.getByTestId("document-direction").textContent).toBe("rtl"))
 })
 
-it("always establishes a DOM boundary from its resolved direction", async function () {
+it("introduces no DOM direction boundary when direction is omitted", async function () {
   document.documentElement.dir = "rtl"
-  render(<UIProvider>
+  const view = render(<UIProvider>
+    <main data-testid="content"><DirectionProbe name="direction" /></main>
+  </UIProvider>)
+
+  expect(view.container.firstElementChild).toBe(screen.getByTestId("content"))
+  expect(screen.getByTestId("direction").textContent).toBe("rtl")
+
+  document.documentElement.dir = "ltr"
+  await waitFor(() => expect(screen.getByTestId("direction").textContent).toBe("ltr"))
+})
+
+it("establishes a DOM boundary only for an explicit direction", function () {
+  render(<UIProvider direction="rtl">
     <main data-testid="content"><DirectionProbe name="direction" /></main>
   </UIProvider>)
 
@@ -42,13 +54,9 @@ it("always establishes a DOM boundary from its resolved direction", async functi
   expect(boundary?.style.display).toBe("contents")
   expect(screen.getByTestId("content").hasAttribute("dir")).toBe(false)
   expect(screen.getByTestId("direction").textContent).toBe("rtl")
-
-  document.documentElement.dir = "ltr"
-  await waitFor(() => expect(boundary?.dir).toBe("ltr"))
-  expect(screen.getByTestId("direction").textContent).toBe("ltr")
 })
 
-it("resolves each omitted provider direction from the document", function () {
+it("inherits an omitted direction from the nearest provider", function () {
   document.documentElement.dir = "ltr"
   render(<UIProvider direction="rtl">
     <DirectionProbe name="outer" />
@@ -56,9 +64,9 @@ it("resolves each omitted provider direction from the document", function () {
   </UIProvider>)
 
   expect(screen.getByTestId("outer").textContent).toBe("rtl")
-  expect(screen.getByTestId("inner").textContent).toBe("ltr")
+  expect(screen.getByTestId("inner").textContent).toBe("rtl")
   expect(screen.getByTestId("outer").closest("[dir=rtl]")).not.toBeNull()
-  expect(screen.getByTestId("inner").closest("[dir=ltr]")).not.toBeNull()
+  expect(screen.getByTestId("inner").closest("[dir=rtl]")).toBe(screen.getByTestId("outer").closest("[dir=rtl]"))
 })
 
 it("keeps directional keyboard behavior and portalled layout in RTL", async function () {
