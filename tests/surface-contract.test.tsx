@@ -277,6 +277,31 @@ describe("Surface", function () {
     expect(surface.querySelector("[data-material-distortion]")).toBeNull()
   })
 
+  it("ignores surface filters when the resolved material opacity reaches one", function () {
+    const material = {
+      light: { ...defaultAppearance.material.light, opacity: 0.8, backdrop: 8, distortion: 70, saturation: 1.8, grain: 0.1, grainAmount: 1 },
+      dark: { ...defaultAppearance.material.dark, opacity: 0.8, backdrop: 8, distortion: 70, saturation: 1.8, grain: 0.1, grainAmount: 1 }
+    }
+    const appearance = { ...defaultAppearance, material }
+    const rendered = render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
+      <Surface data-testid="surface" material={{ opacity: "large" }} />
+    </UIProvider>)
+    const surface = screen.getByTestId("surface")
+
+    expect(surface.querySelector("[data-material-backdrop]")).toBeNull()
+    expect(surface.querySelector("[data-material-distortion]")).toBeNull()
+    expect(surface.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("1")
+    expect(surface.querySelector("[data-material-grain]")).not.toBeNull()
+    expect(surface.querySelector("[data-surface-edge]")).not.toBeNull()
+
+    rendered.rerender(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
+      <Surface data-testid="surface" material={{ opacity: "medium" }} />
+    </UIProvider>)
+
+    expect(surface.querySelectorAll("[data-material-backdrop]")).toHaveLength(2)
+    expect(surface.querySelector("[data-material-distortion]")).not.toBeNull()
+  })
+
   it("omits grain when either grain dimension is zero", function () {
     renderSurface(<>
       <Surface data-testid="no-intensity" material={{ grain: 0, grainAmount: 1 }} />

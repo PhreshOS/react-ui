@@ -100,7 +100,10 @@ const layerStyle = {
 } satisfies CSSProperties
 
 function SurfaceLayers({ material }: Readonly<{ material: ResolvedSurface }>) {
-  const { backdrop, saturation, distortion } = material
+  const filtersVisible = material.opacity < 1
+  const backdrop = filtersVisible ? material.backdrop : 0
+  const saturation = filtersVisible ? material.saturation : 1
+  const distortion = filtersVisible ? material.distortion : 0
   const frost = [
     backdrop === 0 ? "" : `blur(${backdrop}px)`,
     saturation === 1 ? "" : `saturate(${saturation})`
