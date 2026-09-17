@@ -4,7 +4,17 @@
  * Components enter this surface only after their implementation-independent
  * behavior contract has been established by the package's tests.
  */
-export { defaultAppearance } from "@phreshos/core"
+export {
+  defaultAppearance,
+  type Appearance,
+  type AppearanceColor,
+  type AppearanceColors,
+  type AppearanceMaterial,
+  type AppearanceShadow,
+  type AppearanceTransaction,
+  type Easing,
+  type ThemedValue
+} from "./appearance.js"
 export {
   UIProvider,
   useAppearance,
@@ -15,7 +25,7 @@ export {
   useThemedValue,
   type UIProviderProps
 } from "./ui-provider.js"
-export type { DesktopPreferences as Preferences } from "@phreshos/core"
+export type { Preferences, Theme } from "./preferences.js"
 export type { Direction } from "./direction.js"
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"

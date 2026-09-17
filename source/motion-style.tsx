@@ -1,6 +1,6 @@
-import { defaultAppearance, type Easing } from "@phreshos/core"
 import type { CSSProperties } from "react"
 import type { Transition } from "motion/react"
+import { defaultAppearance, type Easing } from "./appearance.js"
 import { useAppearance, usePreferences } from "./appearance-context.js"
 
 const visualProperties = "background-color, color, border-color, border-radius, box-shadow"

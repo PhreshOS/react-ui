@@ -8,8 +8,8 @@ Environment-neutral React components and the visual language of PhreshOS.
 
 ## Role
 
-React UI interprets Core Appearance and Theme contracts as reusable visual
-primitives. The Desktop and Programs compose those primitives instead of
+React UI owns reusable visual contracts that accept the corresponding PhreshOS
+System values directly. The Desktop and Programs compose those primitives instead of
 reimplementing material, spacing, color, radius, or interaction behavior.
 
 The package does not depend on a Client or Server runtime and does not own
@@ -25,9 +25,8 @@ applications own composition.
 | Bun | `bun add @phreshos/react-ui` |
 | Yarn | `yarn add @phreshos/react-ui` |
 
-Core is a built-in runtime dependency. React and React DOM remain peer
-dependencies because the application and React UI must share one React
-runtime.
+React and React DOM are peer dependencies because the application and React UI
+must share one React runtime.
 
 ```tsx
 import { Button, Surface } from "@phreshos/react-ui"
@@ -37,16 +36,16 @@ import { Button, Surface } from "@phreshos/react-ui"
 </Surface>
 ```
 
-Without a provider, components use Core's `defaultAppearance` and reactively
+Without a provider, components use React UI's `defaultAppearance` and reactively
 follow the browser's complete visual preferences. `UIProvider` supplies the
 Appearance, Preferences, and direction explicitly established for a React UI
 subtree. Each omitted property inherits independently from the nearest provider
 or follows its own default resolution. A provider with no properties introduces
 no boundary or behavior.
-React UI also exports that same canonical `defaultAppearance` value for callers
-that need it explicitly.
-See [Appearance](https://docs.phreshos.com/system/appearance) for the contract
-interpreted by the provider and components.
+React UI also exports `defaultAppearance` for callers that need the value
+explicitly. A complete System Appearance can be passed directly; React UI uses
+the visual fields it owns and ignores additional System fields such as
+wallpapers.
 
 React UI is neutral between left-to-right and right-to-left interfaces.
 An explicit `UIProvider` direction creates a boundary that participates in
@@ -279,8 +278,7 @@ the committed dependency graph without local package substitutions.
 
 ## Related repositories
 
-- [`@phreshos/core`](https://github.com/PhreshOS/core) owns Appearance, Theme,
-  and the shared values interpreted here.
+- [`@phreshos/core`](https://github.com/PhreshOS/core) owns the System contracts.
 - [`@phreshos/react`](https://github.com/PhreshOS/react) owns runtime-neutral
   React state adaptation.
 - [PhreshOS System](https://github.com/PhreshOS/system) composes the visual

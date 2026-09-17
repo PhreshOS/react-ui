@@ -1,8 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { createRef, type ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { defaultAppearance } from "@phreshos/core"
-import { UIProvider, Panel, Surface } from "../source/main.js"
+import { UIProvider, Panel, Surface, defaultAppearance } from "../source/main.js"
 
 afterEach(cleanup)
 

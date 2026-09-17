@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react"
-import type { Appearance } from "@phreshos/core"
+import type { Appearance } from "./appearance.js"
 import { isScaleLevel, scale, type ScaleLevel } from "./scale.js"
 
 /** An Appearance-derived level, fully rounded shape, pixel value, or explicit CSS corner radius. */

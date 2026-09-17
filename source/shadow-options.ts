@@ -1,4 +1,4 @@
-import { appearanceLimits, type AppearanceRange } from "@phreshos/core"
+import { appearanceLimits, type AppearanceRange } from "./appearance.js"
 import { useAppearance, useThemedValue } from "./ui-provider.js"
 import { isScaleLevel, scale, type ScaleLevel } from "./scale.js"
 

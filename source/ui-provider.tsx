@@ -1,7 +1,8 @@
 import type { CSSProperties, ReactNode } from "react"
-import { type Appearance, type DesktopPreferences as Preferences } from "@phreshos/core"
+import type { Appearance } from "./appearance.js"
 import { AppearanceContext, PreferencesContext } from "./appearance-context.js"
 import { DirectionContext, type Direction } from "./direction.js"
+import type { Preferences } from "./preferences.js"
 
 export { useAppearance, useBrowserPreferences, usePreferences, useThemedValue } from "./appearance-context.js"
 export { useDirection, useDocumentDirection } from "./direction.js"

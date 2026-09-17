@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { createRef, forwardRef } from "react"
 import type { ComponentPropsWithoutRef } from "react"
 import { afterEach, expect, expectTypeOf, it, vi } from "vitest"
-import { defaultAppearance } from "@phreshos/core"
+import { defaultAppearance } from "../source/main.js"
 import {
   UIProvider, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Radio, Grid,
   type MaterialOptions, type ShadowOptions, type SurfaceHost, type SurfaceProps,

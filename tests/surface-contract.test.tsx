@@ -1,8 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { createRef, type ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { defaultAppearance } from "@phreshos/core"
-import { UIProvider, Surface } from "../source/main.js"
+import { UIProvider, Surface, defaultAppearance } from "../source/main.js"
 import { color as colorScale, type ColorLevel } from "../source/color.js"
 import { shadowStyle } from "../source/shadow-options.js"
 

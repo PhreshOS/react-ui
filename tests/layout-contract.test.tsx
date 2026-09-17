@@ -1,8 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { createRef } from "react"
 import { afterEach, describe, expect, it } from "vitest"
-import { defaultAppearance } from "@phreshos/core"
-import { UIProvider, Flex, Grid } from "../source/main.js"
+import { UIProvider, Flex, Grid, defaultAppearance } from "../source/main.js"
 
 afterEach(cleanup)
 

@@ -12,7 +12,6 @@ test("package contract", async () => {
   const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..")
   const temporary = mkdtempSync(join(tmpdir(), "phreshos-react-ui-package-"))
   const cache = join(temporary, "npm-cache")
-  const corePackage = `@phreshos/core@${manifest.dependencies["@phreshos/core"]}`
 
   assert.equal(typeof manifest.dependencies["@phreshos/core"], "string")
   assert.equal(manifest.peerDependencies["@phreshos/core"], undefined)
@@ -68,7 +67,6 @@ test("package contract", async () => {
         "--no-fund",
         "--no-package-lock",
         archive,
-        corePackage,
         "@types/react@^19.2.18",
         "@types/react-dom@^19.2.4"
       ],
@@ -82,7 +80,6 @@ test("package contract", async () => {
     writeFileSync(
       join(consumer, "runtime.mjs"),
       `import assert from "node:assert/strict"
-  import { defaultAppearance as coreDefaultAppearance } from "@phreshos/core"
   import * as icons from "@phreshos/react-ui/icons"
   import {
     AlertDialog, Button, ContextMenu, Dialog, DropdownMenu,
@@ -107,7 +104,8 @@ test("package contract", async () => {
   for (const exported of [UIProvider, AlertDialog, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale]) {
     assert.notEqual(exported, undefined)
   }
-  assert.equal(defaultAppearance, coreDefaultAppearance)
+  assert.equal("signInWallpaper" in defaultAppearance, false)
+  assert.equal("desktopWallpaper" in defaultAppearance, false)
   assert.deepEqual(Object.keys(icons), [])
   `
     )
@@ -115,22 +113,34 @@ test("package contract", async () => {
 
     writeFileSync(
       join(consumer, "consumer.tsx"),
-      `import { AlertDialog, UIProvider, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, type Preferences } from "@phreshos/react-ui"
+      `import { AlertDialog, UIProvider, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type Preferences } from "@phreshos/react-ui"
 
   const surface = <Surface as="button" type="button" color="background:soft" material={{ opacity: 0.4 }}>Surface</Surface>
   const standalone = <Button>Default Appearance and browser Preferences</Button>
   const preferences: Preferences = { theme: "dark", animations: true }
   const themed = <UIProvider preferences={preferences}><Surface>Dark subtree</Surface></UIProvider>
+  const desktopPreferences = { theme: "dark", animations: true, scale: 1.25 } as const
+  const compatiblePreferences: Preferences = desktopPreferences
+  const desktopThemed = <UIProvider preferences={desktopPreferences}><Surface>Desktop preferences</Surface></UIProvider>
+  const systemAppearance = {
+    ...defaultAppearance,
+    signInWallpaper: { light: null, dark: null },
+    desktopWallpaper: { light: null, dark: null }
+  } as const
+  const compatibleAppearance: Appearance = systemAppearance
+  const systemThemed = <UIProvider appearance={systemAppearance}><Surface>System appearance</Surface></UIProvider>
   // @ts-expect-error Preferences is one complete value, not a partial override
   const partialPreferences = <UIProvider preferences={{ theme: "dark" }}><Surface /></UIProvider>
 
   function Derived() {
     const browser = useBrowserPreferences()
     const resolved = usePreferences()
+    // @ts-expect-error Desktop scale is not part of React UI Preferences
+    const scale = resolved.scale
     const spacing = useScale(defaultAppearance.spacing)
     const primary = useColor(defaultAppearance.colors.light.primary)
 
-    return <span style={{ color: primary.base, padding: spacing.small }} data-browser-theme={browser.theme} data-animations={resolved.animations}>Derived</span>
+    return <span style={{ color: primary.base, padding: spacing.small }} data-browser-theme={browser.theme} data-animations={resolved.animations}>{String(scale)}</span>
   }
 
   function Direction() {
@@ -174,6 +184,10 @@ test("package contract", async () => {
   void view
   void standalone
   void themed
+  void compatiblePreferences
+  void desktopThemed
+  void compatibleAppearance
+  void systemThemed
   void partialPreferences
   `
     )

@@ -2,7 +2,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import userEvent from "@testing-library/user-event"
 import { createRef, useState, type ReactNode } from "react"
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
-import { defaultAppearance } from "@phreshos/core"
+import { defaultAppearance } from "../source/main.js"
 import { colorOpacity, opaqueColor, resolveColorLevel, solidColors } from "../source/color.js"
 import { shadowStyle } from "../source/shadow-options.js"
 import {

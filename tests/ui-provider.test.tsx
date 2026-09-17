@@ -1,8 +1,6 @@
 import { act, cleanup, render } from "@testing-library/react"
 import { afterEach, describe, expect, it } from "vitest"
-import { UIProvider, useAppearance, useBrowserPreferences, usePreferences, useThemedValue } from "../source/main.js"
-import { defaultAppearance, type Appearance } from "@phreshos/core"
-import type { Preferences } from "../source/main.js"
+import { UIProvider, defaultAppearance, useAppearance, useBrowserPreferences, usePreferences, useThemedValue, type Appearance, type Preferences } from "../source/main.js"
 
 afterEach(cleanup)
 
@@ -67,7 +65,7 @@ describe("UIProvider", function () {
     expect(document.documentElement.getAttribute("style")).toBeNull()
   })
 
-  it("uses Core defaults outside a UIProvider", function () {
+  it("uses React UI defaults outside a UIProvider", function () {
     const values: Array<Appearance | Preferences | string> = []
 
     render(<Read onRead={value => values.push(value)} />)

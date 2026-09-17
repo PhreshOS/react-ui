@@ -1,10 +1,11 @@
 import { createContext, useContext, useMemo, useSyncExternalStore } from "react"
-import { defaultAppearance, type Appearance, type DesktopPreferences as Preferences, type ThemedValue } from "@phreshos/core"
+import { defaultAppearance, type Appearance, type ThemedValue } from "./appearance.js"
+import type { Preferences } from "./preferences.js"
 
 export const AppearanceContext = createContext<Appearance>(defaultAppearance)
 export const PreferencesContext = createContext<Preferences | null>(null)
 
-/** Returns the nearest unresolved Appearance, or Core's complete default. */
+/** Returns the nearest unresolved appearance, or React UI's default. */
 export function useAppearance(): Appearance {
   return useContext(AppearanceContext)
 }

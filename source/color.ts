@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import type { AppearanceColor, AppearanceColors } from "@phreshos/core"
+import type { AppearanceColor, AppearanceColors } from "./appearance.js"
 import { ColorSpace, mix, parse, serialize, to, toGamut, contrastWCAG21, sRGB, sRGB_Linear, HSL, HWB, Lab, LCH, OKLab, OKLCH, P3, A98RGB, ProPhoto, REC_2020, XYZ_D50, XYZ_D65 } from "colorjs.io/fn"
 import { useAppearance, useThemedValue } from "./ui-provider.js"
 

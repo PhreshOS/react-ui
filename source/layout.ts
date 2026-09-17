@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react"
-import type { Appearance } from "@phreshos/core"
+import type { Appearance } from "./appearance.js"
 import { resolveSpacing, type Spacing } from "./spacing.js"
 
 /** Cross-axis alignment shared by layout containers. */

@@ -1,8 +1,7 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it, vi } from "vitest"
-import { defaultAppearance } from "@phreshos/core"
-import { UIProvider, Button, Input, Surface, Select } from "../source/main.js"
+import { UIProvider, Button, Input, Surface, Select, defaultAppearance } from "../source/main.js"
 import { overlayMotionClass, useControlTransition } from "../source/motion-style.js"
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
