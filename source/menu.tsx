@@ -87,7 +87,7 @@ const MenuItemImplementation = forwardRef(function MenuItem<T = object>(
     style={state => {
       const paint = state.isPressed
         ? theme.paints.palette.pressed
-        : state.isFocused || state.isHovered || state.isSelected
+        : state.isHovered || state.isSelected
           ? theme.paints.palette.hover
           : { background: "transparent", color: theme.foreground }
 
@@ -102,7 +102,8 @@ const MenuItemImplementation = forwardRef(function MenuItem<T = object>(
         paddingInline: Math.max(8, theme.spacing),
         boxSizing: "border-box",
         borderRadius: theme.radius,
-        outline: "none",
+        outline: state.isFocusVisible ? `1px solid ${theme.focusColor}` : "none",
+        outlineOffset: 1,
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.46 : 1,
         userSelect: "none",

@@ -55,6 +55,21 @@ describe("ContextMenu", function () {
     expect(action).not.toHaveBeenCalled()
   })
 
+  it("does not retain hover paint after a focused item is left", async function () {
+    const user = userEvent.setup()
+    render(<Example onAction={() => undefined} />)
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Workspace tile" }))
+    const item = screen.getByRole("menuitem", { name: "Open" })
+    item.focus()
+
+    await user.hover(item)
+    expect(item.style.background).not.toBe("transparent")
+
+    await user.unhover(item)
+    expect(item.style.background).toBe("transparent")
+  })
+
   it("closes with Escape and restores focus", async function () {
     const user = userEvent.setup()
     render(<Example onAction={() => undefined} />)
@@ -66,6 +81,40 @@ describe("ContextMenu", function () {
 
     expect(screen.queryByRole("menu")).toBeNull()
     await waitFor(() => expect(document.activeElement).toBe(trigger))
+  })
+
+  it("dismisses when pressing outside", function () {
+    render(<>
+      <Example onAction={() => undefined} />
+      <button>Outside</button>
+    </>)
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Workspace tile" }))
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Outside" }))
+
+    expect(screen.queryByRole("menu")).toBeNull()
+  })
+
+  it("leaves other context-menu targets available and reopens on them", function () {
+    render(<>
+      <Example onAction={() => undefined} />
+      <ContextMenu>
+        <ContextMenu.Trigger><button>Second tile</button></ContextMenu.Trigger>
+        <ContextMenu.Content>
+          <Menu aria-label="Second actions"><Menu.Item>Inspect</Menu.Item></Menu>
+        </ContextMenu.Content>
+      </ContextMenu>
+    </>)
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Workspace tile" }))
+
+    const second = screen.getByRole("button", { name: "Second tile" })
+    expect(second.closest("[inert]")).toBeNull()
+
+    fireEvent.pointerDown(second, { button: 2 })
+    fireEvent.contextMenu(second)
+    expect(screen.getByRole("menu", { name: "Second tile" })).toBeTruthy()
+    expect(screen.queryByRole("menu", { name: "Workspace tile" })).toBeNull()
   })
 
   it("removes portalled content when its owner unmounts", function () {
