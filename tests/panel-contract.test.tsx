@@ -37,7 +37,7 @@ describe("Panel", () => {
     for (const surface of [panel, body]) {
       expect(surface.style.borderRadius).toBe(reference.style.borderRadius)
       expect(surface.querySelector("[data-surface-edge]")?.getAttribute("style")).toBe(reference.querySelector("[data-surface-edge]")?.getAttribute("style"))
-      expect(surface.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe(String(defaultAppearance.material.light.opacity))
+      expect(surface.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe(String(defaultAppearance.material.light.opacity))
     }
   })
 
@@ -72,8 +72,8 @@ describe("Panel", () => {
     render(provider(<Panel data-testid="panel" material={{ opacity: 0.4 }}>
       <Panel.Content material={{ opacity: 0.1 }} aria-label="Body">Content</Panel.Content>
     </Panel>))
-    expect(screen.getByTestId("panel").querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.4")
-    expect(screen.getByLabelText("Body").querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.1")
+    expect(screen.getByTestId("panel").querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("0.4")
+    expect(screen.getByLabelText("Body").querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("0.1")
   })
 
   it("keeps the content rim above an opaque iframe without compensating padding", () => {
@@ -83,7 +83,7 @@ describe("Panel", () => {
     </Panel>))
     const body = screen.getByLabelText("Body")
     const frame = screen.getByTitle("Opaque content")
-    const material = body.querySelector<SVGSVGElement>("[data-material-paint]")!
+    const material = body.querySelector<HTMLElement>("[data-material-paint]")!
     const rim = body.querySelector<HTMLElement>("[data-surface-edge]")!
     expect(frame.parentElement).toBe(body)
     expect(body.style.padding).toBe("")

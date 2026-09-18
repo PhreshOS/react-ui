@@ -1,6 +1,6 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { afterEach, expect, it } from "vitest"
+import { afterEach, expect, it, vi } from "vitest"
 import { UIProvider, Radio, RadioGroup, Select, Slider, useDirection, useDocumentDirection } from "../source/main.js"
 
 afterEach(function () {
@@ -8,6 +8,24 @@ afterEach(function () {
   document.documentElement.removeAttribute("class")
   document.documentElement.removeAttribute("style")
   cleanup()
+  vi.unstubAllGlobals()
+})
+
+it("shares one document observer across direction consumers", function () {
+  let observers = 0
+  let disconnects = 0
+  class Observer {
+    constructor(_change: MutationCallback) { observers += 1 }
+    observe() {}
+    disconnect() { disconnects += 1 }
+    takeRecords() { return [] }
+  }
+  vi.stubGlobal("MutationObserver", Observer)
+
+  const rendered = render(<>{Array.from({ length: 20 }, (_, index) => <DirectionProbe key={index} name={`direction-${index}`} />)}</>)
+  expect(observers).toBe(1)
+  rendered.unmount()
+  expect(disconnects).toBe(1)
 })
 
 it("reads only the explicit direction of the HTML element", async function () {

@@ -12,6 +12,18 @@ import {
 
 afterEach(cleanup)
 
+it("uses compact reusable grain resources instead of per-Surface path fields", () => {
+  const { container } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    {Array.from({ length: 10 }, (_, index) => <Button key={index}>Action {index}</Button>)}
+  </UIProvider>)
+  const grains = [...container.querySelectorAll<HTMLElement>("[data-material-grain]")]
+
+  expect(grains).toHaveLength(10)
+  expect(container.querySelector("path[data-material-grain-tone]")).toBeNull()
+  expect(new Set(grains.map(grain => grain.style.backgroundImage)).size).toBeLessThanOrEqual(4)
+  expect(grains.every(grain => grain.style.backgroundImage.length < 1_000)).toBe(true)
+})
+
 it("groups material customization uniformly across Surface and controls", () => {
   const NotAHost = (_: Readonly<{ value: string }>) => <div />
 
@@ -111,7 +123,7 @@ it("accepts grouped material properties without another rendered entity", () => 
   expect(material?.style.position).toBe("absolute")
   expect(material?.style.inset).toBe("0px")
   expect(material?.style.borderRadius).toBe("inherit")
-  expect(material?.querySelector<SVGRectElement>("[data-material-base]")?.style.fill).toBe("rgb(52, 86, 120)")
+  expect(material?.querySelector<HTMLElement>("[data-material-base]")?.style.background).toBe("rgb(52, 86, 120)")
   expect(geometry.querySelector("[data-surface-edge]")).not.toBeNull()
 })
 
@@ -126,10 +138,10 @@ it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"]
     : kind === "switch" ? <Switch label="Value" color="#345678" material={material} onChange={action} />
     : <RadioGroup label="Values" color="#345678" material={material} onChange={action}><Radio label="Value" value="one" /></RadioGroup>
   const { container } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{example}</UIProvider>)
-  const base = container.querySelector<SVGRectElement>("[data-material-base]")
+  const base = container.querySelector<HTMLElement>("[data-material-base]")
 
   expect(base).not.toBeNull()
-  expect(container.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.45")
+  expect(container.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("0.45")
   expect(container.querySelector<HTMLElement>("[data-material-backdrop='frost']")?.style.backdropFilter)
     .toBe(`saturate(${defaultAppearance.material.light.saturation})`)
   expect(container.querySelector("[material]")).toBeNull()
@@ -153,7 +165,7 @@ it("lets a Radio override its group's material independently from color and radi
     <Button data-testid="button" color="danger:base" radius="small" material={{ opacity: 0.4 }}>Action</Button>
   </UIProvider>)
 
-  expect([...document.querySelectorAll("[data-material-fill]")].slice(0, 2).map(element => element.getAttribute("opacity"))).toEqual(["0.6", "0.3"])
+  expect([...document.querySelectorAll<HTMLElement>("[data-material-fill]")].slice(0, 2).map(element => element.style.opacity)).toEqual(["0.6", "0.3"])
   expect(screen.getByTestId("button").style.borderRadius).toBe("5px")
-  expect(screen.getByTestId("button").querySelector<SVGRectElement>("[data-material-base]")?.style.fill).toBe("rgb(220, 38, 38)")
+  expect(screen.getByTestId("button").querySelector<HTMLElement>("[data-material-base]")?.style.background).toBe("rgb(220, 38, 38)")
 })

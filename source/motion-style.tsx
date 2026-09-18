@@ -1,52 +1,42 @@
 import type { CSSProperties } from "react"
 import type { Transition } from "motion/react"
-import { defaultAppearance, type Easing } from "./appearance.js"
-import { useAppearance, usePreferences } from "./appearance-context.js"
+import type { AppearanceTransaction, Easing } from "./appearance.js"
 
 const visualProperties = "background-color, color, border-color, border-radius, box-shadow"
 const paintProperties = "fill, stroke, opacity"
 
-/** CSS timing for values painted directly by React UI. */
-export function useVisualTransition(): CSSProperties {
-  return { ...useTransitionTiming(), transitionProperty: visualProperties }
-}
-
-/** CSS timing for SVG paint owned by a Material. */
-export function usePaintTransition(): CSSProperties {
-  return { ...useTransitionTiming(), transitionProperty: paintProperties }
-}
-
-/** Motion timing for interactive geometry owned by React UI. */
-export function useControlTransition(): Transition {
-  const { duration, easing } = useAppearance().transaction
-  const { animations } = usePreferences()
+export function controlTransition(transaction: AppearanceTransaction, animations: boolean): Transition {
   return {
     type: "tween",
-    duration: animations ? duration / 1_000 : 0,
-    ease: motionEasing(easing)
+    duration: animations ? transaction.duration / 1_000 : 0,
+    ease: motionEasing(transaction.easing)
   }
 }
 
 /** Per-overlay variables consumed by the shared entrance keyframes. */
-export function useOverlayTransition(): CSSProperties {
-  const { duration, easing } = useAppearance().transaction
-  const { animations } = usePreferences()
+export function overlayTransition(transaction: AppearanceTransaction, animations: boolean): CSSProperties {
   return {
-    "--phreshos-ui-motion-duration": `${animations ? duration : 0}ms`,
-    "--phreshos-ui-motion-easing": cssEasing(easing)
+    "--phreshos-ui-motion-duration": `${animations ? transaction.duration : 0}ms`,
+    "--phreshos-ui-motion-easing": cssEasing(transaction.easing)
   } as CSSProperties
 }
 
 export const overlayMotionClass = "phreshos-ui-overlay"
 export const backdropMotionClass = "phreshos-ui-backdrop"
 
-export function useTransitionTiming(): CSSProperties {
-  const { duration, easing } = useAppearance().transaction
-  const { animations } = usePreferences()
+export function transitionTiming(transaction: AppearanceTransaction, animations: boolean): CSSProperties {
   return {
-    transitionDuration: `${animations ? duration : 0}ms`,
-    transitionTimingFunction: cssEasing(easing)
+    transitionDuration: `${animations ? transaction.duration : 0}ms`,
+    transitionTimingFunction: cssEasing(transaction.easing)
   }
+}
+
+export function visualTransition(transaction: AppearanceTransaction, animations: boolean): CSSProperties {
+  return { ...transitionTiming(transaction, animations), transitionProperty: visualProperties }
+}
+
+export function paintTransition(transaction: AppearanceTransaction, animations: boolean): CSSProperties {
+  return { ...transitionTiming(transaction, animations), transitionProperty: paintProperties }
 }
 
 function cssEasing(easing: Easing) {
@@ -63,11 +53,6 @@ function motionEasing(easing: Easing): Transition["ease"] {
 }
 
 const stylesheet = `
-:root {
-  --phreshos-ui-motion-duration: ${defaultAppearance.transaction.duration}ms;
-  --phreshos-ui-motion-easing: ${cssEasing(defaultAppearance.transaction.easing)};
-}
-
 .phreshos-ui-overlay[data-entering] {
   animation: phreshos-ui-overlay-enter var(--phreshos-ui-motion-duration) var(--phreshos-ui-motion-easing) both;
 }

@@ -2,15 +2,13 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it, vi } from "vitest"
 import { UIProvider, Button, Input, Surface, Select, defaultAppearance } from "../source/main.js"
-import { overlayMotionClass, useControlTransition } from "../source/motion-style.js"
+import { controlTransition, overlayMotionClass } from "../source/motion-style.js"
 
 afterEach(() => { cleanup(); vi.restoreAllMocks() })
 
 it("consumes Appearance timing and limits transitions to explicit visual properties", () => {
   const appearance = { ...defaultAppearance, transaction: { duration: 240, easing: "ease-in-out" as const } }
-  let motion: ReturnType<typeof useControlTransition> | undefined
   render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
-    <ReadMotion onRead={value => { motion = value }} />
     <Surface data-testid="surface">Content</Surface><Button>Action</Button><Input label="Name" />
   </UIProvider>)
   const host = screen.getByTestId("surface")
@@ -19,11 +17,12 @@ it("consumes Appearance timing and limits transitions to explicit visual propert
     expect(element.style.transitionDuration).toBe("240ms")
     expect(element.style.transitionTimingFunction).toBe("ease-in-out")
   }
-  for (const selector of ["[data-material-fill]", "[data-material-base]"]) {
-    const layer = host.querySelector<HTMLElement | SVGElement>(selector)
-    expect(layer?.style.transitionProperty).toBe("fill, stroke, opacity")
-    expect(layer?.style.transitionDuration).toBe(host.style.transitionDuration)
-  }
+  const fill = host.querySelector<HTMLElement>("[data-material-fill]")
+  const base = host.querySelector<HTMLElement>("[data-material-base]")
+  expect(fill).toBe(base)
+  expect(fill?.style.transitionProperty).toBe("background-color, opacity")
+  expect(fill?.style.transitionDuration).toBe(host.style.transitionDuration)
+  expect(base?.style.transitionDuration).toBe(host.style.transitionDuration)
   const edge = host.querySelector<HTMLElement>("[data-surface-edge]")
   const light = host.querySelector<HTMLElement>("[data-surface-edge-light]")
   expect(edge?.style.transitionProperty).toBe("border-color, opacity")
@@ -33,13 +32,16 @@ it("consumes Appearance timing and limits transitions to explicit visual propert
   expect(host.querySelector("[data-surface-palette]")).toBeNull()
   expect(host.style.transitionProperty).not.toMatch(/opacity|filter|transform|width|height|all/)
   expect(host.querySelector<HTMLElement>("[data-material-backdrop]")?.style.transitionProperty).toBe("")
-  expect(motion).toEqual({ type: "tween", duration: 0.24, ease: "easeInOut" })
+  expect(controlTransition(appearance.transaction, true)).toEqual({ type: "tween", duration: 0.24, ease: "easeInOut" })
 })
 
-it("hoists one scoped stylesheet for nested providers", () => {
+it("hoists one scoped stylesheet when an overlay owns motion", async () => {
   render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
-    <UIProvider appearance={defaultAppearance} preferences={{ theme: "dark", animations: true }}><Surface /></UIProvider>
+    <UIProvider appearance={defaultAppearance} preferences={{ theme: "dark", animations: true }}>
+      <Select aria-label="Choice" options={[{ value: "one", label: "One" }]} />
+    </UIProvider>
   </UIProvider>)
+  await userEvent.setup().click(screen.getByRole("button"))
   const sheets = [...document.head.querySelectorAll("style")].filter(style => style.textContent?.includes("@keyframes phreshos-ui-overlay-enter"))
   expect(sheets).toHaveLength(1)
   const css = sheets[0]?.textContent
@@ -47,8 +49,7 @@ it("hoists one scoped stylesheet for nested providers", () => {
   expect(css).toContain("[data-entering]")
   expect(css).toContain("[data-exiting]")
   expect(css).toContain("pointer-events: none")
-  expect(css).toContain("--phreshos-ui-motion-duration: 120ms")
-  expect(css).toContain("--phreshos-ui-motion-easing: ease-out")
+  expect(css).not.toContain(":root")
   expect(css).toContain("var(--phreshos-ui-motion-easing) both")
   expect(css).toContain("var(--phreshos-ui-motion-easing) reverse both")
   expect(css).toContain("from { opacity: 0; scale: 1.05;")
@@ -60,26 +61,19 @@ it("hoists one scoped stylesheet for nested providers", () => {
 
 it("makes every React UI transition immediate when animations are disabled", async () => {
   const appearance = { ...defaultAppearance, transaction: { duration: 240, easing: "ease-in-out" as const } }
-  let motion: ReturnType<typeof useControlTransition> | undefined
   render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: false }}>
-    <ReadMotion onRead={value => { motion = value }} />
     <Surface data-testid="surface" />
     <Select label="Choice" options={[{ value: "one", label: "One" }]} />
   </UIProvider>)
 
   expect(screen.getByTestId("surface").style.transitionDuration).toBe("0ms")
   expect(screen.getByRole("button").style.transitionDuration).toBe("0ms")
-  expect(motion).toMatchObject({ duration: 0 })
+  expect(controlTransition(appearance.transaction, false)).toMatchObject({ duration: 0 })
 
   await userEvent.setup().click(screen.getByRole("button"))
   const overlay = (await screen.findByRole("listbox")).closest<HTMLElement>(`.${overlayMotionClass}`)
   expect(overlay?.style.getPropertyValue("--phreshos-ui-motion-duration")).toBe("0ms")
 })
-
-function ReadMotion({ onRead }: Readonly<{ onRead: (value: ReturnType<typeof useControlTransition>) => void }>) {
-  onRead(useControlTransition())
-  return null
-}
 
 it("uses the shared overlay style without changing Select selection, dismissal, or focus return", async () => {
   const onChange = vi.fn()

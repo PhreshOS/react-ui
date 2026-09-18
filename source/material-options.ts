@@ -1,5 +1,4 @@
 import { appearanceLimits, type AppearanceRange } from "./appearance.js"
-import { useAppearance, useThemedValue } from "./ui-provider.js"
 import { isScaleLevel, scale, scaleMultiplier, type ScaleLevel } from "./scale.js"
 
 /** Optional values of visual substance, expressed directly or relative to Appearance. */
@@ -18,10 +17,15 @@ export interface MaterialOverrides {
   readonly material?: boolean | MaterialOptions
 }
 
-/** Resolves material values from the current Appearance without knowing any host geometry. */
-export function useMaterialOptions(values: MaterialOptions = {}) {
-  const appearance = useAppearance()
-  const defaults = useThemedValue(appearance.material)
+/** Resolves overrides against an already selected material branch. */
+export function resolveMaterialOptions(values: MaterialOptions, defaults: Readonly<{
+  opacity: number
+  backdrop: number
+  grain: number
+  grainAmount: number
+  distortion: number
+  saturation: number
+}>) {
   const limits = appearanceLimits.material
 
   return {
@@ -34,7 +38,7 @@ export function useMaterialOptions(values: MaterialOptions = {}) {
   }
 }
 
-export type ResolvedMaterial = ReturnType<typeof useMaterialOptions>
+export type ResolvedMaterial = ReturnType<typeof resolveMaterialOptions>
 
 function resolve(value: ScaleLevel | number | undefined, base: number, range: AppearanceRange, derive = scale) {
   const resolved = isScaleLevel(value) ? derive(base, value) : value ?? base

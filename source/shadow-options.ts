@@ -1,5 +1,4 @@
 import { appearanceLimits, type AppearanceRange } from "./appearance.js"
-import { useAppearance, useThemedValue } from "./ui-provider.js"
 import { isScaleLevel, scale, type ScaleLevel } from "./scale.js"
 
 /** Optional outer-shadow values expressed directly or relative to Appearance. */
@@ -17,10 +16,14 @@ export interface ShadowOverrides {
   readonly shadow?: boolean | ShadowOptions
 }
 
-/** Resolves shadow values from the active Appearance branch. */
-export function useShadowOptions(values: ShadowOptions = {}) {
-  const appearance = useAppearance()
-  const defaults = useThemedValue(appearance.shadow)
+/** Resolves overrides against an already selected shadow branch. */
+export function resolveShadowOptions(values: ShadowOptions, defaults: Readonly<{
+  x: number
+  y: number
+  blur: number
+  spread: number
+  opacity: number
+}>) {
   const limits = appearanceLimits.shadow
 
   return {
@@ -32,7 +35,7 @@ export function useShadowOptions(values: ShadowOptions = {}) {
   }
 }
 
-export type ResolvedShadow = ReturnType<typeof useShadowOptions>
+export type ResolvedShadow = ReturnType<typeof resolveShadowOptions>
 
 /** Serializes one resolved neutral-black outer shadow. */
 export function shadowStyle({ x, y, blur, spread, opacity }: ResolvedShadow) {

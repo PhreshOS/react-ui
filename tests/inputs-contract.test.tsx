@@ -18,7 +18,7 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on th
         : kind === "switch" ? <Switch label="Choice" color="secondary:base" />
         : <RadioGroup label="Choices" color="secondary:base"><Radio value="one" label="Choice" /></RadioGroup>
     const { container } = renderUI(sample)
-    const base = container.querySelector<SVGRectElement>("[data-material-base]")
+    const base = container.querySelector<HTMLElement>("[data-material-base]")
     const material = container.querySelector("[data-material-fill]")
     const border = container.querySelector<HTMLElement>("[data-surface-edge]")
     const indicator = border?.parentElement
@@ -26,14 +26,14 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on th
     expect(indicator?.tagName).toBe("SPAN")
     expect(indicator?.style.background).toBe("transparent")
     expect(indicator?.style.boxShadow).toBe(shadowStyle(defaultAppearance.shadow.light))
-    expect(material?.getAttribute("opacity")).toBe(String(defaultAppearance.material.light.opacity))
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
+    expect((material as HTMLElement | null)?.style.opacity).toBe(String(defaultAppearance.material.light.opacity))
+    expect(css(base?.style.background ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
 
     const user = userEvent.setup()
     await user.click(screen.getByRole(kind, { name: "Choice" }))
     await user.unhover(screen.getByRole(kind, { name: "Choice" }))
     expect(kind === "radio" ? screen.getByRole(kind).getAttribute("aria-checked") === "true" : (screen.getByRole(kind) as HTMLInputElement).checked).toBe(true)
-    expect(css(base?.style.fill ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.secondary, "base")))
+    expect(css(base?.style.background ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.secondary, "base")))
     expect(indicator?.style.borderRadius).toBe(kind === "checkbox" ? "4.75px" : "19px")
 })
 
@@ -278,7 +278,7 @@ it("RadioGroup follows controlled props without repeating its validation error f
 
 const options = [{ value: "one", label: "One" }, { value: "two", label: "Two", disabled: true }, { value: "three", label: "Three" }]
 
-it("spaces Select options and leaves unselected options transparent, including keyboard focus", async () => {
+it("spaces Select options and distinguishes hover from keyboard focus", async () => {
     const user = userEvent.setup()
     renderUI(<Select label="Choice" options={options} defaultValue="one" />)
     await user.click(screen.getByRole("button"))
@@ -291,10 +291,11 @@ it("spaces Select options and leaves unselected options transparent, including k
     expect(third.style.background).toBe("transparent")
     await user.hover(third)
     expect(third.getAttribute("data-focused")).toBeNull()
+    expect(third.style.background).not.toBe("transparent")
     expect(third.style.outline).toBe("none")
     await user.keyboard("[ArrowDown]")
     expect(third.getAttribute("data-focused")).toBe("true")
-    expect(third.style.background).toBe("transparent")
+    expect(third.style.background).not.toBe("transparent")
     expect(third.style.outline).toBe(`1px solid ${colorOpacity(opaqueColor(defaultAppearance.colors.light.warning), 0.2)}`)
     expect(third.style.outlineOffset).toBe("1px")
 })
@@ -343,7 +344,7 @@ it("keeps a long controlled Select open across rerenders and constrains scrollin
     const scrollArea = list.closest<HTMLElement>("[data-phreshos-scroll-area]")!
     const material = scrollArea.parentElement!
     const popover = material.parentElement!
-    expect(material.style.maxHeight).toBe("inherit")
+    expect(material.style.maxHeight).toContain("min(")
     expect(material.style.boxSizing).toBe("border-box")
     expect(material.style.display).toBe("flex")
     expect(material.style.flexDirection).toBe("column")
@@ -456,12 +457,12 @@ function css(value: string) {
 
 function materialColor(control: HTMLElement) {
     const host = control instanceof HTMLButtonElement ? control : control.parentElement
-    const base = host?.querySelector<SVGRectElement>("[data-material-base]")
+    const base = host?.querySelector<HTMLElement>("[data-material-base]")
     expect(base).not.toBeNull()
     if (!(control instanceof HTMLButtonElement)) {
         expect(host?.tagName).toBe("SPAN")
         expect(host?.querySelector("label")).toBeNull()
         expect(host?.style.padding).toBe("")
     }
-    return css(base?.style.fill ?? "")
+    return css(base?.style.background ?? "")
 }

@@ -16,8 +16,11 @@ import type {
   TextProps as AriaTextProps
 } from "react-aria-components"
 import { useAppearance } from "./ui-provider.js"
+import { useResolvedAppearance } from "./appearance-context.js"
+import { colorOpacity, orderColors } from "./color.js"
+import { controlFontWeight, controlOpacity } from "./control.js"
 import { Button, type ButtonProps } from "./button.js"
-import { backdropMotionClass, overlayMotionClass, useOverlayTransition } from "./motion-style.js"
+import MotionStyle, { backdropMotionClass, overlayMotionClass, overlayTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceOwnProps } from "./surface.js"
 import { resolveDirection, useDirection } from "./direction.js"
@@ -45,11 +48,14 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
   style,
   ...properties
 }, ref) {
-  const inset = scale(useAppearance().spacing, "medium")
-  const transition = useOverlayTransition()
+  const resolved = useResolvedAppearance()
+  const inset = scale(resolved.appearance.spacing, "medium")
+  const colors = resolved.colors
+  const backdrop = colorOpacity(orderColors(colors.background, colors.foreground).darker, 0.32)
+  const transition = overlayTransition(resolved.transaction, resolved.preferences.animations)
   const direction = resolveDirection(properties.dir, useDirection())
 
-  return <AriaModalOverlay
+  return <><MotionStyle /><AriaModalOverlay
     {...properties}
     ref={ref}
     dir={direction}
@@ -64,10 +70,10 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
       boxSizing: "border-box",
       padding: inset,
       overflow: "auto",
-      background: "rgb(0 0 0 / 0.32)",
+      background: backdrop,
       ...style
     }}
-  />
+  /></>
 })
 
 export interface DialogContentProps extends
@@ -88,11 +94,12 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
   style,
   ...properties
 }, ref) {
-  const inset = scale(useAppearance().spacing, "medium")
-  const transition = useOverlayTransition()
+  const resolved = useResolvedAppearance()
+  const inset = scale(resolved.appearance.spacing, "medium")
+  const transition = overlayTransition(resolved.transaction, resolved.preferences.animations)
   const direction = resolveDirection(properties.dir, useDirection())
 
-  return <AriaModal
+  return <><MotionStyle /><AriaModal
     dir={direction}
     className={overlayMotionClass}
     style={{
@@ -130,7 +137,7 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
         }}
       >{children}</AriaDialog>
     </Surface>
-  </AriaModal>
+  </AriaModal></>
 })
 
 export type DialogHeaderProps = HTMLAttributes<HTMLDivElement>
@@ -143,13 +150,13 @@ export const DialogHeader = forwardRef<HTMLDivElement, DialogHeaderProps>(functi
 export type DialogTitleProps = AriaHeadingProps
 
 export const DialogTitle = forwardRef<HTMLHeadingElement, DialogTitleProps>(function DialogTitle({ style, ...properties }, ref) {
-  return <AriaHeading {...properties} ref={ref} slot="title" style={{ margin: 0, font: "inherit", fontWeight: 650, ...style }} />
+  return <AriaHeading {...properties} ref={ref} slot="title" style={{ margin: 0, font: "inherit", fontWeight: controlFontWeight, ...style }} />
 })
 
 export type DialogDescriptionProps = AriaTextProps
 
 export const DialogDescription = forwardRef<HTMLElement, DialogDescriptionProps>(function DialogDescription({ style, ...properties }, ref) {
-  return <AriaText {...properties} ref={ref} slot="description" style={{ margin: 0, opacity: 0.72, ...style }} />
+  return <AriaText {...properties} ref={ref} slot="description" style={{ margin: 0, opacity: controlOpacity.secondary, ...style }} />
 })
 
 export type DialogBodyProps = HTMLAttributes<HTMLDivElement>

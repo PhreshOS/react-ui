@@ -68,7 +68,7 @@ describe("Button", function () {
     expect(button.style.paddingInline).toBe(`${defaultAppearance.spacing * 2}px`)
     expect(button.style.borderRadius).toBe(`${defaultAppearance.radius * 0.25}px`)
     expect(button.style.color).toBe("rgb(24, 52, 71)")
-    expect(button.style.fontSize).toBe("15px")
+    expect(button.style.fontSize).toBe("1.25em")
   })
 
   it("uses Appearance's default color by default", function () {
@@ -77,7 +77,7 @@ describe("Button", function () {
     expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
     expect(button.style.background).toBe("transparent")
     expect(button.style.height).toBe("36px")
-    expect(button.style.fontSize).toBe("13px")
+    expect(button.style.fontSize).toBe("1em")
     expect(button.style.boxShadow).toBe(shadowStyle(defaultAppearance.shadow.light))
     expect(button.style.transform).toBe("")
     expect(button.style.backgroundImage).toBe("none")
@@ -101,13 +101,13 @@ describe("Button", function () {
     expect(button.hasAttribute("color")).toBe(false)
   })
 
-  it.each<[ScaleLevel, number, number]>([
-    ["xsmall", 27, 11], ["small", 30, 12], ["medium", 36, 13], ["large", 42, 14], ["xlarge", 48, 15]
+  it.each<[ScaleLevel, number, string]>([
+    ["xsmall", 27, "0.8125em"], ["small", 30, "0.875em"], ["medium", 36, "1em"], ["large", 42, "1.125em"], ["xlarge", 48, "1.25em"]
   ])("derives the %s size without scaling content", function (size, height, fontSize) {
     renderButton(<Button size={size}>Continue</Button>)
     const button = screen.getByRole("button")
     expect(button.style.height).toBe(`${height}px`)
-    expect(button.style.fontSize).toBe(`${fontSize}px`)
+    expect(button.style.fontSize).toBe(fontSize)
     expect(button.style.transform).toBe("")
   })
 
@@ -206,8 +206,8 @@ function cssBackground(value: string) {
 }
 
 function materialColor(button: HTMLElement) {
-  const base = button.querySelector<SVGRectElement>("[data-material-base]")
+  const base = button.querySelector<HTMLElement>("[data-material-base]")
   expect(base).not.toBeNull()
   expect(button.querySelector("button, div")).toBeNull()
-  return cssBackground(base?.style.fill ?? "")
+  return cssBackground(base?.style.background ?? "")
 }

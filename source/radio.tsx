@@ -1,3 +1,4 @@
+// Base UI accepts direction directly; React Aria derives these keys from locale.
 import { Radio as BaseRadio } from "@base-ui/react/radio"
 import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group"
 import { DirectionProvider as BaseDirectionProvider } from "@base-ui/react/direction-provider"
@@ -5,7 +6,7 @@ import type { RadioRootProps as BaseRadioProps } from "@base-ui/react/radio"
 import type { RadioGroupProps as BaseRadioGroupProps } from "@base-ui/react/radio-group"
 import { createContext, forwardRef, useContext, useId, useState } from "react"
 import type { ReactNode } from "react"
-import { fieldStyle, useControlTheme } from "./control.js"
+import { controlFontWeight, controlOpacity, fieldStyle, useControlTheme } from "./control.js"
 import type { ControlProps, FieldProps } from "./control.js"
 import { ToggleIndicator, toggleStyle } from "./toggle-indicator.js"
 import type { MaterialOverrides } from "./material-options.js"
@@ -90,13 +91,13 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(function R
     aria-describedby={describedBy}
     style={fieldStyle(theme, disabled, style)}
   >
-    {label != null && <div id={labelId} style={{ fontWeight: 550 }}>{label}</div>}
+    {label != null && <div id={labelId} style={{ fontWeight: controlFontWeight }}>{label}</div>}
     <RadioStyleContext.Provider value={{ size, color, disabled, invalid, readOnly, material, shadow }}>
       <div style={{ display: "flex", flexDirection: orientation === "vertical" ? "column" : "row", gap: theme.gap, flexWrap: "wrap" }}>
         {children}
       </div>
     </RadioStyleContext.Provider>
-    {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: 0.7 }}>{description}</span>}
+    {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</span>}
     {invalid && errorMessage != null && <span id={errorId} style={{ fontSize: "0.92em", color: theme.danger }}>{errorMessage}</span>}
   </BaseRadioGroup>
 
@@ -164,6 +165,6 @@ export const Radio = forwardRef<HTMLDivElement, RadioProps>(function Radio({
         {label}
       </span>}
     />
-    {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: 0.7 }}>{description}</span>}
+    {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</span>}
   </div>
 })

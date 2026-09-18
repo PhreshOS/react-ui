@@ -1,12 +1,13 @@
 import type { CSSProperties, ReactNode } from "react"
 import { useMemo } from "react"
 import { FieldError, Label, Text } from "react-aria-components"
-import { useAppearance, useThemedValue } from "./ui-provider.js"
+import { useResolvedAppearance } from "./appearance-context.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { scale, type ScaleLevel } from "./scale.js"
 import { colorOpacity, solidColors } from "./color.js"
-import { useResolveSolidColor, type Color } from "./color.js"
-import { useVisualTransition } from "./motion-style.js"
+import { resolveSolidColor, type Color } from "./color.js"
+import { controlTransition, visualTransition } from "./motion-style.js"
+import type { Transition } from "motion/react"
 
 /** Semantic Appearance colors accepted by interactive controls. */
 export type ControlColor = Color
@@ -31,18 +32,32 @@ export interface FieldProps {
 /** Names owned by our contract, not a second set of primitive-specific aliases. */
 export type ControlOverrides = keyof ControlProps | keyof FieldProps | "children" | "isDisabled" | "isRequired" | "isInvalid"
 
-export const controlFontSizes: Readonly<Record<ScaleLevel, number>> = Object.freeze({
-    xsmall: 11,
-    small: 12,
-    medium: 13,
-    large: 14,
-    xlarge: 15
+export const controlFontSizes: Readonly<Record<ScaleLevel, CSSProperties["fontSize"]>> = Object.freeze({
+    xsmall: "0.8125em",
+    small: "0.875em",
+    medium: "1em",
+    large: "1.125em",
+    xlarge: "1.25em"
 })
+
+/** Shared interaction attenuation, derived consistently across control families. */
+export const controlOpacity = Object.freeze({
+    disabled: 0.46,
+    pending: 0.68,
+    secondary: 0.7,
+    placeholder: 0.6,
+    separator: 0.14
+})
+
+/** Shared emphasis used by labels and control-owned headings. */
+export const controlFontWeight = 600
 
 type SolidColors = ReturnType<typeof solidColors>
 
 export interface ControlTheme {
     readonly transition: CSSProperties
+    readonly motionTransition: Transition
+    readonly animations: boolean
     readonly spacing: number
     readonly foreground: string
     readonly background: string
@@ -55,31 +70,41 @@ export interface ControlTheme {
         readonly danger: SolidColors
     }
     readonly radius: CSSProperties["borderRadius"]
-    readonly fontSize: number
+    readonly fontSize: CSSProperties["fontSize"]
+    readonly indicatorSize: number
     readonly height: number
     readonly gap: number
 }
 
 export function useControlTheme({ size = "medium", color, radius = "medium" }: ControlProps & RadiusProps): ControlTheme {
 
-    const appearance = useAppearance()
-    const transition = useVisualTransition()
+    const resolved = useResolvedAppearance()
+    const { appearance, colors } = resolved
+    const transition = useMemo(
+        () => visualTransition(resolved.transaction, resolved.preferences.animations),
+        [resolved.transaction, resolved.preferences.animations]
+    )
+    const motionTransition = useMemo(
+        () => controlTransition(resolved.transaction, resolved.preferences.animations),
+        [resolved.transaction, resolved.preferences.animations]
+    )
     const spacing = scale(appearance.spacing, size)
-    const colors = useThemedValue(appearance.colors)
     const foreground = colors.foreground
     const background = colors.background
-    const tint = useResolveSolidColor(color ?? "default:base")
-    const neutral = useResolveSolidColor("default:base")
-    const focus = useResolveSolidColor("warning:base")
-    const danger = useResolveSolidColor("danger:base")
+    const tint = resolveSolidColor(color ?? "default:base", colors)
+    const neutral = resolveSolidColor("default:base", colors)
+    const focus = resolveSolidColor("warning:base", colors)
+    const danger = resolveSolidColor("danger:base", colors)
     const paints = useMemo(() => ({
         palette: solidColors(tint, background, foreground),
         neutral: solidColors(neutral, background, foreground),
         danger: solidColors(danger, background, foreground)
     }), [tint, neutral, background, foreground, danger])
 
-    return {
+    return useMemo(() => ({
         transition,
+        motionTransition,
+        animations: resolved.preferences.animations,
         spacing,
         foreground,
         background,
@@ -89,9 +114,10 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
         paints,
         radius: resolveRadius(radius, appearance),
         fontSize: controlFontSizes[size],
+        indicatorSize: Math.max(16, 16 + spacing / 4),
         height: Math.max(24, 24 + spacing),
         gap: Math.max(4, spacing / 2)
-    }
+    }), [appearance, colors, transition, motionTransition, resolved.preferences.animations, spacing, foreground, background, tint, focus, danger, paints, radius, size])
 }
 
 export function fieldStyle(theme: ControlTheme, disabled = false, style?: CSSProperties): CSSProperties {
@@ -106,7 +132,7 @@ export function fieldStyle(theme: ControlTheme, disabled = false, style?: CSSPro
         fontFamily: "inherit",
         fontSize: theme.fontSize,
         lineHeight: 1.5,
-        opacity: disabled ? 0.46 : 1
+        opacity: disabled ? controlOpacity.disabled : 1
     }
 }
 
@@ -141,13 +167,13 @@ export function controlStyle(theme: ControlTheme, focused: boolean, invalid: boo
 
 export function FieldLabel({ label }: Pick<FieldProps, "label">) {
 
-    return label == null ? null : <Label style={{ fontWeight: 550 }}>{label}</Label>
+    return label == null ? null : <Label style={{ fontWeight: controlFontWeight }}>{label}</Label>
 }
 
 export function FieldFeedback({ description, errorMessage, theme }: Pick<FieldProps, "description" | "errorMessage"> & { readonly theme: ControlTheme }) {
 
     return <>
-        {description != null && <Text slot="description" style={{ fontSize: "0.92em", opacity: 0.7 }}>{description}</Text>}
+        {description != null && <Text slot="description" style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</Text>}
         <FieldError style={{ fontSize: "0.92em", color: theme.danger }}>{errorMessage}</FieldError>
     </>
 }

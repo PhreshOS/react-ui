@@ -3,8 +3,6 @@ import type { CSSProperties } from "react"
 import type { ControlTheme } from "./control.js"
 import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
-import { useControlTransition } from "./motion-style.js"
-import { usePreferences } from "./ui-provider.js"
 import { Surface } from "./surface.js"
 import type { Direction } from "./direction.js"
 
@@ -21,9 +19,8 @@ export function ToggleIndicator({ kind, direction = "ltr", selected, indetermina
     theme: ControlTheme
 } & MaterialOverrides & ShadowOverrides>) {
 
-    const { animations } = usePreferences()
-    const transition = useControlTransition()
-    const diameter = theme.fontSize + 6
+    const { animations, motionTransition: transition } = theme
+    const diameter = theme.indicatorSize
     const active = selected || indeterminate
     const paints = invalid ? theme.paints.danger : active ? theme.paints.palette : theme.paints.neutral
     const paint = pressed ? paints.pressed : hovered ? paints.hover : paints.rest

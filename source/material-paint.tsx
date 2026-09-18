@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { usePaintTransition } from "./motion-style.js"
+import type { CSSProperties } from "react"
 
 interface MaterialPaintProps {
   readonly color: string
@@ -8,23 +8,22 @@ interface MaterialPaintProps {
   readonly grainAmount: number
   readonly identity: string
   readonly opacity: number
+  readonly transition: CSSProperties
 }
 
 /** The fill, refraction definition, and grain of one Surface. */
-export function MaterialPaint({ color, distortion, grain, grainAmount, identity, opacity }: MaterialPaintProps) {
-  const paintTransition = usePaintTransition()
-  const seed = useMemo(() => seedFrom(identity), [identity])
+export function MaterialPaint({ color, distortion, grain, grainAmount, identity, opacity, transition }: MaterialPaintProps) {
+  const grainSeed = useMemo(() => grainSeeds[seedFrom(identity) % grainSeeds.length] ?? grainSeeds[0], [identity])
+  const grainResource = useMemo(() => grainImage(grainSeed, grainAmount), [grainSeed, grainAmount])
   const hasPaint = opacity > 0
   const hasGrain = hasPaint && grain > 0 && grainAmount > 0
   const hasDistortion = distortion > 0
-  const initial = useMemo(() => hasGrain ? grainPaths(seed, grainAmount) : [], [grainAmount, hasGrain, seed])
 
   if (!hasPaint && !hasDistortion) return null
 
-  return <svg
+  return <span
       data-material-paint=""
       aria-hidden="true"
-      focusable="false"
       style={{
         position: "absolute",
         zIndex: -1,
@@ -37,29 +36,30 @@ export function MaterialPaint({ color, distortion, grain, grainAmount, identity,
         pointerEvents: "none"
       }}
     >
-      {(hasGrain || hasDistortion) && <defs>
-        {hasDistortion && <DistortionFilter distortion={distortion} identity={identity} />}
-        {hasGrain && <pattern id={`${identity}-grain`} width={patternSize} height={patternSize} patternUnits="userSpaceOnUse">
-          {initial.map((path, tone) => <path
-            key={tone}
-            data-material-grain-tone={tone}
-            d={path}
-            fill={grainTone(color, tone, grain)}
-            shapeRendering="crispEdges"
-          />)}
-        </pattern>}
-      </defs>}
-      {hasPaint && <g data-material-fill="" opacity={opacity} style={paintTransition}>
-        <rect data-material-base="" width="100%" height="100%" style={{ ...paintTransition, fill: color }} />
-        {hasGrain && <rect
-          data-material-grain=""
-          width="100%"
-          height="100%"
-          fill={`url(#${identity}-grain)`}
-          shapeRendering="crispEdges"
-        />}
-      </g>}
-    </svg>
+      {hasDistortion && <svg width="0" height="0" focusable="false" style={{ position: "absolute" }}>
+        <defs><DistortionFilter distortion={distortion} identity={identity} /></defs>
+      </svg>}
+      {hasPaint && <span data-material-fill="" data-material-base="" style={{
+        position: "absolute",
+        inset: 0,
+        borderRadius: "inherit",
+        background: color,
+        opacity,
+        ...transition,
+        transitionProperty: "background-color, opacity"
+      }}>
+        {hasGrain && <span data-material-grain="" style={{
+          position: "absolute",
+          inset: 0,
+          borderRadius: "inherit",
+          backgroundImage: grainResource,
+          backgroundRepeat: "repeat",
+          backgroundSize: `${patternSize}px ${patternSize}px`,
+          mixBlendMode: "soft-light",
+          opacity: grain
+        }} />}
+      </span>}
+    </span>
 }
 
 function DistortionFilter({ distortion, identity }: Readonly<{
@@ -100,41 +100,9 @@ function DistortionFilter({ distortion, identity }: Readonly<{
   </filter>
 }
 
-function grainTone(color: string, tone: number, intensity: number) {
-  const channel = Math.round(tone / (toneCount - 1) * 255)
-  const percentage = Math.round(intensity * 10_000) / 100
-  return `color-mix(in srgb, ${color} ${100 - percentage}%, rgb(${channel} ${channel} ${channel}) ${percentage}%)`
-}
-
-function grainPaths(seed: number, amount: number) {
-  const tones = Array.from({ length: toneCount }, () => [] as string[])
-
-  for (let y = 0; y < patternSize; y += 1) {
-    for (let x = 0; x < patternSize; x += 1) {
-      const pointX = x + seed * 41
-      const pointY = y + seed * 17
-      const presence = shaderHash(pointX + 71.9, pointY + 13.7)
-      if (presence > amount) continue
-      const fine = shaderHash(Math.floor(pointX * 1.18), Math.floor(pointY * 1.18))
-      const clustered = shaderHash(Math.floor(pointX * 0.47) + 31.7, Math.floor(pointY * 0.47) + 31.7)
-      const value = clamp(fine * 0.8 + clustered * 0.2, 0, 1)
-      const tone = Math.min(toneCount - 1, Math.floor(value * toneCount))
-      tones[tone]?.push(`M${x} ${y}h1v1h-1z`)
-    }
-  }
-
-  return tones.map(tone => tone.join(""))
-}
-
-function shaderHash(x: number, y: number) {
-  let red = fract(x * 0.1031)
-  let green = fract(y * 0.1031)
-  let blue = fract(x * 0.1031)
-  const product = red * (green + 33.33) + green * (blue + 33.33) + blue * (red + 33.33)
-  red += product
-  green += product
-  blue += product
-  return fract((red + green) * blue)
+function grainImage(seed: number, amount: number) {
+  const threshold = -20 * (1 - amount)
+  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${patternSize}" height="${patternSize}" viewBox="0 0 ${patternSize} ${patternSize}"><filter id="n" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".82" numOctaves="3" seed="${seed}" stitchTiles="stitch"/><feColorMatrix type="matrix" values=".333 .333 .333 0 0 .333 .333 .333 0 0 .333 .333 .333 0 0 .333 .333 .333 0 0"/><feComponentTransfer><feFuncA type="linear" slope="20" intercept="${threshold}"/></feComponentTransfer></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>`)}")`
 }
 
 function seedFrom(value: string) {
@@ -146,13 +114,5 @@ function seedFrom(value: string) {
   return (seed >>> 0) % 997 + 1
 }
 
-function fract(value: number) {
-  return value - Math.floor(value)
-}
-
-function clamp(value: number, minimum: number, maximum: number) {
-  return Math.min(maximum, Math.max(minimum, value))
-}
-
 const patternSize = 64
-const toneCount = 16
+const grainSeeds = [19, 47, 83, 131] as const

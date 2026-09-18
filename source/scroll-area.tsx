@@ -2,9 +2,9 @@ import { ScrollArea as BaseScrollArea } from "@base-ui/react/scroll-area"
 import { DirectionProvider as BaseDirectionProvider } from "@base-ui/react/direction-provider"
 import { forwardRef, useState } from "react"
 import type { ComponentPropsWithoutRef, Ref, ReactNode, UIEventHandler } from "react"
-import { useAppearance, useThemedValue } from "./ui-provider.js"
+import { useResolvedAppearance } from "./appearance-context.js"
 import { colorOpacity } from "./color.js"
-import { useTransitionTiming } from "./motion-style.js"
+import { transitionTiming } from "./motion-style.js"
 import { resolveDirection, useDirection } from "./direction.js"
 
 export type ScrollAreaAxis = "vertical" | "horizontal" | "both"
@@ -25,12 +25,16 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
   viewportRef,
   ...properties
 }, ref) {
-  const appearance = useAppearance()
+  const resolved = useResolvedAppearance()
+  const { appearance } = resolved
   const direction = resolveDirection(properties.dir, useDirection())
-  const foreground = useThemedValue(appearance.colors).foreground
+  const foreground = resolved.colors.foreground
   const radius = Math.min(appearance.radius, 8)
+  const thickness = Math.max(8, appearance.spacing)
+  const inset = Math.max(2, thickness / 3)
   const vertical = axis === "vertical" || axis === "both"
   const horizontal = axis === "horizontal" || axis === "both"
+  const transition = transitionTiming(resolved.transaction, resolved.preferences.animations)
 
   const root = <BaseScrollArea.Root
     {...properties}
@@ -38,6 +42,8 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
     ref={ref}
     style={{
       ...style,
+      display: "flex",
+      flexDirection: "column",
       position: style?.position ?? "relative",
       minWidth: style?.minWidth ?? 0,
       minHeight: style?.minHeight ?? 0,
@@ -49,6 +55,8 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
       ref={viewportRef}
       onScroll={onScroll}
       style={{
+        flex: "1 1 auto",
+        minHeight: 0,
         width: "100%",
         height: "100%",
         overflowX: horizontal ? "scroll" : "hidden",
@@ -60,21 +68,23 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
       </BaseScrollArea.Content>
     </BaseScrollArea.Viewport>
 
-    {vertical && <Scrollbar orientation="vertical" foreground={foreground} radius={radius} />}
-    {horizontal && <Scrollbar orientation="horizontal" foreground={foreground} radius={radius} />}
+    {vertical && <Scrollbar orientation="vertical" foreground={foreground} radius={radius} thickness={thickness} inset={inset} transition={transition} />}
+    {horizontal && <Scrollbar orientation="horizontal" foreground={foreground} radius={radius} thickness={thickness} inset={inset} transition={transition} />}
     {vertical && horizontal && <BaseScrollArea.Corner style={{ background: "transparent" }} />}
   </BaseScrollArea.Root>
 
   return <BaseDirectionProvider direction={direction}>{root}</BaseDirectionProvider>
 })
 
-function Scrollbar({ orientation, foreground, radius }: Readonly<{
+function Scrollbar({ orientation, foreground, radius, thickness, inset, transition }: Readonly<{
   orientation: "vertical" | "horizontal"
   foreground: string
   radius: number
+  thickness: number
+  inset: number
+  transition: ReturnType<typeof transitionTiming>
 }>) {
   const [hovered, setHovered] = useState(false)
-  const transition = useTransitionTiming()
   const vertical = orientation === "vertical"
 
   return <BaseScrollArea.Scrollbar
@@ -88,9 +98,9 @@ function Scrollbar({ orientation, foreground, radius }: Readonly<{
 
       return {
         boxSizing: "border-box",
-        width: vertical ? 16 : undefined,
-        height: vertical ? undefined : 16,
-        padding: 5,
+        width: vertical ? thickness : undefined,
+        height: vertical ? undefined : thickness,
+        padding: inset,
         opacity: present && (state.hovering || state.scrolling) ? 1 : 0,
         pointerEvents: present && (state.hovering || state.scrolling) ? "auto" : "none",
         transitionDuration: transition.transitionDuration,

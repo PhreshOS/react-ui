@@ -1,8 +1,9 @@
+// Base UI accepts direction directly; React Aria derives these keys from locale.
 import { Slider as BaseSlider } from "@base-ui/react/slider"
 import { DirectionProvider as BaseDirectionProvider } from "@base-ui/react/direction-provider"
 import { forwardRef, useEffect, useId, useRef, useState } from "react"
 import type { HTMLAttributes } from "react"
-import { fieldStyle, useControlTheme } from "./control.js"
+import { controlFontWeight, controlOpacity, fieldStyle, useControlTheme } from "./control.js"
 import type { ControlProps, FieldProps } from "./control.js"
 import { resolveDirection, useDirection } from "./direction.js"
 
@@ -52,7 +53,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
   const [uncontrolledValue, setUncontrolledValue] = useState(initialValue.current)
   const [hovered, setHovered] = useState(false)
   const vertical = orientation === "vertical"
-  const diameter = theme.fontSize + 6
+  const diameter = theme.indicatorSize
   const rail = Math.max(4, Math.round(diameter / 3))
   const describedBy = [properties["aria-describedby"], description != null ? descriptionId : null].filter(Boolean).join(" ") || undefined
   const controlled = value !== undefined
@@ -87,8 +88,8 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
     style={fieldStyle(theme, disabled, style)}
   >
     <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: theme.gap }}>
-      {label != null && <BaseSlider.Label style={{ fontWeight: 550 }}>{label}</BaseSlider.Label>}
-      <BaseSlider.Value style={{ fontVariantNumeric: "tabular-nums", opacity: 0.7 }} />
+      {label != null && <BaseSlider.Label style={{ fontWeight: controlFontWeight }}>{label}</BaseSlider.Label>}
+      <BaseSlider.Value style={{ fontVariantNumeric: "tabular-nums", opacity: controlOpacity.secondary }} />
     </div>
     <BaseSlider.Control style={{
       position: "relative",
@@ -98,7 +99,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
       touchAction: "none",
       userSelect: "none",
       width: vertical ? theme.height : "100%",
-      height: vertical ? 160 : theme.height
+      height: vertical ? theme.height * 4 : theme.height
     }}>
       <BaseSlider.Track style={{
         position: "relative",
@@ -128,7 +129,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
               borderRadius: "50%",
               boxSizing: "border-box",
               background: paint.color,
-              border: `3px solid ${paint.background}`,
+              border: `${Math.max(1, diameter / 6)}px solid ${paint.background}`,
               outline: state.focused ? `1px solid ${theme.focusColor}` : "none",
               outlineOffset: 1,
               cursor: state.disabled ? "not-allowed" : state.dragging ? "grabbing" : "grab",
@@ -138,7 +139,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
         />
       </BaseSlider.Track>
     </BaseSlider.Control>
-    {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: 0.7 }}>{description}</span>}
+    {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</span>}
   </BaseSlider.Root>
 
   return <BaseDirectionProvider direction={direction}>{root}</BaseDirectionProvider>

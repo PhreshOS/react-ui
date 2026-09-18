@@ -1,12 +1,12 @@
 import { createElement, forwardRef, useId } from "react"
 import type { ComponentPropsWithRef, ComponentPropsWithoutRef, CSSProperties, ElementType, ReactElement, ReactNode } from "react"
-import { useAppearance, useThemedValue } from "./ui-provider.js"
-import { useResolveColor, type Color } from "./color.js"
-import { useMaterialOptions, type MaterialOptions, type MaterialOverrides } from "./material-options.js"
+import { useResolvedAppearance } from "./appearance-context.js"
+import { contrastingColor, defaultColor, resolveColor, type Color } from "./color.js"
+import { resolveMaterialOptions, type MaterialOptions, type MaterialOverrides } from "./material-options.js"
 import { MaterialPaint } from "./material-paint.js"
-import MotionStyle, { useVisualTransition } from "./motion-style.js"
+import { paintTransition, transitionTiming, visualTransition } from "./motion-style.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
-import { shadowStyle, useShadowOptions, type ShadowOverrides } from "./shadow-options.js"
+import { resolveShadowOptions, shadowStyle, type ShadowOverrides } from "./shadow-options.js"
 import { SurfaceEdge } from "./surface-edge.js"
 import type { Direction } from "./direction.js"
 
@@ -53,12 +53,17 @@ const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Sur
   style,
   ...properties
 }, ref) {
-  const appearance = useAppearance()
-  const transition = useVisualTransition()
-  const material = useResolvedSurface(color, options)
-  const resolvedShadow = useShadowOptions(typeof shadowOptions === "object" ? shadowOptions : undefined)
+  const resolved = useResolvedAppearance()
+  const transition = visualTransition(resolved.transaction, resolved.preferences.animations)
+  const material = resolveSurface(color, options, resolved)
+  const resolvedShadow = resolveShadowOptions(
+    typeof shadowOptions === "object" ? shadowOptions : {},
+    resolved.shadow
+  )
   const shadow = shadowOptions === false ? "none" : shadowStyle(resolvedShadow)
-  const resolvedRadius = resolveRadius(radius ?? "medium", appearance)
+  const resolvedRadius = resolveRadius(radius ?? "medium", resolved.appearance)
+  const timing = transitionTiming(resolved.transaction, resolved.preferences.animations)
+  const paintTiming = paintTransition(resolved.transaction, resolved.preferences.animations)
 
   return createElement(Element, {
     ...properties,
@@ -73,24 +78,28 @@ const SurfaceRoot = forwardRef<Element, SurfaceImplementationProps>(function Sur
       position: style?.position ?? "relative",
       isolation: "isolate"
     }
-  }, material.enabled && <SurfaceLayers material={material} />, material.enabled && <SurfaceEdge material={material} />, children)
+  }, material.enabled && <SurfaceLayers material={material} paintTransition={paintTiming} />, material.enabled && <SurfaceEdge material={material} transition={timing} />, children)
 })
 
 export const Surface = SurfaceRoot as SurfaceComponent
 
-function useResolvedSurface(color: Color | undefined, options?: boolean | MaterialOptions) {
-  const appearance = useAppearance()
-  const material = useMaterialOptions(typeof options === "object" ? options : undefined)
+function resolveSurface(
+  color: Color | undefined,
+  options: boolean | MaterialOptions | undefined,
+  resolved: ReturnType<typeof useResolvedAppearance>
+) {
+  const material = resolveMaterialOptions(typeof options === "object" ? options : {}, resolved.material)
+  const fill = resolveColor(color, resolved.colors)
 
   return {
     ...material,
     enabled: options !== false,
-    color: useResolveColor(color),
-    foreground: useThemedValue(appearance.colors).foreground
+    color: fill,
+    foreground: contrastingColor(color ?? defaultColor, resolved.colors)
   }
 }
 
-type ResolvedSurface = ReturnType<typeof useResolvedSurface>
+type ResolvedSurface = ReturnType<typeof resolveSurface>
 
 const layerStyle = {
   position: "absolute",
@@ -99,7 +108,10 @@ const layerStyle = {
   pointerEvents: "none"
 } satisfies CSSProperties
 
-function SurfaceLayers({ material }: Readonly<{ material: ResolvedSurface }>) {
+function SurfaceLayers({ material, paintTransition }: Readonly<{
+  material: ResolvedSurface
+  paintTransition: CSSProperties
+}>) {
   const filtersVisible = material.opacity < 1
   const backdrop = filtersVisible ? material.backdrop : 0
   const saturation = filtersVisible ? material.saturation : 1
@@ -111,7 +123,6 @@ function SurfaceLayers({ material }: Readonly<{ material: ResolvedSurface }>) {
   const identity = `phresh-material-${useId().replaceAll(":", "")}`
 
   return <span data-material="" aria-hidden="true" style={layerStyle}>
-    <MotionStyle />
     {distortion > 0 && <BackdropLayer
       name="refraction"
       filter={`url("#${identity}-distortion")`}
@@ -125,6 +136,7 @@ function SurfaceLayers({ material }: Readonly<{ material: ResolvedSurface }>) {
       grain={material.grain}
       grainAmount={material.grainAmount}
       opacity={material.opacity}
+      transition={paintTransition}
     />
   </span>
 }

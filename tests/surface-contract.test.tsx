@@ -23,19 +23,29 @@ describe("Surface", function () {
     const view = render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
       <Surface data-testid="surface" color={`background:${level}`} />
     </UIProvider>)
-    const base = required(screen.getByTestId("surface").querySelector<SVGRectElement>("[data-material-base]"))
-    expect(base.style.fill).toBe(cssFill(colorScale(appearance.colors.light.background)[level]))
+    const base = required(screen.getByTestId("surface").querySelector<HTMLElement>("[data-material-base]"))
+    expect(base.style.background).toBe(cssBackground(colorScale(appearance.colors.light.background)[level]))
     view.rerender(<UIProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>
       <Surface data-testid="surface" color={`background:${level}`} />
     </UIProvider>)
-    expect(base.style.fill).toBe(cssFill(colorScale(appearance.colors.dark.background)[level]))
+    expect(base.style.background).toBe(cssBackground(colorScale(appearance.colors.dark.background)[level]))
     expect(screen.getByTestId("surface").hasAttribute("color")).toBe(false)
   })
 
   it.each(["#8b5cf6", "rgb(20 80 120)", "color-mix(in srgb, #ffffff 80%, #000000)"])("accepts the direct background color %s", function (color) {
     renderSurface(<Surface data-testid="surface" color={color} />)
-    const base = required(screen.getByTestId("surface").querySelector<SVGRectElement>("[data-material-base]"))
-    expect(base.style.fill).toBe(cssFill(color))
+    const base = required(screen.getByTestId("surface").querySelector<HTMLElement>("[data-material-base]"))
+    expect(base.style.background).toBe(cssBackground(color))
+  })
+
+  it("chooses readable Appearance foreground or background text for concrete fills", function () {
+    renderSurface(<>
+      <Surface data-testid="dark-fill" color="#000000">Dark</Surface>
+      <Surface data-testid="light-fill" color="#ffffff">Light</Surface>
+    </>)
+
+    expect(screen.getByTestId("dark-fill").style.color).toBe(cssColor(defaultAppearance.colors.light.background))
+    expect(screen.getByTestId("light-fill").style.color).toBe(cssColor(defaultAppearance.colors.light.foreground))
   })
 
   it.each([
@@ -91,8 +101,8 @@ describe("Surface", function () {
 
     expect(explicit.querySelector("[data-material]")).not.toBeNull()
     expect(explicit.querySelector("[data-surface-edge]")).not.toBeNull()
-    expect(explicit.querySelector("[data-material-fill]")?.getAttribute("opacity"))
-      .toBe(implicit.querySelector("[data-material-fill]")?.getAttribute("opacity"))
+    expect(explicit.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity)
+      .toBe(implicit.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity)
     expect(explicit.style.boxShadow).toBe(implicit.style.boxShadow)
   })
 
@@ -102,7 +112,7 @@ describe("Surface", function () {
 
     expect(surface.style.background).toBe("rgb(52, 86, 120)")
     expect(surface.style.boxShadow).toBe("none")
-    expect(surface.style.color).toBe(cssColor(defaultAppearance.colors.light.foreground))
+    expect(surface.style.color).toBe(cssColor(defaultAppearance.colors.light.background))
     expect(surface.querySelector("[data-material]")).toBeNull()
     expect(surface.querySelector("[data-material-paint]")).toBeNull()
     expect(surface.querySelector("[data-surface-edge]")).toBeNull()
@@ -149,7 +159,7 @@ describe("Surface", function () {
     expect(surface.style.borderRadius).toBe("18px")
     expect(surface.style.padding).toBe("12px")
     expect(screen.getByText("Content").parentElement).toBe(surface)
-    expect(surface.querySelector("[data-material-paint]")).toBeInstanceOf(SVGSVGElement)
+    expect(surface.querySelector("[data-material-paint]")).toBeInstanceOf(HTMLSpanElement)
     expect(baseColor("surface")).toBe("rgb(18, 52, 86)")
     expect(surface.querySelector("canvas")).toBeNull()
   })
@@ -158,8 +168,8 @@ describe("Surface", function () {
     renderSurface(<Surface data-testid="surface" />)
 
     const surface = screen.getByTestId("surface")
-    const material = required(surface.querySelector<SVGSVGElement>("[data-material-paint]"))
-    const base = required(material.querySelector<SVGRectElement>("[data-material-base]"))
+    const material = required(surface.querySelector<HTMLElement>("[data-material-paint]"))
+    const base = required(material.querySelector<HTMLElement>("[data-material-base]"))
 
     expect(surface.style.backgroundColor).toBe("transparent")
     expect(surface.style.backgroundImage).toBe("none")
@@ -196,10 +206,10 @@ describe("Surface", function () {
     expect(illumination.style.getPropertyValue("--phreshos-surface-edge-light-minimum")).toContain("24%")
     expect(illumination.style.maskComposite).toBe("exclude")
     expect(surface.querySelector("[data-surface-edge-glow]")).toBeNull()
-    expect(material.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.55")
-    expect(base.style.fill).toBe("rgb(255, 255, 255)")
+    expect(material.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("0.55")
+    expect(base.style.background).toBe("rgb(255, 255, 255)")
     expect(material.querySelector("[data-material-grain]")).not.toBeNull()
-    expect(material.querySelector("[data-material-grain-tone]")).not.toBeNull()
+    expect(material.querySelector<HTMLElement>("[data-material-grain]")?.style.backgroundImage).toContain("data:image/svg+xml")
     expect(material.querySelector("[data-material-distortion]")).toBeNull()
   })
 
@@ -210,7 +220,7 @@ describe("Surface", function () {
 
     const surface = screen.getByTestId("surface")
     expect(surface.style.borderRadius).toBe("14px")
-    expect(surface.querySelector<SVGSVGElement>("[data-material-paint]")?.style.borderRadius).toBe("inherit")
+    expect(surface.querySelector<HTMLElement>("[data-material-paint]")?.style.borderRadius).toBe("inherit")
     expect(surface.querySelector<HTMLElement>("[data-surface-edge]")?.style.borderRadius).toBe("inherit")
   })
 
@@ -242,8 +252,8 @@ describe("Surface", function () {
     />)
 
     const surface = screen.getByTestId("surface")
-    const material = required(surface.querySelector<SVGSVGElement>("[data-material-paint]"))
-    const grain = required(material.querySelector<SVGRectElement>("[data-material-grain]"))
+    const material = required(surface.querySelector<HTMLElement>("[data-material-paint]"))
+    const grain = required(material.querySelector<HTMLElement>("[data-material-grain]"))
     const refraction = required(surface.querySelector<HTMLElement>("[data-material-backdrop='refraction']"))
     const frost = required(surface.querySelector<HTMLElement>("[data-material-backdrop='frost']"))
 
@@ -251,12 +261,13 @@ describe("Surface", function () {
     expect(refraction.style.backdropFilter).toContain("url(")
     expect(frost.style.backdropFilter).toBe("blur(8px) saturate(1.8)")
     expect(surface.style.backgroundColor).toBe("transparent")
-    expect(grain.getAttribute("opacity")).toBeNull()
-    expect(material.querySelector("[data-material-grain-tone='0']")?.getAttribute("fill")).toBe("color-mix(in srgb, #ffffff 10%, rgb(0 0 0) 90%)")
+    expect(grain.style.opacity).toBe("0.9")
+    expect(grain.style.backgroundImage).toContain("feTurbulence")
+    expect(grain.style.backgroundImage).toContain("feComponentTransfer")
     expect(material.querySelectorAll("[data-material-distortion-field]")).toHaveLength(1)
     expect(material.querySelectorAll("[data-material-distortion-stage]")).toHaveLength(1)
     expect(material.style.opacity).toBe("")
-    expect(material.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.5")
+    expect(material.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("0.5")
     expect(surface.querySelector<HTMLElement>("[data-surface-edge]")?.style.opacity).toBe("1")
     for (const property of ["grain", "grainAmount", "backdrop", "distortion", "saturation", "opacity"]) {
       expect(surface.hasAttribute(property)).toBe(false)
@@ -290,7 +301,7 @@ describe("Surface", function () {
 
     expect(surface.querySelector("[data-material-backdrop]")).toBeNull()
     expect(surface.querySelector("[data-material-distortion]")).toBeNull()
-    expect(surface.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("1")
+    expect(surface.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("1")
     expect(surface.querySelector("[data-material-grain]")).not.toBeNull()
     expect(surface.querySelector("[data-surface-edge]")).not.toBeNull()
 
@@ -309,7 +320,7 @@ describe("Surface", function () {
     </>)
 
     for (const testId of ["no-intensity", "no-amount"]) {
-      const material = required(screen.getByTestId(testId).querySelector<SVGSVGElement>("[data-material-paint]"))
+      const material = required(screen.getByTestId(testId).querySelector<HTMLElement>("[data-material-paint]"))
       expect(material.querySelector("[data-material-grain]")).toBeNull()
       expect(material.querySelector("[data-material-grain-tone]")).toBeNull()
     }
@@ -337,7 +348,7 @@ describe("Surface", function () {
   it("renders one organic distortion field and one displacement stage", function () {
     renderSurface(<Surface data-testid="surface" material={{ distortion: 12 }} />)
 
-    const material = required(screen.getByTestId("surface").querySelector<SVGSVGElement>("[data-material-paint]"))
+    const material = required(screen.getByTestId("surface").querySelector<HTMLElement>("[data-material-paint]"))
     expect(material.querySelectorAll('[data-material-distortion-field="organic"]')).toHaveLength(1)
     expect(material.querySelectorAll('[data-material-distortion-stage="organic"]')).toHaveLength(1)
     expect(material.querySelector("[data-material-distortion-noise]")).not.toBeNull()
@@ -406,7 +417,7 @@ describe("Surface", function () {
     </UIProvider>)
 
     expect(Number(border.style.opacity)).toBe(1)
-    expect(surface.querySelector("[data-material-fill]")?.getAttribute("opacity")).toBe("0.8")
+    expect(surface.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("0.8")
   })
 
   it("removes the edge at zero opacity while keeping active refraction", function () {
@@ -442,13 +453,13 @@ function renderSurface(surface: ReactNode) {
 }
 
 function baseColor(testId: string) {
-  return required(screen.getByTestId(testId).querySelector<SVGRectElement>("[data-material-base]")).style.fill
+  return required(screen.getByTestId(testId).querySelector<HTMLElement>("[data-material-base]")).style.background
 }
 
-function cssFill(value: string) {
-  const element = document.createElementNS("http://www.w3.org/2000/svg", "rect")
-  element.style.fill = value
-  return element.style.fill
+function cssBackground(value: string) {
+  const element = document.createElement("div")
+  element.style.background = value
+  return element.style.background
 }
 
 function cssColor(value: string) {

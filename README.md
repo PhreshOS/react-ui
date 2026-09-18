@@ -79,11 +79,12 @@ use the shared Surface implementation while retaining their native behavior. Col
 are independent inputs. `color` accepts an Appearance color and resting level such
 as `background:base` or `primary:soft`, or a direct CSS color. Surface defaults
 to `background:base`; solid controls default to `default:base`.
-Hover and press derive shades of that fill. The resting fill chooses the
-higher-contrast text from Appearance's background and foreground once; interaction
-shades keep that choice.
+Hover and press derive shades of that fill. Surface and solid controls choose
+the higher-contrast text from Appearance's background and foreground whenever
+their fill can be evaluated; interaction shades keep that choice.
 `size` accepts `xsmall`, `small`, `medium` (default), `large`, or `xlarge`;
-spacing and radius follow Appearance. `disabled` prevents activation and focus;
+spacing and radius follow Appearance, while typography remains inherited and
+component sizes are relative to the surrounding text. `disabled` prevents activation and focus;
 `pending` prevents activation while retaining focus.
 
 ```tsx
@@ -95,7 +96,7 @@ spacing and radius follow Appearance. `disabled` prevents activation and focus;
 `Surface` is the material- and shadow-owning element. It renders a `div` by default, while
 `as` selects another React element and preserves that element's native properties
 and ref type. Surface owns its paint, opacity, frost, refraction, grain, edge,
-outer shadow, radius, and clipping requirements. `radius` accepts a size level, `full`, a
+outer shadow, and radius. `radius` accepts a size level, `full`, a
 number in pixels, or a CSS radius and defaults to `medium`.
 
 ```tsx
@@ -153,6 +154,25 @@ Native properties and the root ref target the outer Surface. `Panel.Header`
 owns the optional leading region, while `Panel.Content` is the independently
 configurable inner Surface.
 
+`WindowHeader` provides the layout shared by Desktop-owned and application-owned
+window headers. `Identity` presents the icon and truncating title, `Center` is
+optional flexible space, and `Actions` aligns compact controls at the end. The
+header uses the enclosing Surface rather than creating another material layer.
+Its controls are React UI Buttons; callers connect them to their own window
+operations. Pointer and double-click handlers on the root can implement a drag
+area, while the center and actions keep their interactions separate.
+
+```tsx
+<WindowHeader active={active} onPointerDown={beginDrag}>
+  <WindowHeader.Identity icon={icon} title={title} />
+  <WindowHeader.Actions>
+    <WindowHeader.Minimize onPress={minimize} />
+    <WindowHeader.Maximize maximized={maximized} onPress={toggleMaximize} />
+    <WindowHeader.Close onPress={close} />
+  </WindowHeader.Actions>
+</WindowHeader>
+```
+
 ## Overlays
 
 Overlay components expose each behavioral role as a named part. Roots own open
@@ -202,8 +222,8 @@ Blur, distortion, geometry, and Surface host opacity are not transitioned; gradi
 and structurally removed effects change directly rather than adding extra
 layers or keeping disabled effects alive.
 
-Motion animates toggle presses, selection marks, switch travel, the Select
-chevron, and Slider thumb feedback. Preferences with animations disabled remove spatial
+Motion animates toggle presses, selection marks, and switch travel. CSS transitions
+animate paint and the Select chevron. Preferences with animations disabled remove spatial
 feedback and make state transitions immediate. Slider values and native input
 behavior are never delayed by visual animation.
 
@@ -255,8 +275,9 @@ import { Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider } 
 <Slider label="Volume" name="volume" defaultValue={50} minValue={0} maxValue={100} step={1} />
 ```
 
-React Aria owns focus, keyboard, form, and selection behavior. Select's popup
-uses Surface defaults. Toggle indicators use Motion internally and respect
+Each control delegates focus, keyboard, form, and selection behavior to its
+accessible behavioral primitive rather than recreating those systems. Select's
+popup uses Surface defaults. Toggle indicators use Motion internally and respect
 animation preferences. The preview Program demonstrates each input's
 sizes, colors, state, and interaction without overriding its visual defaults.
 

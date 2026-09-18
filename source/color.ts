@@ -1,7 +1,26 @@
 import { useMemo } from "react"
 import type { AppearanceColor, AppearanceColors } from "./appearance.js"
-import { ColorSpace, mix, parse, serialize, to, toGamut, contrastWCAG21, sRGB, sRGB_Linear, HSL, HWB, Lab, LCH, OKLab, OKLCH, P3, A98RGB, ProPhoto, REC_2020, XYZ_D50, XYZ_D65 } from "colorjs.io/fn"
-import { useAppearance, useThemedValue } from "./ui-provider.js"
+import ColorSpace from "colorjs.io/src/ColorSpace.js"
+import { mix } from "colorjs.io/src/interpolation.js"
+import parse from "colorjs.io/src/parse.js"
+import serialize from "colorjs.io/src/serialize.js"
+import to from "colorjs.io/src/to.js"
+import toGamut from "colorjs.io/src/toGamut.js"
+import contrastWCAG21 from "colorjs.io/src/contrast/WCAG21.js"
+import sRGB from "colorjs.io/src/spaces/srgb.js"
+import sRGB_Linear from "colorjs.io/src/spaces/srgb-linear.js"
+import HSL from "colorjs.io/src/spaces/hsl.js"
+import HWB from "colorjs.io/src/spaces/hwb.js"
+import Lab from "colorjs.io/src/spaces/lab.js"
+import LCH from "colorjs.io/src/spaces/lch.js"
+import OKLab from "colorjs.io/src/spaces/oklab.js"
+import OKLCH from "colorjs.io/src/spaces/oklch.js"
+import P3 from "colorjs.io/src/spaces/p3.js"
+import A98RGB from "colorjs.io/src/spaces/a98rgb.js"
+import ProPhoto from "colorjs.io/src/spaces/prophoto.js"
+import REC_2020 from "colorjs.io/src/spaces/rec2020.js"
+import XYZ_D50 from "colorjs.io/src/spaces/xyz-d50.js"
+import XYZ_D65 from "colorjs.io/src/spaces/xyz-d65.js"
 
 // Register the CSS color spaces, without bundling unrelated color-model APIs.
 for (const space of [sRGB, sRGB_Linear, HSL, HWB, Lab, LCH, OKLab, OKLCH, P3, A98RGB, ProPhoto, REC_2020, XYZ_D50, XYZ_D65]) ColorSpace.register(space)
@@ -56,21 +75,16 @@ export function useColor(value: string): ColorScale {
   return useMemo(() => color(value), [value])
 }
 
-/** Resolves a semantic Appearance color or preserves a direct CSS color. */
-export function useResolveColor(value: Color = defaultColor): string {
-  const appearance = useAppearance()
-  const colors = useThemedValue(appearance.colors)
-  const semantic = parseSemanticColor(value, colors)
-
-  return semantic ? color(semantic.source)[semantic.level] : value
+/** Resolves a semantic color from an already selected Appearance branch. */
+export function resolveColor(value: Color | undefined, colors: AppearanceColors): string {
+  const resolved = value ?? defaultColor
+  const semantic = parseSemanticColor(resolved, colors)
+  return semantic ? color(semantic.source)[semantic.level] : resolved
 }
 
-/** Resolves a color to concrete opaque paint for solid interactive states. */
-export function useResolveSolidColor(value: Color): string {
-  const appearance = useAppearance()
-  const colors = useThemedValue(appearance.colors)
+/** Resolves opaque control paint from an already selected Appearance branch. */
+export function resolveSolidColor(value: Color, colors: AppearanceColors): string {
   const semantic = parseSemanticColor(value, colors)
-
   return semantic ? resolveColorLevel(semantic.source, semantic.level) : opaqueColor(value)
 }
 
@@ -113,6 +127,15 @@ export function onColor(fill: string, background: string, foreground: string): s
   const first = opaqueColor(background)
   const second = opaqueColor(foreground)
   return contrastWCAG21(fill, first) > contrastWCAG21(fill, second) ? first : second
+}
+
+/** Chooses readable content when the fill can be evaluated, otherwise preserves Appearance foreground. */
+export function contrastingColor(value: Color, colors: AppearanceColors): string {
+  try {
+    return onColor(resolveSolidColor(value, colors), colors.background, colors.foreground)
+  } catch {
+    return colors.foreground
+  }
 }
 
 /** Solid controls start at base; interaction shades preserve its text choice. */

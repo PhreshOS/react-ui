@@ -50,6 +50,26 @@ export {
   type PanelHeaderProps,
   type PanelContentProps
 } from "./panel.js"
+export {
+  WindowHeader,
+  WindowHeaderRoot,
+  WindowHeaderIdentity,
+  WindowHeaderCenter,
+  WindowHeaderActions,
+  WindowHeaderAction,
+  WindowHeaderMinimize,
+  WindowHeaderMaximize,
+  WindowHeaderClose,
+  type WindowHeaderProps,
+  type WindowHeaderRootProps,
+  type WindowHeaderIdentityProps,
+  type WindowHeaderCenterProps,
+  type WindowHeaderActionsProps,
+  type WindowHeaderActionProps,
+  type WindowHeaderControlProps,
+  type WindowHeaderMaximizeProps,
+  type WindowHeaderCloseProps
+} from "./window-header.js"
 export { Button, type ButtonColor, type ButtonProps } from "./button.js"
 export { Input, type InputProps } from "./input.js"
 export { Textarea, type TextareaProps } from "./textarea.js"
@@ -101,9 +121,11 @@ export {
   ContextMenu,
   ContextMenuRoot,
   ContextMenuTrigger,
+  ContextMenuContent,
   type ContextMenuProps,
   type ContextMenuRootProps,
-  type ContextMenuTriggerProps
+  type ContextMenuTriggerProps,
+  type ContextMenuContentProps
 } from "./context-menu.js"
 export {
   Dialog,

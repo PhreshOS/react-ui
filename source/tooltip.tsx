@@ -5,10 +5,10 @@ import type {
   TooltipProps as AriaTooltipProps,
   TooltipTriggerComponentProps as AriaTooltipTriggerProps
 } from "react-aria-components"
-import { useAppearance } from "./ui-provider.js"
+import { useResolvedAppearance } from "./appearance-context.js"
 import { Button, type ButtonProps } from "./button.js"
 import { controlFontSizes } from "./control.js"
-import { overlayMotionClass, useOverlayTransition } from "./motion-style.js"
+import MotionStyle, { overlayMotionClass, overlayTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceOwnProps } from "./surface.js"
 import { resolveDirection, useDirection } from "./direction.js"
@@ -46,11 +46,12 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
   placement = "top",
   ...properties
 }, ref) {
-  const inset = scale(useAppearance().spacing, "small")
-  const transition = useOverlayTransition()
+  const resolved = useResolvedAppearance()
+  const inset = scale(resolved.appearance.spacing, "small")
+  const transition = overlayTransition(resolved.transaction, resolved.preferences.animations)
   const direction = resolveDirection(properties.dir, useDirection())
 
-  return <AriaTooltip
+  return <><MotionStyle /><AriaTooltip
     {...properties}
     ref={ref}
     dir={direction}
@@ -68,7 +69,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
       shadow={shadow}
       style={{
         boxSizing: "border-box",
-        maxWidth: 280,
+        maxWidth: "28em",
         paddingBlock: inset,
         paddingInline: inset * 1.5,
         outline: "none",
@@ -77,7 +78,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
         ...style
       }}
     >{children}</Surface>
-  </AriaTooltip>
+  </AriaTooltip></>
 })
 
 /** A description shown from the focus and hover state of its trigger. */

@@ -5,6 +5,49 @@ import { UIProvider, defaultAppearance, useAppearance, useBrowserPreferences, us
 afterEach(cleanup)
 
 describe("UIProvider", function () {
+  it("shares the browser's native preference subscriptions across consumers", function () {
+    let subscriptions = 0
+    let removals = 0
+    const original = window.matchMedia
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      value: (query: string) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addEventListener: () => { subscriptions += 1 },
+        removeEventListener: () => { removals += 1 },
+        addListener: () => undefined,
+        removeListener: () => undefined,
+        dispatchEvent: () => true
+      })
+    })
+
+    const rendered = render(<>{Array.from({ length: 20 }, (_, index) => <ReadBrowserPreferences key={index} onRead={() => undefined} />)}</>)
+    expect(subscriptions).toBe(2)
+    rendered.unmount()
+    expect(removals).toBe(2)
+    Object.defineProperty(window, "matchMedia", { configurable: true, value: original })
+  })
+
+  it("does not inspect browser preferences when complete Preferences are supplied", function () {
+    const original = window.matchMedia
+    let reads = 0
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      value: () => {
+        reads += 1
+        throw new Error("Explicit Preferences must not inspect the browser")
+      }
+    })
+
+    render(<UIProvider preferences={{ theme: "dark", animations: false }}>
+      {Array.from({ length: 20 }, (_, index) => <ReadBrowserIndependentPreferences key={index} />)}
+    </UIProvider>)
+    expect(reads).toBe(0)
+    Object.defineProperty(window, "matchMedia", { configurable: true, value: original })
+  })
+
   it("introduces no boundary when every property is omitted", function () {
     const values: Array<Appearance | Preferences | string> = []
 
@@ -82,7 +125,7 @@ describe("UIProvider", function () {
     Object.defineProperty(window, "matchMedia", {
       configurable: true,
       value: (query: string) => ({
-        matches: query.includes("color-scheme") ? dark : reduced,
+        get matches() { return query.includes("color-scheme") ? dark : reduced },
         media: query,
         onchange: null,
         addEventListener: (_event: string, listener: () => void) => listeners.add(listener),
@@ -119,5 +162,10 @@ function Read({ onRead }: Readonly<{ onRead: (value: Appearance | Preferences | 
 
 function ReadBrowserPreferences({ onRead }: Readonly<{ onRead: (value: Preferences) => void }>) {
   onRead(useBrowserPreferences())
+  return null
+}
+
+function ReadBrowserIndependentPreferences() {
+  usePreferences()
   return null
 }

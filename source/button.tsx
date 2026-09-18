@@ -4,7 +4,7 @@ import { Button as AriaButton } from "react-aria-components"
 import type { ButtonProps as AriaButtonProps } from "react-aria-components"
 import type { ScaleLevel } from "./scale.js"
 import type { RadiusProps } from "./radius.js"
-import { controlFontSizes, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
+import { controlFontWeight, controlOpacity, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
 import { SurfaceButton } from "./control-surface.js"
 import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
@@ -76,7 +76,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       isHovered,
       isPressed,
       pending,
-      size,
       style
     })}
   >{children}</AriaButton>
@@ -89,7 +88,6 @@ function buttonStyle({
   isHovered,
   isPressed,
   pending,
-  size,
   style
 }: Readonly<{
   theme: ControlTheme
@@ -98,12 +96,9 @@ function buttonStyle({
   isHovered: boolean
   isPressed: boolean
   pending: boolean
-  size: ScaleLevel
   style: CSSProperties | undefined
 }>): CSSProperties {
-  const fontSize = controlFontSizes[size]
   const { spacing, focusColor } = theme
-  const height = Math.max(24, 24 + spacing)
   const interactive = !disabled && !pending
   const paint = buttonPaint(theme, interactive, isHovered, isPressed)
 
@@ -118,20 +113,20 @@ function buttonStyle({
     justifyContent: "center",
     flexShrink: 0,
     minWidth: 0,
-    height,
+    height: theme.height,
     paddingBlock: 0,
     paddingInline: Math.max(8, spacing),
-    gap: Math.max(4, spacing / 2),
+    gap: theme.gap,
     border: "none",
     borderRadius: theme.radius,
     outline: isFocusVisible ? `1px solid ${focusColor}` : "none",
     outlineOffset: 1,
     ...paint,
-    opacity: disabled ? 0.46 : pending ? 0.68 : 1,
+    opacity: disabled ? controlOpacity.disabled : pending ? controlOpacity.pending : 1,
     cursor: disabled ? "not-allowed" : pending ? "progress" : "pointer",
     font: "inherit",
-    fontSize,
-    fontWeight: 550,
+    fontSize: theme.fontSize,
+    fontWeight: controlFontWeight,
     lineHeight: 1,
     textAlign: "center",
     textDecoration: "none",

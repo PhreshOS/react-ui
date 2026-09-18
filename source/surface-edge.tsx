@@ -1,5 +1,4 @@
 import { Fragment, type CSSProperties } from "react"
-import { useTransitionTiming } from "./motion-style.js"
 import { scale } from "./scale.js"
 
 type EdgeMaterial = Readonly<{ color: string, opacity: number }>
@@ -22,8 +21,10 @@ const horizontalIllumination = "linear-gradient(90deg, var(--phreshos-surface-ed
 const edgeMask = "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)"
 
 /** Paints the boundary owned by one Surface from the material it contains. */
-export function SurfaceEdge({ material }: Readonly<{ material: EdgeMaterial }>) {
-  const timing = useTransitionTiming()
+export function SurfaceEdge({ material, transition }: Readonly<{
+  material: EdgeMaterial
+  transition: CSSProperties
+}>) {
   const visible = material.opacity > 0
 
   if (!visible) return null
@@ -36,7 +37,7 @@ export function SurfaceEdge({ material }: Readonly<{ material: EdgeMaterial }>) 
       data-surface-edge-light=""
       aria-hidden="true"
       style={{
-        ...timing,
+        ...transition,
         ...edgeLayer,
         transitionProperty: "opacity",
         padding: illuminatedEdgeBoundary,
@@ -55,7 +56,7 @@ export function SurfaceEdge({ material }: Readonly<{ material: EdgeMaterial }>) 
       data-surface-edge=""
       aria-hidden="true"
       style={{
-        ...timing,
+        ...transition,
         ...edgeLayer,
         transitionProperty: "border-color, opacity",
         borderStyle: "solid",
