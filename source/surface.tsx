@@ -88,18 +88,22 @@ function resolveSurface(
   options: MaterialMode | MaterialOptions | undefined,
   resolved: ReturnType<typeof useResolvedAppearance>
 ) {
-  const mode = typeof options === "object" ? "full" : options ?? "opaque"
+  const mode = typeof options === "object" ? "full" : options ?? "basic"
   const level = materialLevel[mode]
   const material = resolveMaterialOptions(typeof options === "object" ? options : {}, resolved.material)
   const fill = resolveColor(color, resolved.colors)
-  const opacity = level >= materialLevel.translucent ? material.opacity : 1
+  const opacity = level >= materialLevel.extended ? material.opacity : 1
   const backdrop = level >= materialLevel.full
+  const grain = level === materialLevel.basic
+    ? material.grain * material.opacity
+    : material.grain
 
   return {
     ...material,
-    enabled: level >= materialLevel.opaque,
+    enabled: level >= materialLevel.basic,
     opacity,
     fillOpacity: opacity,
+    grain,
     backdrop: backdrop ? material.backdrop : 0,
     distortion: backdrop ? material.distortion : 0,
     saturation: backdrop ? material.saturation : 1,
@@ -110,8 +114,8 @@ function resolveSurface(
 
 const materialLevel = Object.freeze({
   none: 0,
-  opaque: 1,
-  translucent: 2,
+  basic: 1,
+  extended: 2,
   full: 3
 } satisfies Readonly<Record<MaterialMode, number>>)
 

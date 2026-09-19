@@ -12,11 +12,11 @@ export interface MaterialOptions {
 }
 
 /** React UI's progressively complete browser rendering strategies for a resolved Material. */
-export type MaterialMode = "none" | "opaque" | "translucent" | "full"
+export type MaterialMode = "none" | "basic" | "extended" | "full"
 
 /** Grouped material customization exposed by components built on Surface. */
 export interface MaterialOverrides {
-  /** Omission uses opaque rendering. An options object uses full rendering with those overrides. */
+  /** Omission uses basic rendering. An options object uses full rendering with those overrides. */
   readonly material?: MaterialMode | MaterialOptions
 }
 

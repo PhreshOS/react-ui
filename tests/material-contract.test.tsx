@@ -61,7 +61,7 @@ it("groups material customization uniformly across Surface and controls", () => 
   expectTypeOf<"color" extends keyof MaterialOptions ? true : false>().toEqualTypeOf<false>()
   expectTypeOf<"material" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<true>()
   expectTypeOf<"opacity" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<false>()
-  expectTypeOf<MaterialMode>().toEqualTypeOf<"none" | "opaque" | "translucent" | "full">()
+  expectTypeOf<MaterialMode>().toEqualTypeOf<"none" | "basic" | "extended" | "full">()
   expectTypeOf<SurfaceProps["material"]>().toEqualTypeOf<MaterialMode | MaterialOptions | undefined>()
   expectTypeOf<SurfaceProps["shadow"]>().toEqualTypeOf<boolean | ShadowOptions | undefined>()
   expectTypeOf<ButtonProps["material"]>().toEqualTypeOf<MaterialMode | MaterialOptions | undefined>()

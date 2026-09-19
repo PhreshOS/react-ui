@@ -117,15 +117,16 @@ required geometry.
 Surface, exposes these values through its `material` prop. Color remains a
 separate property. Omission uses the resource-efficient `basic` rendering mode.
 `none` ignores Material and paints the resolved color as a normal background;
-`full` applies every resolved Material value. A `MaterialOptions` object selects
-full rendering with those overrides. Effect options accept a scale level or a
-direct number; opacity affects Surface paint only, never its content. The
-material edge is part of the same Surface rather than a second public entity.
+`basic` adds Material paint, grain, and its edge while remaining solid, with
+Material opacity applied only to the grain; `extended` applies that opacity to
+the complete Material instead; and `full` adds backdrop, distortion, and
+saturation. A `MaterialOptions` object selects full rendering with those
+overrides. Effect options accept a scale level or a direct number; opacity
+affects Surface paint only, never its content. The material edge is part of the
+same Surface rather than a second public entity.
 
-Basic rendering preserves Material paint, grain, and its edge without exposing
-or processing the backdrop. Its base is opaque, while the resolved Material
-opacity continues to attenuate the grain and edge so their visual strength stays
-consistent with full rendering.
+The modes are progressive: each level preserves the rendering of the previous
+one and adds only its own Material capability.
 
 Surface-based controls expose the same separate `color` and `material` props.
 `ShadowOptions` similarly groups `x`, `y`, `blur`, `spread`, and `opacity` under
