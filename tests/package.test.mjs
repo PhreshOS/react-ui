@@ -33,6 +33,10 @@ test("package contract", async () => {
     assert(paths.has("dist/main.d.ts"), "the package has no declaration entry point")
     assert(paths.has("dist/panel.js"), "the package has no Panel implementation")
     assert(paths.has("dist/panel.d.ts"), "the package has no Panel contract")
+    assert(paths.has("dist/window.js"), "the package has no Window implementation")
+    assert(paths.has("dist/window.d.ts"), "the package has no Window contract")
+    assert(!paths.has("dist/window-header.js"), "the removed WindowHeader implementation entered the package")
+    assert(!paths.has("dist/window-header.d.ts"), "the removed WindowHeader contract entered the package")
     for (const name of ["ui-provider", "direction", "input", "textarea", "checkbox", "radio", "switch", "select", "slider", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
       assert(paths.has(`dist/${name}.js`), `the package has no ${name} implementation`)
       assert(paths.has(`dist/${name}.d.ts`), `the package has no ${name} contract`)
@@ -81,12 +85,13 @@ test("package contract", async () => {
       join(consumer, "runtime.mjs"),
       `import assert from "node:assert/strict"
   import * as icons from "@phreshos/react-ui/icons"
+  import * as reactUI from "@phreshos/react-ui"
   import {
     AlertDialog, Button, ContextMenu, Dialog, DropdownMenu,
     Flex,
     Grid,
     Menu, Panel, Popover,
-    Surface,
+    Surface, Window,
     Tooltip,
     Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider,
     UIProvider,
@@ -101,11 +106,12 @@ test("package contract", async () => {
     useScale
   } from "@phreshos/react-ui"
 
-  for (const exported of [UIProvider, AlertDialog, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale]) {
+  for (const exported of [UIProvider, AlertDialog, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Window, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale]) {
     assert.notEqual(exported, undefined)
   }
   assert.equal("signInWallpaper" in defaultAppearance, false)
   assert.equal("desktopWallpaper" in defaultAppearance, false)
+  assert.equal("WindowHeader" in reactUI, false)
   assert.deepEqual(Object.keys(icons), [])
   `
     )
@@ -113,7 +119,7 @@ test("package contract", async () => {
 
     writeFileSync(
       join(consumer, "consumer.tsx"),
-      `import { AlertDialog, UIProvider, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type Preferences } from "@phreshos/react-ui"
+      `import { AlertDialog, UIProvider, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Window, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type Preferences } from "@phreshos/react-ui"
 
   const surface = <Surface as="button" type="button" color="background:soft" material={{ opacity: 0.4 }}>Surface</Surface>
   const standalone = <Button>Default Appearance and browser Preferences</Button>
@@ -170,6 +176,10 @@ test("package contract", async () => {
           </Flex>
         </Grid></Panel.Content>
       </Panel>
+      <Window>
+        <Window.Header><Window.Header.Identity title="Example" /><Window.Header.Actions><Window.Header.Close /></Window.Header.Actions></Window.Header>
+        <Window.Content>Window content</Window.Content>
+      </Window>
       <Popover><Popover.Trigger>Info</Popover.Trigger><Popover.Content><Popover.Dialog aria-label="Info"><Popover.Close>Close</Popover.Close></Popover.Dialog></Popover.Content></Popover>
       <DropdownMenu><DropdownMenu.Trigger>Actions</DropdownMenu.Trigger><DropdownMenu.Content><Menu aria-label="Actions"><Menu.Item>Open</Menu.Item></Menu></DropdownMenu.Content></DropdownMenu>
       <Menu aria-label="Dynamic actions" items={commands}>{command => <Menu.Item id={command.id}>{command.label}</Menu.Item>}</Menu>

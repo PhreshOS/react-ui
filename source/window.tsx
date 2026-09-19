@@ -1,11 +1,12 @@
 import { createContext, forwardRef, useContext } from "react"
-import type { ComponentProps, CSSProperties, HTMLAttributes, ReactNode } from "react"
+import type { CSSProperties, HTMLAttributes, ReactNode } from "react"
 import { useResolvedAppearance } from "./appearance-context.js"
 import { Button, type ButtonProps } from "./button.js"
 import { transitionTiming } from "./motion-style.js"
 import { scale } from "./scale.js"
+import { Surface, type SurfaceProps } from "./surface.js"
 
-interface WindowHeaderState {
+interface HeaderState {
   readonly active: boolean
   readonly foreground: string
   readonly iconRadius: number
@@ -13,21 +14,61 @@ interface WindowHeaderState {
   readonly transition: CSSProperties
 }
 
-const WindowHeaderContext = createContext<WindowHeaderState | null>(null)
+const HeaderContext = createContext<HeaderState | null>(null)
 
-function useWindowHeader() {
-  const value = useContext(WindowHeaderContext)
-  if (value === null) throw new Error("WindowHeader parts require WindowHeader.Root")
+function useHeader() {
+  const value = useContext(HeaderContext)
+  if (value === null) throw new Error("Window.Header parts require Window.Header")
   return value
 }
 
-export interface WindowHeaderRootProps extends HTMLAttributes<HTMLDivElement> {
+/** The material shell that establishes the complete header-and-content layout. */
+export type WindowProps = SurfaceProps
+
+const WindowRoot = forwardRef<HTMLDivElement, WindowProps>(function WindowRoot(
+  { children, style, ...properties },
+  ref
+) {
+  return <Surface
+    {...properties}
+    ref={ref}
+    style={{
+      display: "flex",
+      flexDirection: "column",
+      minWidth: 0,
+      minHeight: 0,
+      ...style
+    }}
+  >{children}</Surface>
+})
+
+/** The remaining window area. Its consumer owns content behavior, including overflow. */
+export type WindowContentProps = HTMLAttributes<HTMLDivElement>
+
+const WindowContent = forwardRef<HTMLDivElement, WindowContentProps>(function WindowContent(
+  { style, ...properties },
+  ref
+) {
+  return <div
+    {...properties}
+    ref={ref}
+    style={{
+      position: "relative",
+      flex: "1 1 auto",
+      minWidth: 0,
+      minHeight: 0,
+      ...style
+    }}
+  />
+})
+
+export interface WindowHeaderProps extends HTMLAttributes<HTMLDivElement> {
   /** Attenuates the identity when this header is not active. */
   readonly active?: boolean
 }
 
 /** The composable top region of a window; its enclosing Surface owns the material. */
-export const WindowHeaderRoot = forwardRef<HTMLDivElement, WindowHeaderRootProps>(function WindowHeaderRoot({
+const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function HeaderRoot({
   active = true,
   children,
   onPointerDown,
@@ -36,7 +77,7 @@ export const WindowHeaderRoot = forwardRef<HTMLDivElement, WindowHeaderRootProps
 }, ref) {
   const resolved = useResolvedAppearance()
   const spacing = resolved.appearance.spacing
-  const state: WindowHeaderState = {
+  const state: HeaderState = {
     active,
     foreground: resolved.colors.foreground,
     iconRadius: scale(resolved.appearance.radius, "xsmall"),
@@ -44,7 +85,7 @@ export const WindowHeaderRoot = forwardRef<HTMLDivElement, WindowHeaderRootProps
     transition: transitionTiming(resolved.transaction, resolved.preferences.animations)
   }
 
-  return <WindowHeaderContext.Provider value={state}>
+  return <HeaderContext.Provider value={state}>
     <div
       {...properties}
       ref={ref}
@@ -64,22 +105,22 @@ export const WindowHeaderRoot = forwardRef<HTMLDivElement, WindowHeaderRootProps
         ...style
       }}
     >{children}</div>
-  </WindowHeaderContext.Provider>
+  </HeaderContext.Provider>
 })
 
-export interface WindowHeaderIdentityProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
+export interface WindowIdentityProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   readonly icon?: string
   readonly title?: ReactNode
 }
 
 /** The icon and truncating title share the window's active treatment. */
-export const WindowHeaderIdentity = forwardRef<HTMLDivElement, WindowHeaderIdentityProps>(function WindowHeaderIdentity({
+const WindowIdentity = forwardRef<HTMLDivElement, WindowIdentityProps>(function WindowIdentity({
   icon,
   title,
   style,
   ...properties
 }, ref) {
-  const { active, iconRadius, spacing, transition } = useWindowHeader()
+  const { active, iconRadius, spacing, transition } = useHeader()
 
   return <div {...properties} ref={ref} style={{
     ...transition,
@@ -110,16 +151,16 @@ export const WindowHeaderIdentity = forwardRef<HTMLDivElement, WindowHeaderIdent
   </div>
 })
 
-export type WindowHeaderCenterProps = HTMLAttributes<HTMLDivElement>
+export type WindowCenterProps = HTMLAttributes<HTMLDivElement>
 
 /** Optional flexible space for application-owned content. */
-export const WindowHeaderCenter = forwardRef<HTMLDivElement, WindowHeaderCenterProps>(function WindowHeaderCenter({
+const WindowCenter = forwardRef<HTMLDivElement, WindowCenterProps>(function WindowCenter({
   onDoubleClick,
   onPointerDown,
   style,
   ...properties
 }, ref) {
-  useWindowHeader()
+  useHeader()
 
   return <div {...properties} ref={ref}
     onDoubleClick={event => { event.stopPropagation(); onDoubleClick?.(event) }}
@@ -128,16 +169,16 @@ export const WindowHeaderCenter = forwardRef<HTMLDivElement, WindowHeaderCenterP
   />
 })
 
-export type WindowHeaderActionsProps = HTMLAttributes<HTMLDivElement>
+export type WindowActionsProps = HTMLAttributes<HTMLDivElement>
 
 /** End-aligned controls that do not begin a header drag or double-click action. */
-export const WindowHeaderActions = forwardRef<HTMLDivElement, WindowHeaderActionsProps>(function WindowHeaderActions({
+const WindowActions = forwardRef<HTMLDivElement, WindowActionsProps>(function WindowActions({
   onDoubleClick,
   onPointerDown,
   style,
   ...properties
 }, ref) {
-  const { spacing } = useWindowHeader()
+  const { spacing } = useHeader()
 
   return <div {...properties} ref={ref}
     onDoubleClick={event => { event.stopPropagation(); onDoubleClick?.(event) }}
@@ -153,56 +194,56 @@ export const WindowHeaderActions = forwardRef<HTMLDivElement, WindowHeaderAction
   />
 })
 
-export type WindowHeaderActionProps = Omit<ButtonProps, "size">
+export type WindowActionProps = Omit<ButtonProps, "size">
 
 /** A compact header action; extra actions use the same treatment as the standard controls. */
-export const WindowHeaderAction = forwardRef<HTMLButtonElement, WindowHeaderActionProps>(function WindowHeaderAction({
+const WindowAction = forwardRef<HTMLButtonElement, WindowActionProps>(function WindowAction({
   style,
   ...properties
 }, ref) {
-  const { foreground } = useWindowHeader()
+  const { foreground } = useHeader()
   return <Button {...properties} ref={ref} size="xsmall" style={{ color: foreground, ...style }} />
 })
 
-export type WindowHeaderControlProps = Omit<WindowHeaderActionProps, "children">
+export type WindowControlProps = Omit<WindowActionProps, "children">
 
-export const WindowHeaderMinimize = forwardRef<HTMLButtonElement, WindowHeaderControlProps>(function WindowHeaderMinimize({
+const WindowMinimize = forwardRef<HTMLButtonElement, WindowControlProps>(function WindowMinimize({
   "aria-label": label = "Minimize",
   preventFocusOnPress = true,
   ...properties
 }, ref) {
-  return <WindowHeaderAction {...properties} ref={ref} aria-label={label} preventFocusOnPress={preventFocusOnPress}>
+  return <WindowAction {...properties} ref={ref} aria-label={label} preventFocusOnPress={preventFocusOnPress}>
     <ControlIcon><path d="M1.5 7.5h7" /></ControlIcon>
-  </WindowHeaderAction>
+  </WindowAction>
 })
 
-export interface WindowHeaderMaximizeProps extends WindowHeaderControlProps {
+export interface WindowMaximizeProps extends WindowControlProps {
   readonly maximized?: boolean
 }
 
-export const WindowHeaderMaximize = forwardRef<HTMLButtonElement, WindowHeaderMaximizeProps>(function WindowHeaderMaximize({
+const WindowMaximize = forwardRef<HTMLButtonElement, WindowMaximizeProps>(function WindowMaximize({
   "aria-label": label,
   maximized = false,
   ...properties
 }, ref) {
-  return <WindowHeaderAction {...properties} ref={ref} aria-label={label ?? (maximized ? "Restore" : "Maximize")}>
+  return <WindowAction {...properties} ref={ref} aria-label={label ?? (maximized ? "Restore" : "Maximize")}>
     <ControlIcon>{maximized
       ? <path d="M1 4h5v5H1zM4 1h5v5H6.5" strokeWidth="1.3" strokeLinejoin="round" />
       : <path d="M1.5 1.5h7v7h-7z" strokeWidth="1.3" strokeLinejoin="round" />}
     </ControlIcon>
-  </WindowHeaderAction>
+  </WindowAction>
 })
 
-export type WindowHeaderCloseProps = Omit<WindowHeaderControlProps, "color">
+export type WindowCloseProps = Omit<WindowControlProps, "color">
 
-export const WindowHeaderClose = forwardRef<HTMLButtonElement, WindowHeaderCloseProps>(function WindowHeaderClose({
+const WindowClose = forwardRef<HTMLButtonElement, WindowCloseProps>(function WindowClose({
   "aria-label": label = "Close",
   preventFocusOnPress = true,
   ...properties
 }, ref) {
-  return <WindowHeaderAction {...properties} ref={ref} aria-label={label} color="danger:base" preventFocusOnPress={preventFocusOnPress}>
+  return <WindowAction {...properties} ref={ref} aria-label={label} color="danger:base" preventFocusOnPress={preventFocusOnPress}>
     <ControlIcon><path d="M1.5 1.5 8.5 8.5M8.5 1.5 1.5 8.5" /></ControlIcon>
-  </WindowHeaderAction>
+  </WindowAction>
 })
 
 function ControlIcon({ children }: Readonly<{ children: ReactNode }>) {
@@ -211,15 +252,18 @@ function ControlIcon({ children }: Readonly<{ children: ReactNode }>) {
   </svg>
 }
 
-export const WindowHeader = Object.assign(WindowHeaderRoot, {
-  Root: WindowHeaderRoot,
-  Identity: WindowHeaderIdentity,
-  Center: WindowHeaderCenter,
-  Actions: WindowHeaderActions,
-  Action: WindowHeaderAction,
-  Minimize: WindowHeaderMinimize,
-  Maximize: WindowHeaderMaximize,
-  Close: WindowHeaderClose
+const Header = Object.assign(HeaderRoot, {
+  Identity: WindowIdentity,
+  Center: WindowCenter,
+  Actions: WindowActions,
+  Action: WindowAction,
+  Minimize: WindowMinimize,
+  Maximize: WindowMaximize,
+  Close: WindowClose
 })
 
-export type WindowHeaderProps = ComponentProps<typeof WindowHeaderRoot>
+/** One Surface with a ready-to-use header-and-content composition. */
+export const Window = Object.assign(WindowRoot, {
+  Header,
+  Content: WindowContent
+})

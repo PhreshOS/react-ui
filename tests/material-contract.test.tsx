@@ -6,7 +6,7 @@ import { afterEach, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "../source/main.js"
 import {
   UIProvider, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Radio, Grid,
-  type MaterialOptions, type ShadowOptions, type SurfaceHost, type SurfaceProps,
+  type MaterialMode, type MaterialOptions, type ShadowOptions, type SurfaceHost, type SurfaceProps,
   type ButtonProps, type InputProps, type CheckboxProps, type SwitchProps, type RadioProps, type SelectProps
 } from "../source/main.js"
 
@@ -61,9 +61,10 @@ it("groups material customization uniformly across Surface and controls", () => 
   expectTypeOf<"color" extends keyof MaterialOptions ? true : false>().toEqualTypeOf<false>()
   expectTypeOf<"material" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<true>()
   expectTypeOf<"opacity" extends keyof SurfaceProps ? true : false>().toEqualTypeOf<false>()
-  expectTypeOf<SurfaceProps["material"]>().toEqualTypeOf<boolean | MaterialOptions | undefined>()
+  expectTypeOf<MaterialMode>().toEqualTypeOf<"none" | "opaque" | "translucent" | "full">()
+  expectTypeOf<SurfaceProps["material"]>().toEqualTypeOf<MaterialMode | MaterialOptions | undefined>()
   expectTypeOf<SurfaceProps["shadow"]>().toEqualTypeOf<boolean | ShadowOptions | undefined>()
-  expectTypeOf<ButtonProps["material"]>().toEqualTypeOf<boolean | MaterialOptions | undefined>()
+  expectTypeOf<ButtonProps["material"]>().toEqualTypeOf<MaterialMode | MaterialOptions | undefined>()
   expectTypeOf<InputProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<CheckboxProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<SwitchProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
@@ -76,14 +77,14 @@ it("groups material customization uniformly across Surface and controls", () => 
   expectTypeOf<SelectProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
 })
 
-it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"] as const)("exposes the shared material and shadow switches on %s", kind => {
-  const example = kind === "button" ? <Button material={false} shadow={false}>Action</Button>
-    : kind === "input" ? <Input label="Value" material={false} shadow={false} />
-    : kind === "textarea" ? <Textarea label="Value" material={false} shadow={false} />
-    : kind === "select" ? <Select label="Value" material={false} shadow={false} options={[{ value: "one", label: "One" }]} />
-    : kind === "checkbox" ? <Checkbox label="Value" material={false} shadow={false} />
-    : kind === "switch" ? <Switch label="Value" material={false} shadow={false} />
-    : <RadioGroup label="Values" material={false} shadow={false}><Radio label="Value" value="one" /></RadioGroup>
+it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"] as const)("exposes the shared material mode and shadow switch on %s", kind => {
+  const example = kind === "button" ? <Button material="none" shadow={false}>Action</Button>
+    : kind === "input" ? <Input label="Value" material="none" shadow={false} />
+    : kind === "textarea" ? <Textarea label="Value" material="none" shadow={false} />
+    : kind === "select" ? <Select label="Value" material="none" shadow={false} options={[{ value: "one", label: "One" }]} />
+    : kind === "checkbox" ? <Checkbox label="Value" material="none" shadow={false} />
+    : kind === "switch" ? <Switch label="Value" material="none" shadow={false} />
+    : <RadioGroup label="Values" material="none" shadow={false}><Radio label="Value" value="one" /></RadioGroup>
   const { container } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{example}</UIProvider>)
   const host = [...container.querySelectorAll<HTMLElement>("*")]
     .find(element => element.style.boxShadow === "none")

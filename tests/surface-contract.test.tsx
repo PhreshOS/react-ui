@@ -91,10 +91,58 @@ describe("Surface", function () {
     expect(surface.hasAttribute("shadow")).toBe(false)
   })
 
-  it("treats true and omission as the Appearance material and shadow defaults", function () {
+  it("adds Material capabilities progressively from none through full rendering", function () {
+    const appearance = {
+      ...defaultAppearance,
+      material: {
+        light: { ...defaultAppearance.material.light, opacity: 0.4, backdrop: 8, distortion: 12, saturation: 1.8, grain: 0.2 },
+        dark: { ...defaultAppearance.material.dark, opacity: 0.4, backdrop: 8, distortion: 12, saturation: 1.8, grain: 0.2 }
+      }
+    }
+
+    render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
+      <Surface data-testid="none" material="none" />
+      <Surface data-testid="implicit" />
+      <Surface data-testid="opaque" material="opaque" />
+      <Surface data-testid="translucent" material="translucent" />
+      <Surface data-testid="full" material="full" />
+    </UIProvider>)
+
+    const none = screen.getByTestId("none")
+    const implicit = screen.getByTestId("implicit")
+    const opaque = screen.getByTestId("opaque")
+    const translucent = screen.getByTestId("translucent")
+    const full = screen.getByTestId("full")
+
+    expect(none.querySelector("[data-material]")).toBeNull()
+    expect(opaque.querySelector("[data-material]")).not.toBeNull()
+    expect(opaque.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("1")
+    expect(opaque.querySelector<HTMLElement>("[data-material-grain]")?.style.opacity).toBe("0.2")
+    expect(opaque.querySelector("[data-material-backdrop]")).toBeNull()
+    expect(opaque.querySelector<HTMLElement>("[data-surface-edge]")?.style.opacity).toBe("1")
+
+    expect(translucent.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("0.4")
+    expect(translucent.querySelector<HTMLElement>("[data-material-grain]")?.style.opacity).toBe("0.2")
+    expect(translucent.querySelector("[data-material-backdrop]")).toBeNull()
+    expect(Number(translucent.querySelector<HTMLElement>("[data-surface-edge]")?.style.opacity)).toBeLessThan(1)
+
+    expect(full.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("0.4")
+    expect(full.querySelectorAll("[data-material-backdrop]")).toHaveLength(2)
+    expect(full.querySelector("[data-material-distortion]")).not.toBeNull()
+    expect(full.querySelector<HTMLElement>("[data-surface-edge]")?.style.opacity)
+      .toBe(translucent.querySelector<HTMLElement>("[data-surface-edge]")?.style.opacity)
+
+    expect(implicit.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity)
+      .toBe(opaque.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity)
+    expect(implicit.querySelector<HTMLElement>("[data-material-grain]")?.style.opacity)
+      .toBe(opaque.querySelector<HTMLElement>("[data-material-grain]")?.style.opacity)
+    expect(implicit.querySelector("[data-material-backdrop]")).toBeNull()
+  })
+
+  it("uses opaque Material rendering and Appearance shadow by default", function () {
     renderSurface(<>
       <Surface data-testid="implicit" />
-      <Surface data-testid="explicit" material shadow />
+      <Surface data-testid="explicit" material="opaque" shadow />
     </>)
     const implicit = screen.getByTestId("implicit")
     const explicit = screen.getByTestId("explicit")
@@ -103,11 +151,12 @@ describe("Surface", function () {
     expect(explicit.querySelector("[data-surface-edge]")).not.toBeNull()
     expect(explicit.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity)
       .toBe(implicit.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity)
+    expect(explicit.querySelector("[data-material-backdrop]")).toBeNull()
     expect(explicit.style.boxShadow).toBe(implicit.style.boxShadow)
   })
 
-  it("uses ordinary background paint without material or shadow when each is false", function () {
-    renderSurface(<Surface data-testid="surface" color="#345678" material={false} shadow={false}>Content</Surface>)
+  it("uses ordinary background paint in none mode", function () {
+    renderSurface(<Surface data-testid="surface" color="#345678" material="none" shadow={false}>Content</Surface>)
     const surface = screen.getByTestId("surface")
 
     expect(surface.style.background).toBe("rgb(52, 86, 120)")
@@ -164,7 +213,7 @@ describe("Surface", function () {
     expect(surface.querySelector("canvas")).toBeNull()
   })
 
-  it("renders the standard light Theme material with frost and grain", function () {
+  it("renders the standard light Theme material efficiently by default", function () {
     renderSurface(<Surface data-testid="surface" />)
 
     const surface = screen.getByTestId("surface")
@@ -180,7 +229,7 @@ describe("Surface", function () {
     expect(surface.style.boxSizing).toBe("")
     expect(surface.style.color).toBe("rgb(24, 52, 71)")
     expect(surface.style.backdropFilter).toBe("")
-    expect(surface.querySelector<HTMLElement>("[data-material-backdrop='frost']")?.style.backdropFilter).toBe("blur(5px) saturate(1.66)")
+    expect(surface.querySelector("[data-material-backdrop]")).toBeNull()
     expect(surface.style.position).toBe("relative")
     expect(surface.style.isolation).toBe("isolate")
     const border = required(surface.querySelector<HTMLElement>("[data-surface-edge]"))
@@ -206,9 +255,11 @@ describe("Surface", function () {
     expect(illumination.style.getPropertyValue("--phreshos-surface-edge-light-minimum")).toContain("24%")
     expect(illumination.style.maskComposite).toBe("exclude")
     expect(surface.querySelector("[data-surface-edge-glow]")).toBeNull()
-    expect(material.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("0.8")
+    expect(material.querySelector<HTMLElement>("[data-material-fill]")?.style.opacity).toBe("1")
     expect(base.style.background).toBe("rgb(255, 249, 245)")
     expect(material.querySelector("[data-material-grain]")).not.toBeNull()
+    expect(material.querySelector<HTMLElement>("[data-material-grain]")?.style.opacity)
+      .toBe(String(defaultAppearance.material.light.grain))
     expect(material.querySelector<HTMLElement>("[data-material-grain]")?.style.backgroundImage).toContain("data:image/svg+xml")
     expect(material.querySelector("[data-material-distortion]")).toBeNull()
   })

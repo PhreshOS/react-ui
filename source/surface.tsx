@@ -2,7 +2,7 @@ import { createElement, forwardRef, useId } from "react"
 import type { ComponentPropsWithRef, ComponentPropsWithoutRef, CSSProperties, ElementType, ReactElement, ReactNode } from "react"
 import { useResolvedAppearance } from "./appearance-context.js"
 import { contrastingColor, defaultColor, resolveColor, type Color } from "./color.js"
-import { resolveMaterialOptions, type MaterialOptions, type MaterialOverrides } from "./material-options.js"
+import { resolveMaterialOptions, type MaterialMode, type MaterialOptions, type MaterialOverrides } from "./material-options.js"
 import { MaterialPaint } from "./material-paint.js"
 import { paintTransition, transitionTiming, visualTransition } from "./motion-style.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
@@ -10,7 +10,7 @@ import { resolveShadowOptions, shadowStyle, type ShadowOverrides } from "./shado
 import { SurfaceEdge } from "./surface-edge.js"
 import type { Direction } from "./direction.js"
 
-export type { MaterialOptions } from "./material-options.js"
+export type { MaterialMode, MaterialOptions } from "./material-options.js"
 export type { ShadowOptions } from "./shadow-options.js"
 
 export interface SurfaceOwnProps extends MaterialOverrides, ShadowOverrides, RadiusProps {
@@ -85,19 +85,35 @@ export const Surface = SurfaceRoot as SurfaceComponent
 
 function resolveSurface(
   color: Color | undefined,
-  options: boolean | MaterialOptions | undefined,
+  options: MaterialMode | MaterialOptions | undefined,
   resolved: ReturnType<typeof useResolvedAppearance>
 ) {
+  const mode = typeof options === "object" ? "full" : options ?? "opaque"
+  const level = materialLevel[mode]
   const material = resolveMaterialOptions(typeof options === "object" ? options : {}, resolved.material)
   const fill = resolveColor(color, resolved.colors)
+  const opacity = level >= materialLevel.translucent ? material.opacity : 1
+  const backdrop = level >= materialLevel.full
 
   return {
     ...material,
-    enabled: options !== false,
+    enabled: level >= materialLevel.opaque,
+    opacity,
+    fillOpacity: opacity,
+    backdrop: backdrop ? material.backdrop : 0,
+    distortion: backdrop ? material.distortion : 0,
+    saturation: backdrop ? material.saturation : 1,
     color: fill,
     foreground: contrastingColor(color ?? defaultColor, resolved.colors)
   }
 }
+
+const materialLevel = Object.freeze({
+  none: 0,
+  opaque: 1,
+  translucent: 2,
+  full: 3
+} satisfies Readonly<Record<MaterialMode, number>>)
 
 type ResolvedSurface = ReturnType<typeof resolveSurface>
 
@@ -112,7 +128,7 @@ function SurfaceLayers({ material, paintTransition }: Readonly<{
   material: ResolvedSurface
   paintTransition: CSSProperties
 }>) {
-  const filtersVisible = material.opacity < 1
+  const filtersVisible = material.fillOpacity < 1
   const backdrop = filtersVisible ? material.backdrop : 0
   const saturation = filtersVisible ? material.saturation : 1
   const distortion = filtersVisible ? material.distortion : 0
@@ -135,7 +151,7 @@ function SurfaceLayers({ material, paintTransition }: Readonly<{
       color={material.color}
       grain={material.grain}
       grainAmount={material.grainAmount}
-      opacity={material.opacity}
+      opacity={material.fillOpacity}
       transition={paintTransition}
     />
   </span>

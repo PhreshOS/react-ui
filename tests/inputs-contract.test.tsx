@@ -26,7 +26,7 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on th
     expect(indicator?.tagName).toBe("SPAN")
     expect(indicator?.style.background).toBe("transparent")
     expect(indicator?.style.boxShadow).toBe(shadowStyle(defaultAppearance.shadow.light))
-    expect((material as HTMLElement | null)?.style.opacity).toBe(String(defaultAppearance.material.light.opacity))
+    expect((material as HTMLElement | null)?.style.opacity).toBe("1")
     expect(css(base?.style.background ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
 
     const user = userEvent.setup()

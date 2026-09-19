@@ -31,7 +31,7 @@ it("consumes Appearance timing and limits transitions to explicit visual propert
   expect(light?.style.transitionDuration).toBe(host.style.transitionDuration)
   expect(host.querySelector("[data-surface-palette]")).toBeNull()
   expect(host.style.transitionProperty).not.toMatch(/opacity|filter|transform|width|height|all/)
-  expect(host.querySelector<HTMLElement>("[data-material-backdrop]")?.style.transitionProperty).toBe("")
+  expect(host.querySelector("[data-material-backdrop]")).toBeNull()
   expect(controlTransition(appearance.transaction, true)).toEqual({ type: "tween", duration: 0.24, ease: "easeInOut" })
 })
 

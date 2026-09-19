@@ -31,6 +31,7 @@ export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
 export {
   Surface,
+  type MaterialMode,
   type MaterialOptions,
   type ShadowOptions,
   type SurfaceComponent,
@@ -51,25 +52,18 @@ export {
   type PanelContentProps
 } from "./panel.js"
 export {
-  WindowHeader,
-  WindowHeaderRoot,
-  WindowHeaderIdentity,
-  WindowHeaderCenter,
-  WindowHeaderActions,
-  WindowHeaderAction,
-  WindowHeaderMinimize,
-  WindowHeaderMaximize,
-  WindowHeaderClose,
+  Window,
+  type WindowProps,
+  type WindowContentProps,
   type WindowHeaderProps,
-  type WindowHeaderRootProps,
-  type WindowHeaderIdentityProps,
-  type WindowHeaderCenterProps,
-  type WindowHeaderActionsProps,
-  type WindowHeaderActionProps,
-  type WindowHeaderControlProps,
-  type WindowHeaderMaximizeProps,
-  type WindowHeaderCloseProps
-} from "./window-header.js"
+  type WindowIdentityProps,
+  type WindowCenterProps,
+  type WindowActionsProps,
+  type WindowActionProps,
+  type WindowControlProps,
+  type WindowMaximizeProps,
+  type WindowCloseProps
+} from "./window.js"
 export { Button, type ButtonColor, type ButtonProps } from "./button.js"
 export { Input, type InputProps } from "./input.js"
 export { Textarea, type TextareaProps } from "./textarea.js"

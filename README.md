@@ -115,11 +115,17 @@ required geometry.
 `MaterialOptions` defines `opacity`, `backdrop`, `grain`, `grainAmount`,
 `distortion`, and `saturation`. Every material-bearing component, including
 Surface, exposes these values through its `material` prop. Color remains a
-separate property. Omission or `true` uses `appearance.material`; `false`
-removes the material and paints the resolved color as a normal background.
-Effect options accept a scale level or a direct number;
-opacity affects Surface paint only, never its content. The material edge is part
-of the same Surface rather than a second public entity.
+separate property. Omission uses the resource-efficient `basic` rendering mode.
+`none` ignores Material and paints the resolved color as a normal background;
+`full` applies every resolved Material value. A `MaterialOptions` object selects
+full rendering with those overrides. Effect options accept a scale level or a
+direct number; opacity affects Surface paint only, never its content. The
+material edge is part of the same Surface rather than a second public entity.
+
+Basic rendering preserves Material paint, grain, and its edge without exposing
+or processing the backdrop. Its base is opaque, while the resolved Material
+opacity continues to attenuate the grain and edge so their visual strength stays
+consistent with full rendering.
 
 Surface-based controls expose the same separate `color` and `material` props.
 `ShadowOptions` similarly groups `x`, `y`, `blur`, `spread`, and `opacity` under
@@ -133,7 +139,8 @@ to its options, and a Radio can override them. Shadow follows the same targets a
 inheritance path.
 
 ```tsx
-<Button color="primary:base" material={{ opacity: 0.6, backdrop: 0 }}>Save</Button>
+<Button color="primary:base" material="full">Save</Button>
+<Surface material={{ opacity: 0.6, backdrop: 0 }}>Translucent</Surface>
 <Input label="Name" radius="large" material={{ grain: "small" }} shadow={{ blur: "small" }} />
 ```
 
@@ -154,23 +161,29 @@ Native properties and the root ref target the outer Surface. `Panel.Header`
 owns the optional leading region, while `Panel.Content` is the independently
 configurable inner Surface.
 
-`WindowHeader` provides the layout shared by Desktop-owned and application-owned
-window headers. `Identity` presents the icon and truncating title, `Center` is
-optional flexible space, and `Actions` aligns compact controls at the end. The
-header uses the enclosing Surface rather than creating another material layer.
-Its controls are React UI Buttons; callers connect them to their own window
-operations. Pointer and double-click handlers on the root can implement a drag
-area, while the center and actions keep their interactions separate.
+`Window` provides one Surface with a ready header-and-content layout.
+`Window.Header.Identity` presents the icon and truncating title,
+`Window.Header.Center` is optional flexible space, and
+`Window.Header.Actions` aligns compact controls at the end. `Window.Content`
+fills the remaining area without deciding its overflow behavior. The header
+uses the enclosing Surface rather than creating another material layer, and it
+can also be composed independently inside any Surface. Its controls are React
+UI Buttons; callers connect them to their own window operations. Pointer and
+double-click handlers on the header can implement a drag area, while the center
+and actions keep their interactions separate.
 
 ```tsx
-<WindowHeader active={active} onPointerDown={beginDrag}>
-  <WindowHeader.Identity icon={icon} title={title} />
-  <WindowHeader.Actions>
-    <WindowHeader.Minimize onPress={minimize} />
-    <WindowHeader.Maximize maximized={maximized} onPress={toggleMaximize} />
-    <WindowHeader.Close onPress={close} />
-  </WindowHeader.Actions>
-</WindowHeader>
+<Window>
+  <Window.Header active={active} onPointerDown={beginDrag}>
+    <Window.Header.Identity icon={icon} title={title} />
+    <Window.Header.Actions>
+      <Window.Header.Minimize onPress={minimize} />
+      <Window.Header.Maximize maximized={maximized} onPress={toggleMaximize} />
+      <Window.Header.Close onPress={close} />
+    </Window.Header.Actions>
+  </Window.Header>
+  <Window.Content>{children}</Window.Content>
+</Window>
 ```
 
 ## Overlays
