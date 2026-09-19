@@ -4,7 +4,7 @@ import { Button as AriaButton } from "react-aria-components"
 import type { ButtonProps as AriaButtonProps } from "react-aria-components"
 import type { ScaleLevel } from "./scale.js"
 import type { RadiusProps } from "./radius.js"
-import { controlFontWeight, controlOpacity, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
+import { controlOpacity, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
 import { SurfaceButton } from "./control-surface.js"
 import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
@@ -126,7 +126,6 @@ function buttonStyle({
     cursor: disabled ? "not-allowed" : pending ? "progress" : "pointer",
     font: "inherit",
     fontSize: theme.fontSize,
-    fontWeight: controlFontWeight,
     lineHeight: 1,
     textAlign: "center",
     textDecoration: "none",

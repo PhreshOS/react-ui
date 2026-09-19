@@ -68,7 +68,7 @@ describe("Button", function () {
     expect(button.style.paddingInline).toBe(`${defaultAppearance.spacing * 2}px`)
     expect(button.style.borderRadius).toBe(`${defaultAppearance.radius * 0.25}px`)
     expect(button.style.color).toBe("rgb(24, 52, 71)")
-    expect(button.style.fontSize).toBe("1.25em")
+    expect(button.style.fontSize).toBe("0.9375em")
   })
 
   it("uses Appearance's default color by default", function () {
@@ -77,7 +77,8 @@ describe("Button", function () {
     expect(materialColor(button)).toBe(cssBackground(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
     expect(button.style.background).toBe("transparent")
     expect(button.style.height).toBe("36px")
-    expect(button.style.fontSize).toBe("1em")
+    expect(button.style.fontSize).toBe("0.8125em")
+    expect(button.style.fontWeight).toBe("inherit")
     expect(button.style.boxShadow).toBe(shadowStyle(defaultAppearance.shadow.light))
     expect(button.style.transform).toBe("")
     expect(button.style.backgroundImage).toBe("none")
@@ -102,7 +103,7 @@ describe("Button", function () {
   })
 
   it.each<[ScaleLevel, number, string]>([
-    ["xsmall", 27, "0.8125em"], ["small", 30, "0.875em"], ["medium", 36, "1em"], ["large", 42, "1.125em"], ["xlarge", 48, "1.25em"]
+    ["xsmall", 27, "0.6875em"], ["small", 30, "0.75em"], ["medium", 36, "0.8125em"], ["large", 42, "0.875em"], ["xlarge", 48, "0.9375em"]
   ])("derives the %s size without scaling content", function (size, height, fontSize) {
     renderButton(<Button size={size}>Continue</Button>)
     const button = screen.getByRole("button")

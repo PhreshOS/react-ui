@@ -33,11 +33,11 @@ export interface FieldProps {
 export type ControlOverrides = keyof ControlProps | keyof FieldProps | "children" | "isDisabled" | "isRequired" | "isInvalid"
 
 export const controlFontSizes: Readonly<Record<ScaleLevel, CSSProperties["fontSize"]>> = Object.freeze({
-    xsmall: "0.8125em",
-    small: "0.875em",
-    medium: "1em",
-    large: "1.125em",
-    xlarge: "1.25em"
+    xsmall: "0.6875em",
+    small: "0.75em",
+    medium: "0.8125em",
+    large: "0.875em",
+    xlarge: "0.9375em"
 })
 
 /** Shared interaction attenuation, derived consistently across control families. */

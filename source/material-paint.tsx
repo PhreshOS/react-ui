@@ -14,10 +14,13 @@ interface MaterialPaintProps {
 /** The fill, refraction definition, and grain of one Surface. */
 export function MaterialPaint({ color, distortion, grain, grainAmount, identity, opacity, transition }: MaterialPaintProps) {
   const grainSeed = useMemo(() => grainSeeds[seedFrom(identity) % grainSeeds.length] ?? grainSeeds[0], [identity])
-  const grainResource = useMemo(() => grainImage(grainSeed, grainAmount), [grainSeed, grainAmount])
   const hasPaint = opacity > 0
   const hasGrain = hasPaint && grain > 0 && grainAmount > 0
   const hasDistortion = distortion > 0
+  const grainResource = useMemo(
+    () => hasGrain ? grainImage(grainSeed, grainAmount) : null,
+    [grainSeed, grainAmount, hasGrain]
+  )
 
   if (!hasPaint && !hasDistortion) return null
 
@@ -52,11 +55,12 @@ export function MaterialPaint({ color, distortion, grain, grainAmount, identity,
           position: "absolute",
           inset: 0,
           borderRadius: "inherit",
-          backgroundImage: grainResource,
+          backgroundImage: grainResource ?? undefined,
           backgroundRepeat: "repeat",
           backgroundSize: `${patternSize}px ${patternSize}px`,
-          mixBlendMode: "soft-light",
-          opacity: grain
+          opacity: grain,
+          ...transition,
+          transitionProperty: "opacity"
         }} />}
       </span>}
     </span>
@@ -101,8 +105,50 @@ function DistortionFilter({ distortion, identity }: Readonly<{
 }
 
 function grainImage(seed: number, amount: number) {
-  const threshold = -20 * (1 - amount)
-  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${patternSize}" height="${patternSize}" viewBox="0 0 ${patternSize} ${patternSize}"><filter id="n" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".82" numOctaves="3" seed="${seed}" stitchTiles="stitch"/><feColorMatrix type="matrix" values=".333 .333 .333 0 0 .333 .333 .333 0 0 .333 .333 .333 0 0 .333 .333 .333 0 0"/><feComponentTransfer><feFuncA type="linear" slope="20" intercept="${threshold}"/></feComponentTransfer></filter><rect width="100%" height="100%" filter="url(#n)"/></svg>`)}")`
+  const paths = grainPaths(seed, amount)
+    .map((path, tone) => path
+      ? `<path d="${path}" fill="rgb(${toneChannel(tone)} ${toneChannel(tone)} ${toneChannel(tone)})"/>`
+      : "")
+    .join("")
+
+  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${patternSize}" height="${patternSize}" viewBox="0 0 ${patternSize} ${patternSize}">${paths}</svg>`)}")`
+}
+
+/** Preserve the original contract: amount is the monotonic density of visible grain pixels. */
+function grainPaths(seed: number, amount: number) {
+  const tones = Array.from({ length: toneCount }, () => [] as string[])
+
+  for (let y = 0; y < patternSize; y += 1) {
+    for (let x = 0; x < patternSize; x += 1) {
+      const pointX = x + seed * 41
+      const pointY = y + seed * 17
+      const presence = shaderHash(pointX + 71.9, pointY + 13.7)
+      if (presence > amount) continue
+
+      const fine = shaderHash(Math.floor(pointX * 1.18), Math.floor(pointY * 1.18))
+      const clustered = shaderHash(Math.floor(pointX * 0.47) + 31.7, Math.floor(pointY * 0.47) + 31.7)
+      const value = clamp(fine * 0.8 + clustered * 0.2, 0, 1)
+      const tone = Math.min(toneCount - 1, Math.floor(value * toneCount))
+      tones[tone]?.push(`M${x} ${y}h1v1h-1z`)
+    }
+  }
+
+  return tones.map(tone => tone.join(""))
+}
+
+function toneChannel(tone: number) {
+  return Math.round(tone / (toneCount - 1) * 255)
+}
+
+function shaderHash(x: number, y: number) {
+  let red = fract(x * 0.1031)
+  let green = fract(y * 0.1031)
+  let blue = fract(x * 0.1031)
+  const product = red * (green + 33.33) + green * (blue + 33.33) + blue * (red + 33.33)
+  red += product
+  green += product
+  blue += product
+  return fract((red + green) * blue)
 }
 
 function seedFrom(value: string) {
@@ -114,5 +160,14 @@ function seedFrom(value: string) {
   return (seed >>> 0) % 997 + 1
 }
 
+function fract(value: number) {
+  return value - Math.floor(value)
+}
+
+function clamp(value: number, minimum: number, maximum: number) {
+  return Math.min(maximum, Math.max(minimum, value))
+}
+
 const patternSize = 64
+const toneCount = 16
 const grainSeeds = [19, 47, 83, 131] as const

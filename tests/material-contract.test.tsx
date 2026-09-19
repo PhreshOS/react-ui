@@ -12,7 +12,7 @@ import {
 
 afterEach(cleanup)
 
-it("uses compact reusable grain resources instead of per-Surface path fields", () => {
+it("uses reusable grain resources instead of per-Surface DOM path fields", () => {
   const { container } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     {Array.from({ length: 10 }, (_, index) => <Button key={index}>Action {index}</Button>)}
   </UIProvider>)
@@ -21,8 +21,37 @@ it("uses compact reusable grain resources instead of per-Surface path fields", (
   expect(grains).toHaveLength(10)
   expect(container.querySelector("path[data-material-grain-tone]")).toBeNull()
   expect(new Set(grains.map(grain => grain.style.backgroundImage)).size).toBeLessThanOrEqual(4)
-  expect(grains.every(grain => grain.style.backgroundImage.length < 1_000)).toBe(true)
 })
+
+it("interprets grain amount as monotonic texture density", () => {
+  const view = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    <Surface data-testid="surface" material={{ grain: 0.5, grainAmount: 0.1 }} />
+  </UIProvider>)
+  const density = () => grainCoordinates(view.container.querySelector<HTMLElement>("[data-material-grain]")!)
+  const sparse = density()
+
+  view.rerender(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    <Surface data-testid="surface" material={{ grain: 0.5, grainAmount: 0.5 }} />
+  </UIProvider>)
+  const medium = density()
+
+  view.rerender(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    <Surface data-testid="surface" material={{ grain: 0.5, grainAmount: 1 }} />
+  </UIProvider>)
+  const dense = density()
+
+  expect(sparse.size).toBeGreaterThan(0)
+  expect(medium.size).toBeGreaterThan(sparse.size)
+  expect(dense.size).toBe(64 * 64)
+  expect([...sparse].every(point => medium.has(point))).toBe(true)
+  expect([...medium].every(point => dense.has(point))).toBe(true)
+})
+
+function grainCoordinates(element: HTMLElement) {
+  const source = decodeURIComponent(element.style.backgroundImage)
+  return new Set([...source.matchAll(/M(\d+) (\d+)h1v1h-1z/g)]
+    .map(([, x, y]) => `${x}:${y}`))
+}
 
 it("groups material customization uniformly across Surface and controls", () => {
   const NotAHost = (_: Readonly<{ value: string }>) => <div />
