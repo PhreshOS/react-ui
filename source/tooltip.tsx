@@ -83,7 +83,6 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
 
 /** A description shown from the focus and hover state of its trigger. */
 export const Tooltip = Object.assign(TooltipRoot, {
-  Root: TooltipRoot,
   Trigger: TooltipTrigger,
   Content: TooltipContent
 })

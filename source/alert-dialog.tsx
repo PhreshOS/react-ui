@@ -39,7 +39,6 @@ export const AlertDialogContent = forwardRef<HTMLElement, AlertDialogContentProp
 
 /** A dialog requiring an explicit decision rather than ambient dismissal. */
 export const AlertDialog = Object.assign(AlertDialogRoot, {
-  Root: AlertDialogRoot,
   Trigger: DialogTrigger,
   Backdrop: AlertDialogBackdrop,
   Content: AlertDialogContent,

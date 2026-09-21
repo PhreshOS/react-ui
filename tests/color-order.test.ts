@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest"
-import { colorShade, opaqueColor, onColor, orderColors, resolveColorLevel, solidColors } from "../source/color.js"
-import { contrastWCAG21, parse, to } from "colorjs.io/fn"
+import { colorLightness, colorShade, opaqueColor, onColor, orderColors, resolveColorLevel, solidColors } from "../source/color.js"
+import { parse, to } from "colorjs.io/fn"
 
 describe("color lightness", () => {
   it.each([
@@ -25,7 +25,7 @@ describe("solid control colors", () => {
     expect(result.coords[0]).toBeCloseTo(0.4 * 0.6 + 0.4, 4)
   })
 
-  it.each(["#3465ce", "#777777", "yellow", "hsl(180 60% 35%)", "oklch(70% .12 40)", "color(display-p3 .2 .8 .1)"])("keeps the base contrast choice for every shade of %s", base => {
+  it.each(["#3465ce", "#777777", "yellow", "hsl(180 60% 35%)", "oklch(70% .12 40)", "color(display-p3 .2 .8 .1)"])("keeps the base perceptual choice for every shade of %s", base => {
     for (const [background, foreground] of [["#faf0e0", "#101820"], ["#101820", "#faf0e0"]]) {
       const paints = solidColors(base, background!, foreground!)
       expect(paints.rest.background).toBe(resolveColorLevel(base, "base"))
@@ -35,13 +35,17 @@ describe("solid control colors", () => {
         expect(choices).toContain(paint.color)
         expect(paint.color).toBe(paints.rest.color)
       }
-      expect(contrastWCAG21(paints.rest.background, paints.rest.color)).toBe(Math.max(...choices.map(color => contrastWCAG21(paints.rest.background, color))))
+      const ordered = orderColors(choices[0]!, choices[1]!)
+      const darker = colorLightness(ordered.darker)
+      const lighter = colorLightness(ordered.lighter)
+      const threshold = darker + (lighter - darker) * 2 / 3
+      expect(paints.rest.color).toBe(colorLightness(paints.rest.background) < threshold ? ordered.lighter : ordered.darker)
       expect(new Set(Object.values(paints).map(paint => paint.background)).size).toBe(3)
     }
   })
 
-  it("does not switch text when an interaction shade crosses the contrast threshold", () => {
-    const paints = solidColors("oklch(55% 0 0)", "white", "black")
+  it("does not switch text when an interaction shade crosses the perceptual boundary", () => {
+    const paints = solidColors("oklch(59% 0 0)", "white", "black")
     expect(onColor(paints.pressed.background, "white", "black")).not.toBe(paints.rest.color)
     expect(paints.hover.color).toBe(paints.rest.color)
     expect(paints.pressed.color).toBe(paints.rest.color)
@@ -59,6 +63,14 @@ describe("solid control colors", () => {
   it("chooses background for a dark fill and foreground for a pale fill when those are the contrasting candidates", () => {
     expect(onColor("navy", "white", "black")).toBe(opaqueColor("white"))
     expect(onColor("yellow", "white", "black")).toBe(opaqueColor("black"))
+  })
+
+  it("gives the current dark success color the lighter Appearance candidate", () => {
+    expect(onColor("#16a34a", "#fff9f5", "#183447")).toBe(opaqueColor("#fff9f5"))
+  })
+
+  it("gives the current dark-theme danger color the lighter Appearance candidate", () => {
+    expect(onColor("#f87171", "#121a21", "#edf8fc")).toBe(opaqueColor("#edf8fc"))
   })
 
   it("does not carry alpha from the source color into solid paint", () => {

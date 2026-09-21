@@ -5,9 +5,9 @@ import type { ComponentPropsWithoutRef } from "react"
 import { afterEach, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "../source/main.js"
 import {
-  UIProvider, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Radio, Grid,
+  UIProvider, Surface, Button, Input, Textarea, Select, Checkbox, Switch, RadioGroup, Grid,
   type MaterialMode, type MaterialOptions, type ShadowOptions, type SurfaceHost, type SurfaceProps,
-  type ButtonProps, type InputProps, type CheckboxProps, type SwitchProps, type RadioProps, type SelectProps
+  type ButtonProps, type InputProps, type CheckboxProps, type SwitchProps, type RadioGroupItemProps, type SelectProps
 } from "../source/main.js"
 
 afterEach(cleanup)
@@ -68,12 +68,12 @@ it("groups material customization uniformly across Surface and controls", () => 
   expectTypeOf<InputProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<CheckboxProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<SwitchProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
-  expectTypeOf<RadioProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
+  expectTypeOf<RadioGroupItemProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<SelectProps["material"]>().toEqualTypeOf<ButtonProps["material"]>()
   expectTypeOf<InputProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
   expectTypeOf<CheckboxProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
   expectTypeOf<SwitchProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
-  expectTypeOf<RadioProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
+  expectTypeOf<RadioGroupItemProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
   expectTypeOf<SelectProps["shadow"]>().toEqualTypeOf<ButtonProps["shadow"]>()
 })
 
@@ -84,7 +84,7 @@ it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"]
     : kind === "select" ? <Select label="Value" material="none" shadow={false} options={[{ value: "one", label: "One" }]} />
     : kind === "checkbox" ? <Checkbox label="Value" material="none" shadow={false} />
     : kind === "switch" ? <Switch label="Value" material="none" shadow={false} />
-    : <RadioGroup label="Values" material="none" shadow={false}><Radio label="Value" value="one" /></RadioGroup>
+    : <RadioGroup label="Values" material="none" shadow={false}><RadioGroup.Item label="Value" value="one" /></RadioGroup>
   const { container } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{example}</UIProvider>)
   const host = [...container.querySelectorAll<HTMLElement>("*")]
     .find(element => element.style.boxShadow === "none")
@@ -166,7 +166,7 @@ it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"]
     : kind === "select" ? <Select label="Value" color="#345678" material={material} options={[{ value: "one", label: "One" }]} onChange={action} />
     : kind === "checkbox" ? <Checkbox label="Value" color="#345678" material={material} onChange={action} />
     : kind === "switch" ? <Switch label="Value" color="#345678" material={material} onChange={action} />
-    : <RadioGroup label="Values" color="#345678" material={material} onChange={action}><Radio label="Value" value="one" /></RadioGroup>
+    : <RadioGroup label="Values" color="#345678" material={material} onChange={action}><RadioGroup.Item label="Value" value="one" /></RadioGroup>
   const { container } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{example}</UIProvider>)
   const base = container.querySelector<HTMLElement>("[data-material-base]")
 
@@ -186,11 +186,11 @@ it.each(["button", "input", "textarea", "select", "checkbox", "switch", "radio"]
   expect(action).toHaveBeenCalled()
 })
 
-it("lets a Radio override its group's material independently from color and radius", () => {
+it("lets a RadioGroup Item override its group's material independently from color and radius", () => {
   render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     <RadioGroup label="Choices" material={{ opacity: 0.6 }}>
-      <Radio label="One" value="one" />
-      <Radio label="Two" value="two" material={{ opacity: 0.3 }} />
+      <RadioGroup.Item label="One" value="one" />
+      <RadioGroup.Item label="Two" value="two" material={{ opacity: 0.3 }} />
     </RadioGroup>
     <Button data-testid="button" color="danger:base" radius="small" material={{ opacity: 0.4 }}>Action</Button>
   </UIProvider>)

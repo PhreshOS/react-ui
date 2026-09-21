@@ -17,8 +17,8 @@ import type {
 } from "react-aria-components"
 import { useAppearance } from "./ui-provider.js"
 import { useResolvedAppearance } from "./appearance-context.js"
-import { colorOpacity, orderColors } from "./color.js"
-import { controlFontWeight, controlOpacity } from "./control.js"
+import { colorOpacity, orderColors, resolveColor, type Color } from "./color.js"
+import { controlFontSizes, controlFontWeight, controlOpacity } from "./control.js"
 import { Button, type ButtonProps } from "./button.js"
 import MotionStyle, { backdropMotionClass, overlayMotionClass, overlayTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
@@ -37,21 +37,27 @@ export const DialogTrigger = forwardRef<HTMLButtonElement, DialogTriggerProps>(f
   return <Button {...properties} ref={ref} />
 })
 
-export interface DialogBackdropProps extends Omit<AriaModalOverlayProps, "children" | "className" | "style"> {
+export interface DialogBackdropProps extends Omit<AriaModalOverlayProps, "children" | "className" | "color" | "style"> {
   readonly children?: ReactNode
   readonly className?: string
+  /** Base color rendered with the backdrop's derived opacity. */
+  readonly color?: Color
   readonly style?: CSSProperties
 }
 
 export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(function DialogBackdrop({
   className,
+  color,
   style,
   ...properties
 }, ref) {
   const resolved = useResolvedAppearance()
   const inset = scale(resolved.appearance.spacing, "medium")
   const colors = resolved.colors
-  const backdrop = colorOpacity(orderColors(colors.background, colors.foreground).darker, 0.32)
+  const base = color === undefined
+    ? orderColors(colors.background, colors.foreground).darker
+    : resolveColor(color, colors)
+  const backdrop = colorOpacity(base, 0.32)
   const transition = overlayTransition(resolved.transaction, resolved.preferences.animations)
   const direction = resolveDirection(properties.dir, useDirection())
 
@@ -150,13 +156,28 @@ export const DialogHeader = forwardRef<HTMLDivElement, DialogHeaderProps>(functi
 export type DialogTitleProps = AriaHeadingProps
 
 export const DialogTitle = forwardRef<HTMLHeadingElement, DialogTitleProps>(function DialogTitle({ style, ...properties }, ref) {
-  return <AriaHeading {...properties} ref={ref} slot="title" style={{ margin: 0, font: "inherit", fontWeight: controlFontWeight, ...style }} />
+  // The modal is portalled: owned text parts set their relative scale directly,
+  // while Dialog.Body remains untouched for consumer-owned content and controls.
+  return <AriaHeading {...properties} ref={ref} slot="title" style={{
+    margin: 0,
+    fontFamily: "inherit",
+    fontSize: controlFontSizes.medium,
+    fontWeight: controlFontWeight,
+    lineHeight: 1.5,
+    ...style
+  }} />
 })
 
 export type DialogDescriptionProps = AriaTextProps
 
 export const DialogDescription = forwardRef<HTMLElement, DialogDescriptionProps>(function DialogDescription({ style, ...properties }, ref) {
-  return <AriaText {...properties} ref={ref} slot="description" style={{ margin: 0, opacity: controlOpacity.secondary, ...style }} />
+  return <AriaText {...properties} ref={ref} slot="description" style={{
+    margin: 0,
+    fontSize: controlFontSizes.medium,
+    lineHeight: 1.5,
+    opacity: controlOpacity.secondary,
+    ...style
+  }} />
 })
 
 export type DialogBodyProps = HTMLAttributes<HTMLDivElement>
@@ -180,7 +201,6 @@ export const DialogClose = forwardRef<HTMLButtonElement, DialogCloseProps>(funct
 
 /** A modal dialog whose behavioral and structural roles remain independently composable. */
 export const Dialog = Object.assign(DialogRoot, {
-  Root: DialogRoot,
   Trigger: DialogTrigger,
   Backdrop: DialogBackdrop,
   Content: DialogContent,

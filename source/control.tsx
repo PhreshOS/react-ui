@@ -4,7 +4,7 @@ import { FieldError, Label, Text } from "react-aria-components"
 import { useResolvedAppearance } from "./appearance-context.js"
 import { resolveRadius, type RadiusProps } from "./radius.js"
 import { scale, type ScaleLevel } from "./scale.js"
-import { colorOpacity, solidColors } from "./color.js"
+import { colorOpacity, solidColors, subtleColors } from "./color.js"
 import { resolveSolidColor, type Color } from "./color.js"
 import { controlTransition, visualTransition } from "./motion-style.js"
 import type { Transition } from "motion/react"
@@ -66,7 +66,7 @@ export interface ControlTheme {
     readonly danger: string
     readonly paints: {
         readonly palette: SolidColors
-        readonly neutral: SolidColors
+        readonly subtle: SolidColors
         readonly danger: SolidColors
     }
     readonly radius: CSSProperties["borderRadius"]
@@ -91,15 +91,15 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
     const spacing = scale(appearance.spacing, size)
     const foreground = colors.foreground
     const background = colors.background
+    // One owner-provided base drives every ordinary interaction state; adding
+    // hidden state colors here would make the public color contract incomplete.
     const tint = resolveSolidColor(color ?? "default:base", colors)
-    const neutral = resolveSolidColor("default:base", colors)
-    const focus = resolveSolidColor("warning:base", colors)
     const danger = resolveSolidColor("danger:base", colors)
     const paints = useMemo(() => ({
         palette: solidColors(tint, background, foreground),
-        neutral: solidColors(neutral, background, foreground),
+        subtle: subtleColors(tint, background, foreground),
         danger: solidColors(danger, background, foreground)
-    }), [tint, neutral, background, foreground, danger])
+    }), [tint, background, foreground, danger])
 
     return useMemo(() => ({
         transition,
@@ -109,7 +109,7 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
         foreground,
         background,
         tint,
-        focusColor: colorOpacity(focus, 0.2),
+        focusColor: colorOpacity(tint, 0.2),
         danger,
         paints,
         radius: resolveRadius(radius, appearance),
@@ -117,7 +117,7 @@ export function useControlTheme({ size = "medium", color, radius = "medium" }: C
         indicatorSize: Math.max(16, 16 + spacing / 4),
         height: Math.max(24, 24 + spacing),
         gap: Math.max(4, spacing / 2)
-    }), [appearance, colors, transition, motionTransition, resolved.preferences.animations, spacing, foreground, background, tint, focus, danger, paints, radius, size])
+    }), [appearance, colors, transition, motionTransition, resolved.preferences.animations, spacing, foreground, background, tint, danger, paints, radius, size])
 }
 
 export function fieldStyle(theme: ControlTheme, disabled = false, style?: CSSProperties): CSSProperties {
@@ -128,7 +128,6 @@ export function fieldStyle(theme: ControlTheme, disabled = false, style?: CSSPro
         display: "grid",
         gap: theme.gap,
         minWidth: 0,
-        color: theme.foreground,
         fontFamily: "inherit",
         fontSize: theme.fontSize,
         lineHeight: 1.5,

@@ -37,7 +37,7 @@ test("package contract", async () => {
     assert(paths.has("dist/window.d.ts"), "the package has no Window contract")
     assert(!paths.has("dist/window-header.js"), "the removed WindowHeader implementation entered the package")
     assert(!paths.has("dist/window-header.d.ts"), "the removed WindowHeader contract entered the package")
-    for (const name of ["ui-provider", "direction", "input", "textarea", "checkbox", "radio", "switch", "select", "slider", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
+    for (const name of ["ui-provider", "direction", "input", "textarea", "date-field", "time-field", "date-picker", "checkbox", "radio", "switch", "select", "slider", "progress-bar", "toolbar", "disclosure", "accordion", "tree", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
       assert(paths.has(`dist/${name}.js`), `the package has no ${name} implementation`)
       assert(paths.has(`dist/${name}.d.ts`), `the package has no ${name} contract`)
     }
@@ -87,13 +87,13 @@ test("package contract", async () => {
   import * as icons from "@phreshos/react-ui/icons"
   import * as reactUI from "@phreshos/react-ui"
   import {
-    AlertDialog, Button, ContextMenu, Dialog, DropdownMenu,
+    Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu,
     Flex,
     Grid,
-    Menu, Panel, Popover,
+    ListBox, Menu, Panel, Popover, Table, Tabs,
     Surface, Window,
     Tooltip,
-    Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider,
+    Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree,
     UIProvider,
     defaultAppearance,
     resolveRadius,
@@ -106,12 +106,27 @@ test("package contract", async () => {
     useScale
   } from "@phreshos/react-ui"
 
-  for (const exported of [UIProvider, AlertDialog, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Window, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale]) {
+  for (const exported of [UIProvider, Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu, Flex, Grid, ListBox, Menu, Panel, Popover, Surface, Table, Tabs, Window, Tooltip, Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale]) {
     assert.notEqual(exported, undefined)
   }
   assert.equal("signInWallpaper" in defaultAppearance, false)
   assert.equal("desktopWallpaper" in defaultAppearance, false)
   assert.equal("WindowHeader" in reactUI, false)
+  for (const name of [
+    "Radio", "PanelRoot", "PanelHeader", "PanelContent", "ListBoxRoot", "ListBoxItem", "ListBoxSection", "ListBoxHeader",
+    "TabsRoot", "TabsList", "TabsTab", "TabsPanels", "TabsPanel", "TableRoot", "TableHeader", "TableColumn", "TableBody", "TableRow", "TableCell",
+    "TreeRoot", "TreeItem", "TreeContent", "TreeCollection", "ToolbarRoot", "ToolbarGroup", "ToolbarSeparator",
+    "DisclosureRoot", "DisclosureTrigger", "DisclosureContent", "AccordionRoot", "AccordionItem",
+    "PopoverRoot", "PopoverTrigger", "PopoverContent", "PopoverDialog", "PopoverTitle", "PopoverClose",
+    "MenuRoot", "MenuItem", "MenuSection", "MenuHeader", "MenuSeparator", "DropdownMenuRoot", "DropdownMenuTrigger",
+    "ContextMenuRoot", "ContextMenuTrigger", "ContextMenuContent", "DialogRoot", "DialogTrigger", "DialogBackdrop", "DialogContent",
+    "DialogHeader", "DialogTitle", "DialogDescription", "DialogBody", "DialogFooter", "DialogClose",
+    "AlertDialogRoot", "AlertDialogBackdrop", "AlertDialogContent", "TooltipRoot", "TooltipTrigger", "TooltipContent"
+  ]) assert.equal(name in reactUI, false, name + " escaped its component family")
+  for (const family of [Accordion, AlertDialog, ContextMenu, Dialog, Disclosure, DropdownMenu, ListBox, Menu, Panel, Popover, RadioGroup, Table, Tabs, Toolbar, Tree, Tooltip, Window]) {
+    assert.equal("Root" in family, false)
+  }
+  assert.notEqual(RadioGroup.Item, undefined)
   assert.deepEqual(Object.keys(icons), [])
   `
     )
@@ -119,7 +134,8 @@ test("package contract", async () => {
 
     writeFileSync(
       join(consumer, "consumer.tsx"),
-      `import { AlertDialog, UIProvider, Button, ContextMenu, Dialog, DropdownMenu, Flex, Grid, Menu, Panel, Popover, Surface, Window, Tooltip, Input, Textarea, Checkbox, Radio, RadioGroup, Switch, Select, Slider, defaultAppearance, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type Preferences } from "@phreshos/react-ui"
+      `import { Accordion, AlertDialog, UIProvider, Button, Calendar, ContextMenu, DateRangePicker, Dialog, Disclosure, DropdownMenu, Flex, Grid, Menu, Panel, Popover, RangeCalendar, Surface, Window, Tooltip, Input, Textarea, DateField, TimeField, DatePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, defaultAppearance, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type Preferences } from "@phreshos/react-ui"
+  import { CalendarDate, Time } from "@internationalized/date"
 
   const surface = <Surface as="button" type="button" color="background:soft" material={{ opacity: 0.4 }}>Surface</Surface>
   const standalone = <Button>Default Appearance and browser Preferences</Button>
@@ -168,11 +184,18 @@ test("package contract", async () => {
             <Derived />
             <Input label="Name" onChange={value => value.toUpperCase()} />
             <Textarea label="Notes" rows={3} />
+            <DateField label="Date" defaultValue={new CalendarDate(2026, 9, 21)} />
+            <TimeField label="Time" defaultValue={new Time(9, 30)} />
+            <DatePicker label="Date with calendar" defaultValue={new CalendarDate(2026, 9, 21)} />
+            <Calendar aria-label="Calendar" defaultValue={new CalendarDate(2026, 9, 21)} />
+            <RangeCalendar aria-label="Range calendar" defaultValue={{ start: new CalendarDate(2026, 9, 21), end: new CalendarDate(2026, 9, 24) }} />
+            <DateRangePicker label="Date range" defaultValue={{ start: new CalendarDate(2026, 9, 21), end: new CalendarDate(2026, 9, 24) }} />
             <Checkbox label="Remember" onChange={value => !value} />
             <Switch label="Enabled" defaultChecked />
-            <RadioGroup label="Mode" defaultValue="one"><Radio label="One" value="one" /></RadioGroup>
+            <RadioGroup label="Mode" defaultValue="one"><RadioGroup.Item label="One" value="one" /></RadioGroup>
             <Select label="Choice" options={[{value: "one", label: "One"}]} onChange={value => value?.toUpperCase()} />
             <Slider label="Volume" onChange={value => value.toFixed(0)} />
+            <ProgressBar label="Upload" value={40} />
           </Flex>
         </Grid></Panel.Content>
       </Panel>
@@ -187,6 +210,10 @@ test("package contract", async () => {
       <Dialog><Dialog.Trigger>Open</Dialog.Trigger><Dialog.Backdrop><Dialog.Content><Dialog.Title>Dialog</Dialog.Title><Dialog.Close>Close</Dialog.Close></Dialog.Content></Dialog.Backdrop></Dialog>
       <AlertDialog><AlertDialog.Trigger>Delete</AlertDialog.Trigger><AlertDialog.Backdrop><AlertDialog.Content><AlertDialog.Title>Delete?</AlertDialog.Title><AlertDialog.Close>Cancel</AlertDialog.Close></AlertDialog.Content></AlertDialog.Backdrop></AlertDialog>
       <Tooltip><Tooltip.Trigger>Help</Tooltip.Trigger><Tooltip.Content>Help text</Tooltip.Content></Tooltip>
+      <Toolbar aria-label="Document actions"><Toolbar.Group aria-label="History"><Button>Undo</Button><Button>Redo</Button></Toolbar.Group><Toolbar.Separator /><Button>Save</Button></Toolbar>
+      <Disclosure><Disclosure.Trigger>Details</Disclosure.Trigger><Disclosure.Content>Content</Disclosure.Content></Disclosure>
+      <Accordion defaultValue="general"><Accordion.Item id="general"><Accordion.Trigger>General</Accordion.Trigger><Accordion.Content>Settings</Accordion.Content></Accordion.Item></Accordion>
+      <Tree aria-label="Files" defaultExpanded={["source"]}><Tree.Item id="source" textValue="Source"><Tree.Content>Source</Tree.Content><Tree.Item id="main" textValue="main.ts"><Tree.Content>main.ts</Tree.Content></Tree.Item></Tree.Item></Tree>
       <Direction />
     </UIProvider>
   )

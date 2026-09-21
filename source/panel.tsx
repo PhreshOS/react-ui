@@ -77,7 +77,6 @@ export const PanelContent = forwardRef<HTMLDivElement, PanelContentProps>(functi
 
 /** A material shell whose named parts remain independently composable. */
 export const Panel = Object.assign(PanelRoot, {
-  Root: PanelRoot,
   Header: PanelHeader,
   Content: PanelContent
 })

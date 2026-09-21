@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, expect, it, vi } from "vitest"
-import { UIProvider, Radio, RadioGroup, Select, Slider, useDirection, useDocumentDirection } from "../source/main.js"
+import { UIProvider, RadioGroup, Select, Slider, useDirection, useDocumentDirection } from "../source/main.js"
 
 afterEach(function () {
   document.documentElement.removeAttribute("dir")
@@ -92,9 +92,9 @@ it("keeps directional keyboard behavior and portalled layout in RTL", async func
   render(<UIProvider direction="rtl">
     <Slider aria-label="Value" minValue={10} maxValue={30} step={5} defaultValue={20} />
     <RadioGroup aria-label="Choice" orientation="horizontal" defaultValue="two">
-      <Radio value="one" label="One" />
-      <Radio value="two" label="Two" />
-      <Radio value="three" label="Three" />
+      <RadioGroup.Item value="one" label="One" />
+      <RadioGroup.Item value="two" label="Two" />
+      <RadioGroup.Item value="three" label="Three" />
     </RadioGroup>
     <Select aria-label="Choice" options={[{ value: "one", label: "One" }]} />
   </UIProvider>)

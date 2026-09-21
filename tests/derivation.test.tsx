@@ -1,6 +1,6 @@
 import { renderHook } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
-import { useColor, useScale } from "../source/main.js"
+import { defaultAppearance, resolveRadius, resolveSpacing, useColor, useScale } from "../source/main.js"
 import { color } from "../source/color.js"
 import { isScaleLevel, scaleMultiplier } from "../source/scale.js"
 
@@ -36,5 +36,14 @@ describe("visual derivation", function () {
     expect(scaleMultiplier(1.8, "medium")).toBe(1.8)
     expect(isScaleLevel("medium")).toBe(true)
     expect(isScaleLevel("full")).toBe(false)
+  })
+
+  it("requires Appearance only when resolving semantic spacing and radius", function () {
+    expect(resolveSpacing("small", defaultAppearance)).toBe(6)
+    expect(resolveRadius("small", defaultAppearance)).toBe(5)
+    expect(resolveSpacing(8, null)).toBe(8)
+    expect(resolveRadius("1rem", null)).toBe("1rem")
+    expect(() => resolveSpacing("small", null)).toThrow("Appearance value")
+    expect(() => resolveRadius("small", null)).toThrow("Appearance value")
   })
 })

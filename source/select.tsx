@@ -1,5 +1,5 @@
 import { forwardRef, useMemo } from "react"
-import { Select as AriaSelect, Button, SelectValue, ListBox, ListBoxItem } from "react-aria-components"
+import { Select as AriaSelect, Button, SelectValue } from "react-aria-components"
 import type { SelectProps as AriaSelectProps } from "react-aria-components"
 import { controlOpacity, controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
 import { SurfaceButton } from "./control-surface.js"
@@ -10,6 +10,7 @@ import type { MaterialOverrides } from "./material-options.js"
 import type { ShadowOverrides } from "./shadow-options.js"
 import { PopoverContent } from "./popover.js"
 import { resolveDirection, useDirection } from "./direction.js"
+import { ListBox } from "./list-box.js"
 
 export interface SelectOption {
     readonly value: string
@@ -53,26 +54,15 @@ export const Select = forwardRef<HTMLDivElement, SelectProps>(function Select({
             <PopoverContent dir={direction} placement="bottom start" offset={theme.gap} style={{
                 width: "var(--trigger-width)",
                 maxHeight: `min(calc(100vh - ${theme.spacing * 2}px), ${theme.height * 8}px)`,
-                padding: theme.gap,
+                padding: 0,
                 display: "flex",
                 flexDirection: "column"
             }}>
                     <ScrollArea style={{ flex: "1 1 auto", minHeight: 0 }}>
-                        <ListBox shouldFocusOnHover={false} style={{ display: "grid", gap: theme.gap, outline: "none", fontSize: theme.fontSize, color: theme.foreground }}>
-                            {options.map(option => <ListBoxItem key={option.value} id={option.value} textValue={option.label} style={item => ({
-                                ...theme.transition,
-                                display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap,
-                                minHeight: theme.height, paddingInline: Math.max(8, theme.spacing), boxSizing: "border-box",
-                                borderRadius: theme.radius,
-                                outline: item.isFocusVisible && !item.isSelected ? `1px solid ${theme.focusColor}` : "none", outlineOffset: 1,
-                                cursor: item.isDisabled ? "not-allowed" : "pointer",
-                                opacity: item.isDisabled ? controlOpacity.disabled : 1,
-                                ...(item.isSelected
-                                    ? item.isPressed ? theme.paints.palette.pressed : item.isHovered ? theme.paints.palette.hover : theme.paints.palette.rest
-                                    : item.isHovered ? theme.paints.neutral.hover : { background: "transparent", color: theme.foreground })
-                            })}>
-                                {item => <>{option.label}<span aria-hidden="true">{item.isSelected ? "✓" : null}</span></>}
-                            </ListBoxItem>)}
+                        <ListBox color={color} radius={radius} size={size}>
+                            {options.map(option => <ListBox.Item key={option.value} id={option.value} textValue={option.label} disabled={option.disabled}>
+                                {option.label}
+                            </ListBox.Item>)}
                         </ListBox>
                     </ScrollArea>
             </PopoverContent>

@@ -22,7 +22,7 @@ export function ToggleIndicator({ kind, direction = "ltr", selected, indetermina
     const { animations, motionTransition: transition } = theme
     const diameter = theme.indicatorSize
     const active = selected || indeterminate
-    const paints = invalid ? theme.paints.danger : active ? theme.paints.palette : theme.paints.neutral
+    const paints = invalid ? theme.paints.danger : active ? theme.paints.palette : theme.paints.subtle
     const paint = pressed ? paints.pressed : hovered ? paints.hover : paints.rest
     const radius = kind === "checkbox" ? Math.min(diameter / 4, typeof theme.radius === "number" ? theme.radius : diameter / 4) : diameter
     const switching = kind === "switch"

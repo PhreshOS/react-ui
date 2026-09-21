@@ -53,4 +53,18 @@ describe("ScrollArea", function () {
     </UIProvider>)
     expect(view.container.querySelector<HTMLElement>("[data-phreshos-scroll-area-thumb]")!.style.backgroundColor).toContain("rgb(237, 248, 252)")
   })
+
+  it("derives scrollbar interaction paint from its color", function () {
+    const view = render(<UIProvider preferences={{ theme: "light", animations: true }}>
+      <ScrollArea color="primary:base"><div>Content</div></ScrollArea>
+    </UIProvider>)
+    const thumb = view.container.querySelector<HTMLElement>("[data-phreshos-scroll-area-thumb]")!
+    const primary = thumb.style.backgroundColor
+
+    view.rerender(<UIProvider preferences={{ theme: "light", animations: true }}>
+      <ScrollArea color="danger:base"><div>Content</div></ScrollArea>
+    </UIProvider>)
+
+    expect(thumb.style.backgroundColor).not.toBe(primary)
+  })
 })

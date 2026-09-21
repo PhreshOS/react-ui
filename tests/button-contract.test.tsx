@@ -102,6 +102,20 @@ describe("Button", function () {
     expect(button.hasAttribute("color")).toBe(false)
   })
 
+  it.each(["var(--brand)", "currentColor", "color-mix(in srgb, red, blue)", "light-dark(white, black)"])("preserves the browser-resolved CSS color %s", function (color) {
+    expect(() => renderButton(<Button color={color}>Continue</Button>)).not.toThrow()
+    expect(screen.getByRole("button").style.color).toBe(cssBackground(defaultAppearance.colors.light.foreground))
+  })
+
+  it("derives interaction paint from an unresolved CSS base", async function () {
+    renderButton(<Button color="var(--brand)">Continue</Button>)
+    const button = screen.getByRole("button")
+    await userEvent.setup().hover(button)
+    const background = button.querySelector<HTMLElement>("[data-material-base]")?.style.background ?? ""
+    expect(background).toContain("color-mix")
+    expect(background).toContain("var(--brand)")
+  })
+
   it.each<[ScaleLevel, number, string]>([
     ["xsmall", 27, "0.6875em"], ["small", 30, "0.75em"], ["medium", 36, "0.8125em"], ["large", 42, "0.875em"], ["xlarge", 48, "0.9375em"]
   ])("derives the %s size without scaling content", function (size, height, fontSize) {
@@ -136,7 +150,7 @@ describe("Button", function () {
     await userEvent.setup().tab()
     const button = screen.getByRole("button")
     expect(document.activeElement).toBe(button)
-    expect(button.style.outline).toBe(`1px solid ${colorOpacity(opaqueColor(defaultAppearance.colors.light.warning), 0.2)}`)
+    expect(button.style.outline).toBe(`1px solid ${colorOpacity(opaqueColor(defaultAppearance.colors.light.default), 0.2)}`)
     expect(button.style.outlineOffset).toBe("1px")
     expect(button.style.boxShadow).toBe(shadowStyle(defaultAppearance.shadow.light))
   })

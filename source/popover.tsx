@@ -14,6 +14,7 @@ import type {
 } from "react-aria-components"
 import { useResolvedAppearance } from "./appearance-context.js"
 import { Button, type ButtonProps } from "./button.js"
+import { controlFontSizes, controlFontWeight } from "./control.js"
 import MotionStyle, { overlayMotionClass, overlayTransition } from "./motion-style.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceOwnProps } from "./surface.js"
@@ -92,8 +93,22 @@ export const PopoverDialog = forwardRef<HTMLElement, PopoverDialogProps>(functio
 
 export type PopoverTitleProps = AriaHeadingProps
 
-export const PopoverTitle = forwardRef<HTMLHeadingElement, PopoverTitleProps>(function PopoverTitle(properties, ref) {
-  return <AriaHeading {...properties} ref={ref} slot="title" />
+export const PopoverTitle = forwardRef<HTMLHeadingElement, PopoverTitleProps>(function PopoverTitle({ style, ...properties }, ref) {
+  return <AriaHeading
+    {...properties}
+    ref={ref}
+    slot="title"
+    // Portalled headings cannot rely on the trigger subtree to neutralize
+    // browser heading defaults; this part owns its complete text treatment.
+    style={{
+      margin: 0,
+      fontFamily: "inherit",
+      fontSize: controlFontSizes.medium,
+      fontWeight: controlFontWeight,
+      lineHeight: 1.5,
+      ...style
+    }}
+  />
 })
 
 export type PopoverCloseProps = ButtonProps
@@ -104,7 +119,6 @@ export const PopoverClose = forwardRef<HTMLButtonElement, PopoverCloseProps>(fun
 
 /** An anchored non-modal overlay with explicit trigger, surface, and dialog roles. */
 export const Popover = Object.assign(PopoverRoot, {
-  Root: PopoverRoot,
   Trigger: PopoverTrigger,
   Content: PopoverContent,
   Dialog: PopoverDialog,

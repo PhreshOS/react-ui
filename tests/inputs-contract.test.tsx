@@ -3,10 +3,10 @@ import userEvent from "@testing-library/user-event"
 import { createRef, useState, type ReactNode } from "react"
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "../source/main.js"
-import { colorOpacity, opaqueColor, resolveColorLevel, solidColors } from "../source/color.js"
+import { colorOpacity, opaqueColor, resolveColorLevel, solidColors, subtleColors } from "../source/color.js"
 import { shadowStyle } from "../source/shadow-options.js"
 import {
-    UIProvider, Button, Input, Textarea, Checkbox, Switch, Radio, RadioGroup, Select, Slider,
+    UIProvider, Button, Input, Textarea, Checkbox, Switch, RadioGroup, Select, Slider,
     type InputProps, type TextareaProps, type CheckboxProps, type SwitchProps, type RadioGroupProps,
     type SelectProps, type SliderProps, type ControlColor, type ScaleLevel
 } from "../source/main.js"
@@ -16,7 +16,7 @@ afterEach(cleanup)
 it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on the %s indicator while retaining selection colors", async kind => {
     const sample = kind === "checkbox" ? <Checkbox label="Choice" color="secondary:base" />
         : kind === "switch" ? <Switch label="Choice" color="secondary:base" />
-        : <RadioGroup label="Choices" color="secondary:base"><Radio value="one" label="Choice" /></RadioGroup>
+        : <RadioGroup label="Choices" color="secondary:base"><RadioGroup.Item value="one" label="Choice" /></RadioGroup>
     const { container } = renderUI(sample)
     const base = container.querySelector<HTMLElement>("[data-material-base]")
     const material = container.querySelector("[data-material-fill]")
@@ -27,7 +27,11 @@ it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on th
     expect(indicator?.style.background).toBe("transparent")
     expect(indicator?.style.boxShadow).toBe(shadowStyle(defaultAppearance.shadow.light))
     expect((material as HTMLElement | null)?.style.opacity).toBe("1")
-    expect(css(base?.style.background ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
+    expect(css(base?.style.background ?? "")).toBe(css(subtleColors(
+        defaultAppearance.colors.light.secondary,
+        defaultAppearance.colors.light.background,
+        defaultAppearance.colors.light.foreground
+    ).rest.background))
 
     const user = userEvent.setup()
     await user.click(screen.getByRole(kind, { name: "Choice" }))
@@ -241,7 +245,7 @@ it("keeps RadioGroup selection exclusive, skips disabled options, and submits th
     const onChange = vi.fn()
     const firstInput = createRef<HTMLInputElement>()
     renderUI(<form data-testid="form"><RadioGroup label="Mode" name="mode" defaultValue="one" onChange={onChange}>
-        <Radio label="One" value="one" inputRef={firstInput} /><Radio label="Two" value="two" disabled /><Radio label="Three" value="three" />
+        <RadioGroup.Item label="One" value="one" inputRef={firstInput} /><RadioGroup.Item label="Two" value="two" disabled /><RadioGroup.Item label="Three" value="three" />
     </RadioGroup></form>)
     expect(screen.getByRole("radiogroup", { name: "Mode" })).toBeTruthy()
     expect(firstInput.current?.checked).toBe(true)
@@ -256,7 +260,7 @@ it("keeps RadioGroup selection exclusive, skips disabled options, and submits th
 it.each(["readOnly", "disabled"] as const)("RadioGroup blocks changes while %s", async state => {
     const onChange = vi.fn()
     renderUI(<RadioGroup label="Mode" defaultValue="one" readOnly={state === "readOnly"} disabled={state === "disabled"} onChange={onChange}>
-        <Radio label="One" value="one" /><Radio label="Two" value="two" />
+        <RadioGroup.Item label="One" value="one" /><RadioGroup.Item label="Two" value="two" />
     </RadioGroup>)
     const user = userEvent.setup()
     await user.click(screen.getByRole("radio", { name: "Two" }))
@@ -265,14 +269,14 @@ it.each(["readOnly", "disabled"] as const)("RadioGroup blocks changes while %s",
     expect(onChange).not.toHaveBeenCalled()
 })
 
-it("RadioGroup follows controlled props without repeating its validation error for each Radio", () => {
+it("RadioGroup follows controlled props without repeating its validation error for each Item", () => {
     const view = renderUI(<RadioGroup label="Mode" value="one" invalid errorMessage="Choose another mode">
-        <Radio label="One" value="one" /><Radio label="Two" value="two" />
+        <RadioGroup.Item label="One" value="one" /><RadioGroup.Item label="Two" value="two" />
     </RadioGroup>)
     expect(screen.getAllByText("Choose another mode")).toHaveLength(1)
-    view.rerender(wrap(<RadioGroup label="Mode" value="two"><Radio label="One" value="one" /><Radio label="Two" value="two" /></RadioGroup>))
+    view.rerender(wrap(<RadioGroup label="Mode" value="two"><RadioGroup.Item label="One" value="one" /><RadioGroup.Item label="Two" value="two" /></RadioGroup>))
     expect(screen.getByRole("radio", { name: "Two" }).getAttribute("aria-checked")).toBe("true")
-    view.rerender(wrap(<RadioGroup label="Mode" value={null}><Radio label="One" value="one" /><Radio label="Two" value="two" /></RadioGroup>))
+    view.rerender(wrap(<RadioGroup label="Mode" value={null}><RadioGroup.Item label="One" value="one" /><RadioGroup.Item label="Two" value="two" /></RadioGroup>))
     expect(screen.getAllByRole("radio").every(radio => radio.getAttribute("aria-checked") === "false")).toBe(true)
 })
 
@@ -296,27 +300,30 @@ it("spaces Select options and distinguishes hover from keyboard focus", async ()
     await user.keyboard("[ArrowDown]")
     expect(third.getAttribute("data-focused")).toBe("true")
     expect(third.style.background).not.toBe("transparent")
-    expect(third.style.outline).toBe(`1px solid ${colorOpacity(opaqueColor(defaultAppearance.colors.light.warning), 0.2)}`)
+    expect(third.style.outline).toBe(`1px solid ${colorOpacity(opaqueColor(defaultAppearance.colors.light.default), 0.2)}`)
     expect(third.style.outlineOffset).toBe("1px")
 })
 
-it("refreshes Select option paint when the theme changes while its collection remains open", async () => {
+it("refreshes Select-owned paint when the theme changes while its collection remains open", async () => {
     const appearance = {
         ...defaultAppearance,
         colors: {
-            light: { ...defaultAppearance.colors.light, foreground: "#123456" },
-            dark: { ...defaultAppearance.colors.dark, foreground: "#fedcba" }
+            light: { ...defaultAppearance.colors.light, default: "#123456" },
+            dark: { ...defaultAppearance.colors.dark, default: "#fedcba" }
         }
     }
     const select = <Select label="Choice" options={options} defaultValue="one" />
     const view = render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>{select}</UIProvider>)
     await userEvent.setup().click(screen.getByRole("button"))
 
-    expect(screen.getByRole("option", { name: "Three" }).style.color).toBe("rgb(18, 52, 86)")
+    const selected = screen.getByRole("option", { name: "One" })
+    const light = selected.style.background
+    expect(screen.getByRole("option", { name: "Three" }).style.color).toBe("inherit")
 
     view.rerender(<UIProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>{select}</UIProvider>)
 
-    expect(screen.getByRole("option", { name: "Three" }).style.color).toBe("rgb(254, 220, 186)")
+    expect(selected.style.background).not.toBe(light)
+    expect(screen.getByRole("option", { name: "Three" }).style.color).toBe("inherit")
     expect(screen.getByRole("listbox")).not.toBeNull()
 })
 

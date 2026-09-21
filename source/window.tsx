@@ -2,6 +2,7 @@ import { createContext, forwardRef, useContext } from "react"
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react"
 import { useResolvedAppearance } from "./appearance-context.js"
 import { Button, type ButtonProps } from "./button.js"
+import { resolveColor, type Color } from "./color.js"
 import { transitionTiming } from "./motion-style.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceProps } from "./surface.js"
@@ -62,24 +63,29 @@ const WindowContent = forwardRef<HTMLDivElement, WindowContentProps>(function Wi
   />
 })
 
-export interface WindowHeaderProps extends HTMLAttributes<HTMLDivElement> {
+export interface WindowHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, "color"> {
   /** Attenuates the identity when this header is not active. */
   readonly active?: boolean
+
+  /** Base color inherited by header-owned text and icons. */
+  readonly color?: Color
 }
 
 /** The composable top region of a window; its enclosing Surface owns the material. */
 const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function HeaderRoot({
   active = true,
   children,
+  color,
   onPointerDown,
   style,
   ...properties
 }, ref) {
   const resolved = useResolvedAppearance()
   const spacing = resolved.appearance.spacing
+  const foreground = style?.color ?? resolveColor(color ?? "foreground:base", resolved.colors)
   const state: HeaderState = {
     active,
-    foreground: resolved.colors.foreground,
+    foreground,
     iconRadius: scale(resolved.appearance.radius, "xsmall"),
     spacing,
     transition: transitionTiming(resolved.transaction, resolved.preferences.animations)
@@ -102,6 +108,7 @@ const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function Header
         userSelect: "none",
         touchAction: onPointerDown ? "none" : undefined,
         cursor: onPointerDown ? "grab" : undefined,
+        color: foreground,
         ...style
       }}
     >{children}</div>
@@ -198,11 +205,10 @@ export type WindowActionProps = Omit<ButtonProps, "size">
 
 /** A compact header action; extra actions use the same treatment as the standard controls. */
 const WindowAction = forwardRef<HTMLButtonElement, WindowActionProps>(function WindowAction({
-  style,
   ...properties
 }, ref) {
-  const { foreground } = useHeader()
-  return <Button {...properties} ref={ref} size="xsmall" style={{ color: foreground, ...style }} />
+  useHeader()
+  return <Button {...properties} ref={ref} size="xsmall" />
 })
 
 export type WindowControlProps = Omit<WindowActionProps, "children">
@@ -234,14 +240,15 @@ const WindowMaximize = forwardRef<HTMLButtonElement, WindowMaximizeProps>(functi
   </WindowAction>
 })
 
-export type WindowCloseProps = Omit<WindowControlProps, "color">
+export type WindowCloseProps = WindowControlProps
 
 const WindowClose = forwardRef<HTMLButtonElement, WindowCloseProps>(function WindowClose({
   "aria-label": label = "Close",
+  color = "danger:base",
   preventFocusOnPress = true,
   ...properties
 }, ref) {
-  return <WindowAction {...properties} ref={ref} aria-label={label} color="danger:base" preventFocusOnPress={preventFocusOnPress}>
+  return <WindowAction {...properties} ref={ref} aria-label={label} color={color} preventFocusOnPress={preventFocusOnPress}>
     <ControlIcon><path d="M1.5 1.5 8.5 8.5M8.5 1.5 1.5 8.5" /></ControlIcon>
   </WindowAction>
 })

@@ -41,13 +41,10 @@ export {
   type SurfaceProps
 } from "./surface.js"
 export { defaultColor, type Color, type ColorLevel, type ColorScale } from "./color.js"
+// Context-dependent parts are public only through their owning component family.
 export {
   Panel,
-  PanelRoot,
-  PanelHeader,
-  PanelContent,
   type PanelProps,
-  type PanelRootProps,
   type PanelHeaderProps,
   type PanelContentProps
 } from "./panel.js"
@@ -67,22 +64,87 @@ export {
 export { Button, type ButtonColor, type ButtonProps } from "./button.js"
 export { Input, type InputProps } from "./input.js"
 export { Textarea, type TextareaProps } from "./textarea.js"
+export { DateField, type DateFieldProps } from "./date-field.js"
+export { TimeField, type TimeFieldProps } from "./time-field.js"
+export { Calendar, type CalendarProps } from "./calendar.js"
+export { RangeCalendar, type RangeCalendarProps } from "./range-calendar.js"
+export { DatePicker, type DatePickerProps } from "./date-picker.js"
+export { DateRangePicker, type DateRangePickerProps } from "./date-range-picker.js"
+export type { DateRange } from "./date-range.js"
 export { Checkbox, type CheckboxProps } from "./checkbox.js"
-export { Radio, RadioGroup, type RadioProps, type RadioGroupProps } from "./radio.js"
+export { RadioGroup, type RadioGroupProps, type RadioGroupItemProps } from "./radio.js"
 export { Switch, type SwitchProps } from "./switch.js"
 export { Select, type SelectProps, type SelectOption } from "./select.js"
+export { ComboBox, type ComboBoxProps, type ComboBoxOption } from "./combo-box.js"
+export {
+  ListBox,
+  type ListBoxProps,
+  type ListBoxSingleSelectionProps,
+  type ListBoxMultipleSelectionProps,
+  type ListBoxMultipleValue,
+  type ListBoxItemProps,
+  type ListBoxSectionProps,
+  type ListBoxHeaderProps
+} from "./list-box.js"
+export {
+  Tabs,
+  type TabsProps,
+  type TabsListProps,
+  type TabsTabProps,
+  type TabsPanelsProps,
+  type TabsPanelProps
+} from "./tabs.js"
+export {
+  Table,
+  type TableProps,
+  type TableNoSelectionProps,
+  type TableSingleSelectionProps,
+  type TableMultipleSelectionProps,
+  type TableMultipleValue,
+  type TableSort,
+  type TableSortDirection,
+  type TableHeaderProps,
+  type TableColumnProps,
+  type TableBodyProps,
+  type TableRowProps,
+  type TableCellProps
+} from "./table.js"
+export {
+  Tree,
+  type TreeProps,
+  type TreeNoSelectionProps,
+  type TreeSingleSelectionProps,
+  type TreeMultipleSelectionProps,
+  type TreeMultipleValue,
+  type TreeItemProps,
+  type TreeContentProps,
+  type TreeCollectionProps
+} from "./tree.js"
 export { Slider, type SliderProps } from "./slider.js"
+export { ProgressBar, type ProgressBarProps } from "./progress-bar.js"
 export { ScrollArea, type ScrollAreaAxis, type ScrollAreaProps } from "./scroll-area.js"
 export {
+  Toolbar,
+  type ToolbarProps,
+  type ToolbarGroupProps,
+  type ToolbarSeparatorProps
+} from "./toolbar.js"
+export {
+  Disclosure,
+  type DisclosureProps,
+  type DisclosureTriggerProps,
+  type DisclosureContentProps
+} from "./disclosure.js"
+export {
+  Accordion,
+  type AccordionProps,
+  type AccordionSingleExpansionProps,
+  type AccordionMultipleExpansionProps,
+  type AccordionItemProps
+} from "./accordion.js"
+export {
   Popover,
-  PopoverRoot,
-  PopoverTrigger,
-  PopoverContent,
-  PopoverDialog,
-  PopoverTitle,
-  PopoverClose,
   type PopoverProps,
-  type PopoverRootProps,
   type PopoverTriggerProps,
   type PopoverContentProps,
   type PopoverDialogProps,
@@ -91,13 +153,11 @@ export {
 } from "./popover.js"
 export {
   Menu,
-  MenuRoot,
-  MenuItem,
-  MenuSection,
-  MenuHeader,
-  MenuSeparator,
   type MenuProps,
-  type MenuRootProps,
+  type MenuNoSelectionProps,
+  type MenuSingleSelectionProps,
+  type MenuMultipleSelectionProps,
+  type MenuMultipleValue,
   type MenuItemProps,
   type MenuSectionProps,
   type MenuHeaderProps,
@@ -105,36 +165,18 @@ export {
 } from "./menu.js"
 export {
   DropdownMenu,
-  DropdownMenuRoot,
-  DropdownMenuTrigger,
   type DropdownMenuProps,
-  type DropdownMenuRootProps,
   type DropdownMenuTriggerProps
 } from "./dropdown-menu.js"
 export {
   ContextMenu,
-  ContextMenuRoot,
-  ContextMenuTrigger,
-  ContextMenuContent,
   type ContextMenuProps,
-  type ContextMenuRootProps,
   type ContextMenuTriggerProps,
   type ContextMenuContentProps
 } from "./context-menu.js"
 export {
   Dialog,
-  DialogRoot,
-  DialogTrigger,
-  DialogBackdrop,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogBody,
-  DialogFooter,
-  DialogClose,
   type DialogProps,
-  type DialogRootProps,
   type DialogTriggerProps,
   type DialogBackdropProps,
   type DialogContentProps,
@@ -147,21 +189,13 @@ export {
 } from "./dialog.js"
 export {
   AlertDialog,
-  AlertDialogRoot,
-  AlertDialogBackdrop,
-  AlertDialogContent,
   type AlertDialogProps,
-  type AlertDialogRootProps,
   type AlertDialogBackdropProps,
   type AlertDialogContentProps
 } from "./alert-dialog.js"
 export {
   Tooltip,
-  TooltipRoot,
-  TooltipTrigger,
-  TooltipContent,
   type TooltipProps,
-  type TooltipRootProps,
   type TooltipTriggerProps,
   type TooltipContentProps
 } from "./tooltip.js"

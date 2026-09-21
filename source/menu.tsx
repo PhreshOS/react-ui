@@ -12,11 +12,21 @@ import type {
   MenuItemProps as AriaMenuItemProps,
   MenuProps as AriaMenuProps,
   MenuSectionProps as AriaMenuSectionProps,
-  SeparatorProps as AriaSeparatorProps
+  SeparatorProps as AriaSeparatorProps,
+  Selection
 } from "react-aria-components"
 import { colorOpacity } from "./color.js"
 import { controlFontWeight, controlOpacity, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
 import type { ScaleLevel } from "./scale.js"
+import {
+  multipleSelection,
+  singleSelection,
+  stringKey,
+  toAriaSelection,
+  type MultipleStringSelection,
+  type MultipleStringSelectionProps,
+  type SingleStringSelectionProps
+} from "./selection.js"
 
 type MenuTheme = Readonly<{
   color?: ControlColor
@@ -26,24 +36,73 @@ type MenuTheme = Readonly<{
 
 const MenuThemeContext = createContext<MenuTheme | null>(null)
 
-export interface MenuRootProps<T extends object = object> extends Omit<AriaMenuProps<T>, "className" | "style"> {
+type MenuRootBaseProps<T extends object> = Omit<
+  AriaMenuProps<T>,
+  | "className"
+  | "defaultSelectedKeys"
+  | "disabledKeys"
+  | "onAction"
+  | "onSelectionChange"
+  | "selectedKeys"
+  | "selectionMode"
+  | "style"
+> & Readonly<{
   readonly className?: string
   readonly color?: ControlColor
+  readonly disabledValues?: readonly string[]
+  readonly onItemAction?: (value: string) => void
   readonly size?: ScaleLevel
   readonly style?: CSSProperties
-}
+}>
+
+export type MenuNoSelectionProps = Readonly<{
+  selectionMode?: "none"
+  value?: never
+  defaultValue?: never
+  onChange?: never
+}>
+
+export type MenuSingleSelectionProps = SingleStringSelectionProps & Readonly<{
+  selectionMode: "single"
+}>
+
+export type MenuMultipleValue = MultipleStringSelection
+
+export type MenuMultipleSelectionProps = MultipleStringSelectionProps & Readonly<{
+  selectionMode: "multiple"
+}>
+
+export type MenuRootProps<T extends object = object> = MenuRootBaseProps<T>
+  & (MenuNoSelectionProps | MenuSingleSelectionProps | MenuMultipleSelectionProps)
 
 const MenuRootImplementation = forwardRef(function MenuRoot<T extends object = object>(
-  { className, color, size = "medium", style, ...properties }: MenuRootProps<T>,
+  properties: MenuRootProps<T>,
   ref: ForwardedRef<HTMLDivElement>
 ) {
+  const {
+    className,
+    color,
+    defaultValue,
+    disabledValues,
+    onChange,
+    onItemAction,
+    selectionMode = "none",
+    size = "medium",
+    style,
+    value,
+    ...native
+  } = properties
   const theme = useControlTheme({ color, size })
   const context = useMemo(() => ({ color, size, theme }), [color, size, theme])
   return <MenuThemeContext.Provider value={context}>
     <AriaMenu
-      {...properties}
+      {...native}
+      {...selectionProperties(properties)}
       ref={ref}
       className={className}
+      disabledKeys={disabledValues}
+      selectionMode={selectionMode === "none" ? undefined : selectionMode}
+      onAction={onItemAction == null ? undefined : key => onItemAction(stringKey(key))}
       style={{
         display: "grid",
         gap: theme.gap,
@@ -51,7 +110,6 @@ const MenuRootImplementation = forwardRef(function MenuRoot<T extends object = o
         padding: theme.gap,
         boxSizing: "border-box",
         outline: "none",
-        color: theme.foreground,
         fontFamily: "inherit",
         fontSize: theme.fontSize,
         ...style
@@ -60,16 +118,38 @@ const MenuRootImplementation = forwardRef(function MenuRoot<T extends object = o
   </MenuThemeContext.Provider>
 })
 
+function selectionProperties<T extends object>(properties: MenuRootProps<T>) {
+  const selectedKeys = toAriaSelection(properties.value)
+  const defaultSelectedKeys = toAriaSelection(properties.defaultValue)
+  const onSelectionChange = properties.onChange == null
+    ? undefined
+    : (selection: Selection) => {
+        if (properties.selectionMode === "multiple") {
+          properties.onChange?.(multipleSelection(selection))
+          return
+        }
+
+        if (properties.selectionMode === "single") properties.onChange?.(singleSelection(selection))
+      }
+
+  return {
+    ...(selectedKeys !== undefined ? { selectedKeys } : {}),
+    ...(defaultSelectedKeys !== undefined ? { defaultSelectedKeys } : {}),
+    ...(onSelectionChange !== undefined ? { onSelectionChange } : {})
+  }
+}
+
 export type MenuRootComponent = <T extends object = object>(
   properties: MenuRootProps<T> & RefAttributes<HTMLDivElement>
 ) => ReactElement | null
 
 export const MenuRoot = MenuRootImplementation as MenuRootComponent
 
-export interface MenuItemProps<T = object> extends Omit<AriaMenuItemProps<T>, "className" | "isDisabled" | "style"> {
+export interface MenuItemProps<T = object> extends Omit<AriaMenuItemProps<T>, "className" | "id" | "isDisabled" | "style"> {
   readonly className?: string
   readonly color?: ControlColor
   readonly disabled?: boolean
+  readonly id?: string
   readonly style?: CSSProperties
 }
 
@@ -110,7 +190,7 @@ function MenuItemView<T>({ className, disabled, properties, ref, style, theme }:
         ? theme.paints.palette.pressed
         : state.isHovered || state.isSelected
           ? theme.paints.palette.hover
-          : { background: "transparent", color: theme.foreground }
+          : { background: "transparent", color: "inherit" }
 
       return {
         ...theme.transition,
@@ -173,7 +253,7 @@ export const MenuSeparator = forwardRef<HTMLElement, MenuSeparatorProps>(functio
       height: 1,
       marginBlock: theme.gap,
       border: 0,
-      background: colorOpacity(theme.foreground, controlOpacity.separator),
+      background: colorOpacity(theme.tint, controlOpacity.separator),
       ...style
     }}
   />
@@ -187,7 +267,6 @@ function useMenuTheme() {
 
 /** A keyboard-navigable collection of commands or selectable options. */
 export const Menu = Object.assign(MenuRoot, {
-  Root: MenuRoot,
   Item: MenuItem,
   Section: MenuSection,
   Header: MenuHeader,

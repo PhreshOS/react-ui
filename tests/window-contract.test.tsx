@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { createRef, type ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { UIProvider, Surface, Window, defaultAppearance } from "../source/main.js"
+import { resolveColorLevel } from "../source/color.js"
 
 afterEach(cleanup)
 
@@ -96,6 +97,16 @@ describe("Window", () => {
     expect(onMaximize).toHaveBeenCalledTimes(2)
   })
 
+  it("uses danger as the overridable semantic default for Window Close", () => {
+    render(provider(<Window.Header>
+      <Window.Header.Actions><Window.Header.Close /></Window.Header.Actions>
+    </Window.Header>))
+
+    const paint = screen.getByRole("button", { name: "Close" })
+      .querySelector<HTMLElement>("[data-material-base]")
+    expect(paint?.style.background).toBe(css(resolveColorLevel(defaultAppearance.colors.light.danger, "base")))
+  })
+
   it("applies active treatment and animation preferences to identity only", () => {
     const content = (active: boolean) => provider(<Window.Header active={active}>
       <Window.Header.Identity title="Editor" data-testid="identity" />
@@ -113,4 +124,29 @@ describe("Window", () => {
     rendered.rerender(provider(<Window.Header active={false}><Window.Header.Identity title="Editor" data-testid="identity" /></Window.Header>, false))
     expect(identity.style.transitionDuration).toBe("0ms")
   })
+
+  it("lets the header and its action controls own their base colors", () => {
+    const content = (header: "primary:base" | "secondary:base", close: "danger:base" | "success:base") => provider(
+      <Window.Header color={header} data-testid="header">
+        <Window.Header.Identity title="Editor" />
+        <Window.Header.Actions><Window.Header.Close color={close} /></Window.Header.Actions>
+      </Window.Header>
+    )
+    const rendered = render(content("primary:base", "danger:base"))
+    const header = screen.getByTestId("header")
+    const close = screen.getByRole("button", { name: "Close" })
+    const headerColor = header.style.color
+    const closeColor = close.querySelector<HTMLElement>("[data-material-base]")?.style.background
+
+    rendered.rerender(content("secondary:base", "success:base"))
+
+    expect(header.style.color).not.toBe(headerColor)
+    expect(close.querySelector<HTMLElement>("[data-material-base]")?.style.background).not.toBe(closeColor)
+  })
 })
+
+function css(value: string) {
+  const element = document.createElement("div")
+  element.style.background = value
+  return element.style.background
+}

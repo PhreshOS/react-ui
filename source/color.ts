@@ -6,7 +6,6 @@ import parse from "colorjs.io/src/parse.js"
 import serialize from "colorjs.io/src/serialize.js"
 import to from "colorjs.io/src/to.js"
 import toGamut from "colorjs.io/src/toGamut.js"
-import contrastWCAG21 from "colorjs.io/src/contrast/WCAG21.js"
 import sRGB from "colorjs.io/src/spaces/srgb.js"
 import sRGB_Linear from "colorjs.io/src/spaces/srgb-linear.js"
 import HSL from "colorjs.io/src/spaces/hsl.js"
@@ -65,9 +64,11 @@ export function color(value: string): ColorScale {
 
 /** Resolves the same named treatment for solid paint and contrast calculations. */
 export function resolveColorLevel(value: string, level: ColorLevel): string {
-  if (level === "base") return opaqueColor(value)
+  if (level === "base") return resolvableOpaqueColor(value) ?? value
+  const opaque = resolvableOpaqueColor(value)
+  if (opaque == null) return color(value)[level]
   const { weight, target } = treatments[level]
-  return opaqueColor(serialize(mix(opaqueColor(value), target, 1 - weight / 100, { space: "oklch" })))
+  return opaqueColor(serialize(mix(opaque, target, 1 - weight / 100, { space: "oklch" })))
 }
 
 /** Returns the complete visual treatments derived from one concrete color. */
@@ -85,7 +86,7 @@ export function resolveColor(value: Color | undefined, colors: AppearanceColors)
 /** Resolves opaque control paint from an already selected Appearance branch. */
 export function resolveSolidColor(value: Color, colors: AppearanceColors): string {
   const semantic = parseSemanticColor(value, colors)
-  return semantic ? resolveColorLevel(semantic.source, semantic.level) : opaqueColor(value)
+  return semantic ? resolveColorLevel(semantic.source, semantic.level) : resolvableOpaqueColor(value) ?? value
 }
 
 /** Applies material opacity without restricting the source CSS color syntax. */
@@ -122,11 +123,16 @@ export function colorShade(value: string, amount: number): string {
   return opaqueColor(serialize(result))
 }
 
-/** Chooses only from the two Appearance colors, against the actual painted fill. */
+/** Chooses the perceptually opposite Appearance color for the actual painted fill. */
 export function onColor(fill: string, background: string, foreground: string): string {
   const first = opaqueColor(background)
   const second = opaqueColor(foreground)
-  return contrastWCAG21(fill, first) > contrastWCAG21(fill, second) ? first : second
+  const candidates = orderColors(first, second)
+  const darker = colorLightness(candidates.darker)
+  const lighter = colorLightness(candidates.lighter)
+  const threshold = darker + (lighter - darker) * 2 / 3
+
+  return colorLightness(opaqueColor(fill)) < threshold ? candidates.lighter : candidates.darker
 }
 
 /** Chooses readable content when the fill can be evaluated, otherwise preserves Appearance foreground. */
@@ -141,13 +147,60 @@ export function contrastingColor(value: Color, colors: AppearanceColors): string
 /** Solid controls start at base; interaction shades preserve its text choice. */
 export function solidColors(base: string, background: string, foreground: string) {
   const fill = resolveColorLevel(base, "base")
-  const color = onColor(fill, background, foreground)
-  const paint = (background: string) => ({ background, color })
-  return {
+  const content = resolvableOnColor(fill, background, foreground) ?? foreground
+  const paint = (background: string) => ({ background, color: content })
+  const concrete = resolvableOpaqueColor(fill)
+
+  if (concrete == null) return {
     rest: paint(fill),
-    hover: paint(colorShade(fill, 0.045)),
-    pressed: paint(colorShade(fill, 0.085))
+    hover: paint(cssInteractionColor(fill, foreground, 0.045)),
+    pressed: paint(cssInteractionColor(fill, foreground, 0.085))
   }
+
+  return {
+    rest: paint(concrete),
+    hover: paint(colorShade(concrete, 0.045)),
+    pressed: paint(colorShade(concrete, 0.085))
+  }
+}
+
+/** Low-emphasis interaction paints derived from the same component-owned base. */
+export function subtleColors(base: string, background: string, foreground: string) {
+  const fill = resolveColorLevel(base, "base")
+  const canvas = resolvableOpaqueColor(background) ?? background
+  const concrete = resolvableOpaqueColor(fill)
+  const paint = (weight: number) => {
+    const mixed = concrete == null
+      ? `color-mix(in oklch, ${canvas} ${Math.round((1 - weight) * 10_000) / 100}%, ${fill})`
+      : opaqueColor(serialize(mix(canvas, concrete, weight, { space: "oklch" })))
+    return { background: mixed, color: resolvableOnColor(mixed, background, foreground) ?? foreground }
+  }
+
+  return {
+    rest: paint(0.25),
+    hover: paint(0.5),
+    pressed: paint(0.65)
+  }
+}
+
+function resolvableOpaqueColor(value: string): string | null {
+  try {
+    return opaqueColor(value)
+  } catch {
+    return null
+  }
+}
+
+function resolvableOnColor(fill: string, background: string, foreground: string): string | null {
+  try {
+    return onColor(fill, background, foreground)
+  } catch {
+    return null
+  }
+}
+
+function cssInteractionColor(base: string, target: string, amount: number) {
+  return `color-mix(in oklch, ${base} ${Math.round((1 - amount) * 10_000) / 100}%, ${target})`
 }
 
 function parseSemanticColor(value: string, colors: AppearanceColors): { source: string, level: ColorLevel } | null {

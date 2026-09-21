@@ -105,13 +105,30 @@ function DistortionFilter({ distortion, identity }: Readonly<{
 }
 
 function grainImage(seed: number, amount: number) {
+  const key = `${seed}:${amount}`
+  const cached = grainResources.get(key)
+  if (cached !== undefined) {
+    grainResources.delete(key)
+    grainResources.set(key, cached)
+    return cached
+  }
+
   const paths = grainPaths(seed, amount)
     .map((path, tone) => path
       ? `<path d="${path}" fill="rgb(${toneChannel(tone)} ${toneChannel(tone)} ${toneChannel(tone)})"/>`
       : "")
     .join("")
 
-  return `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${patternSize}" height="${patternSize}" viewBox="0 0 ${patternSize} ${patternSize}">${paths}</svg>`)}")`
+  const resource = `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${patternSize}" height="${patternSize}" viewBox="0 0 ${patternSize} ${patternSize}">${paths}</svg>`)}")`
+
+  // Preserve the exact texture while avoiding the same expensive SVG generation
+  // for every Surface. The bound prevents live grain controls from growing it forever.
+  if (grainResources.size >= grainResourceLimit) {
+    const oldest = grainResources.keys().next().value
+    if (oldest !== undefined) grainResources.delete(oldest)
+  }
+  grainResources.set(key, resource)
+  return resource
 }
 
 /** Preserve the original contract: amount is the monotonic density of visible grain pixels. */
@@ -171,3 +188,5 @@ function clamp(value: number, minimum: number, maximum: number) {
 const patternSize = 64
 const toneCount = 16
 const grainSeeds = [19, 47, 83, 131] as const
+const grainResourceLimit = 64
+const grainResources = new Map<string, string>()

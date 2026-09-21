@@ -106,7 +106,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
         width: vertical ? rail : "100%",
         height: vertical ? "100%" : rail,
         borderRadius: rail,
-        background: theme.paints.neutral.rest.background
+        background: theme.paints.subtle.rest.background
       }}>
         <BaseSlider.Indicator style={{
           ...theme.transition,

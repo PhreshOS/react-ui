@@ -1,7 +1,8 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { AlertDialog, Dialog } from "../source/main.js"
+import { AlertDialog, Dialog, UIProvider, defaultAppearance } from "../source/main.js"
+import { resolveColorLevel } from "../source/color.js"
 
 afterEach(cleanup)
 
@@ -33,6 +34,23 @@ function Example({ onOpenChange }: Readonly<{ onOpenChange?(open: boolean): void
 }
 
 describe("Dialog", function () {
+  it("derives the backdrop paint from its color", function () {
+    const content = (color: "primary:base" | "danger:base") => <UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+      <Dialog isOpen>
+        <Dialog.Backdrop color={color} data-testid="dialog-backdrop">
+          <Dialog.Content aria-label="Example">Content</Dialog.Content>
+        </Dialog.Backdrop>
+      </Dialog>
+    </UIProvider>
+    const view = render(content("primary:base"))
+    const backdrop = screen.getByTestId("dialog-backdrop")
+    const primary = backdrop.style.background
+
+    view.rerender(content("danger:base"))
+
+    expect(backdrop.style.background).not.toBe(primary)
+  })
+
   it("opens as an accessible modal dialog and focuses its content", async function () {
     render(<Example />)
 
@@ -40,7 +58,13 @@ describe("Dialog", function () {
 
     expect(screen.getByRole("dialog", { name: "Workspace settings" })).toBeTruthy()
     expect(screen.getByRole("textbox", { name: "Workspace name" })).toBe(document.activeElement)
-    expect(screen.getByText("Change the active workspace.").getAttribute("slot")).toBe("description")
+    const title = screen.getByRole("heading", { name: "Workspace settings" })
+    const description = screen.getByText("Change the active workspace.")
+    expect(description.getAttribute("slot")).toBe("description")
+    expect(title.style.fontSize).toBe("0.8125em")
+    expect(description.style.fontSize).toBe("0.8125em")
+    const content = screen.getByRole("dialog", { name: "Workspace settings" }).parentElement
+    expect(content?.style.fontSize).toBe("")
   })
 
   it("closes with Escape and restores focus to its trigger", async function () {
@@ -98,6 +122,7 @@ describe("AlertDialog", function () {
       <AlertDialog.Backdrop data-testid="alert-backdrop">
         <AlertDialog.Content>
           <AlertDialog.Title>Delete permanently?</AlertDialog.Title>
+          <AlertDialog.Close>Cancel</AlertDialog.Close>
           <AlertDialog.Close color="danger:base">Delete</AlertDialog.Close>
         </AlertDialog.Content>
       </AlertDialog.Backdrop>
@@ -105,6 +130,8 @@ describe("AlertDialog", function () {
 
     await user.click(screen.getByRole("button", { name: "Delete workspace" }))
     expect(screen.getByRole("alertdialog", { name: "Delete permanently?" })).toBeTruthy()
+    expect(materialColor(screen.getByRole("button", { name: "Cancel" }))).toBe(css(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
+    expect(materialColor(screen.getByRole("button", { name: "Delete" }))).toBe(css(resolveColorLevel(defaultAppearance.colors.light.danger, "base")))
 
     await user.keyboard("[Escape]")
     await user.click(screen.getByTestId("alert-backdrop"))
@@ -114,3 +141,13 @@ describe("AlertDialog", function () {
     expect(screen.queryByRole("alertdialog")).toBeNull()
   })
 })
+
+function materialColor(element: HTMLElement) {
+  return element.querySelector<HTMLElement>("[data-material-base]")?.style.background
+}
+
+function css(value: string) {
+  const element = document.createElement("div")
+  element.style.background = value
+  return element.style.background
+}

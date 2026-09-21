@@ -34,7 +34,7 @@ export interface RadioGroupProps extends
   readonly orientation?: "horizontal" | "vertical"
 }
 
-export interface RadioProps extends
+export interface RadioGroupItemProps extends
   Omit<BaseRadioProps<string>, "children" | "className" | "disabled" | "readOnly" | "required" | "style" | "value">,
   ControlProps,
   Pick<FieldProps, "label" | "description">,
@@ -43,8 +43,8 @@ export interface RadioProps extends
   readonly value: string
 }
 
-/** One string value selected from its Radio children, with direction-aware arrow navigation. */
-export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(function RadioGroup({
+/** One string value selected from its Items, with direction-aware arrow navigation. */
+const RadioGroupRoot = forwardRef<HTMLDivElement, RadioGroupProps>(function RadioGroupRoot({
   label,
   description,
   errorMessage,
@@ -105,7 +105,7 @@ export const RadioGroup = forwardRef<HTMLDivElement, RadioGroupProps>(function R
 })
 
 /** An option in a RadioGroup. Selection and validation belong to the group. */
-export const Radio = forwardRef<HTMLDivElement, RadioProps>(function Radio({
+const RadioGroupItem = forwardRef<HTMLDivElement, RadioGroupItemProps>(function RadioGroupItem({
   label,
   description,
   value,
@@ -122,7 +122,7 @@ export const Radio = forwardRef<HTMLDivElement, RadioProps>(function Radio({
   ...properties
 }, ref) {
   const inherited = useContext(RadioStyleContext)
-  if (inherited == null) throw new Error("Radio must be used inside RadioGroup")
+  if (inherited == null) throw new Error("RadioGroup.Item must be used inside RadioGroup")
 
   const theme = useControlTheme({ size: size ?? inherited.size, color: color ?? inherited.color })
   const descriptionId = useId()
@@ -167,4 +167,9 @@ export const Radio = forwardRef<HTMLDivElement, RadioProps>(function Radio({
     />
     {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</span>}
   </div>
+})
+
+/** One exclusive-choice field whose context-dependent options are grouped as Items. */
+export const RadioGroup = Object.assign(RadioGroupRoot, {
+  Item: RadioGroupItem
 })

@@ -56,9 +56,11 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
+    "@internationalized/date": "^3.12.3",
     "@phreshos/core": "^0.1.55",
     "colorjs.io": "^0.7.1",
     "motion": "^13.2.0",
+    "react-aria": "^3.51.0",
     "react-aria-components": "^1.20.0"
   },
   "devDependencies": {

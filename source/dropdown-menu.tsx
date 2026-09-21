@@ -20,7 +20,6 @@ export const DropdownMenuTrigger = forwardRef<HTMLButtonElement, DropdownMenuTri
 
 /** A button-triggered overlay. Its Content owns positioning; Menu owns commands and selection. */
 export const DropdownMenu = Object.assign(DropdownMenuRoot, {
-  Root: DropdownMenuRoot,
   Trigger: DropdownMenuTrigger,
   Content: PopoverContent,
   Menu

@@ -54,7 +54,6 @@ export const ContextMenuContent = forwardRef<HTMLElement, ContextMenuContentProp
 
 /** A context-requested overlay sharing the same Menu contract as DropdownMenu. */
 export const ContextMenu = Object.assign(ContextMenuRoot, {
-  Root: ContextMenuRoot,
   Trigger: ContextMenuTrigger,
   Content: ContextMenuContent,
   Menu

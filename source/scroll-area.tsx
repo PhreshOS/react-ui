@@ -3,15 +3,18 @@ import { DirectionProvider as BaseDirectionProvider } from "@base-ui/react/direc
 import { forwardRef, useState } from "react"
 import type { ComponentPropsWithoutRef, Ref, ReactNode, UIEventHandler } from "react"
 import { useResolvedAppearance } from "./appearance-context.js"
-import { colorOpacity } from "./color.js"
+import { colorOpacity, resolveColor } from "./color.js"
+import type { ControlColor } from "./control.js"
 import { transitionTiming } from "./motion-style.js"
 import { resolveDirection, useDirection } from "./direction.js"
 
 export type ScrollAreaAxis = "vertical" | "horizontal" | "both"
 
-export interface ScrollAreaProps extends Omit<ComponentPropsWithoutRef<"div">, "children" | "onScroll"> {
+export interface ScrollAreaProps extends Omit<ComponentPropsWithoutRef<"div">, "children" | "color" | "onScroll"> {
   readonly axis?: ScrollAreaAxis
   readonly children?: ReactNode
+  /** Base color from which scrollbar states are derived. */
+  readonly color?: ControlColor
   readonly onScroll?: UIEventHandler<HTMLDivElement>
   readonly viewportRef?: Ref<HTMLDivElement>
 }
@@ -20,6 +23,7 @@ export interface ScrollAreaProps extends Omit<ComponentPropsWithoutRef<"div">, "
 export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function ScrollArea({
   axis = "vertical",
   children,
+  color,
   onScroll,
   style,
   viewportRef,
@@ -28,7 +32,7 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
   const resolved = useResolvedAppearance()
   const { appearance } = resolved
   const direction = resolveDirection(properties.dir, useDirection())
-  const foreground = resolved.colors.foreground
+  const foreground = resolveColor(color ?? "foreground:base", resolved.colors)
   const radius = Math.min(appearance.radius, 8)
   const thickness = Math.max(8, appearance.spacing)
   const inset = Math.max(2, thickness / 3)
