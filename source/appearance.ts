@@ -2,6 +2,7 @@ import {
   appearanceLimits,
   defaultAppearance as systemDefaultAppearance,
   type Appearance as SystemAppearance,
+  type AppearanceUpdate as SystemAppearanceUpdate,
   type AppearanceColor,
   type AppearanceColors,
   type AppearanceMaterial,
@@ -17,6 +18,18 @@ export type Appearance = Pick<
   SystemAppearance,
   "colors" | "spacing" | "radius" | "shadow" | "material" | "transaction"
 >
+
+type AppearanceUpdateFields = Pick<
+  SystemAppearanceUpdate,
+  "colors" | "spacing" | "radius" | "shadow" | "material" | "transaction"
+>
+
+/** At least one partial visual field recursively merged with the nearest UIProvider. */
+export type AppearanceUpdate = {
+  [Field in keyof AppearanceUpdateFields]-?: Readonly<
+    Required<Pick<AppearanceUpdateFields, Field>> & Omit<AppearanceUpdateFields, Field>
+  >
+}[keyof AppearanceUpdateFields]
 
 export {
   appearanceLimits,

@@ -7,6 +7,7 @@
 export {
   defaultAppearance,
   type Appearance,
+  type AppearanceUpdate,
   type AppearanceColor,
   type AppearanceColors,
   type AppearanceMaterial,
@@ -25,7 +26,7 @@ export {
   useThemedValue,
   type UIProviderProps
 } from "./ui-provider.js"
-export type { Preferences, Theme } from "./preferences.js"
+export type { Preferences, PreferencesUpdate, Theme } from "./preferences.js"
 export type { Direction } from "./direction.js"
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"

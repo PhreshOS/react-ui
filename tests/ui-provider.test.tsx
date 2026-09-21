@@ -57,7 +57,7 @@ describe("UIProvider", function () {
     expect(values).toEqual([defaultAppearance, { theme: "light", animations: true }, defaultAppearance.colors.light.background])
   })
 
-  it("provides Appearance and complete Preferences directly", function () {
+  it("provides complete Appearance and Preferences directly", function () {
     const values: Array<Appearance | Preferences | string> = []
 
     render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "dark", animations: false }}>
@@ -84,20 +84,30 @@ describe("UIProvider", function () {
     expect(values).toEqual([appearance, { theme: "dark", animations: false }, appearance.colors.dark.background])
   })
 
-  it("overrides only the property that is supplied", function () {
-    const appearance = {
+  it("recursively merges partial values with the nearest provider", function () {
+    const inherited = {
       ...defaultAppearance,
-      spacing: defaultAppearance.spacing + 1
+      spacing: defaultAppearance.spacing + 1,
+      colors: {
+        light: { ...defaultAppearance.colors.light, background: "#112233" },
+        dark: { ...defaultAppearance.colors.dark, background: "#ddeeff" }
+      }
     }
     const values: Array<Appearance | Preferences | string> = []
 
-    render(<UIProvider appearance={appearance} preferences={{ theme: "dark", animations: false }}>
-      <UIProvider preferences={{ theme: "light", animations: true }}>
+    render(<UIProvider appearance={inherited} preferences={{ theme: "dark", animations: false }}>
+      <UIProvider appearance={{ colors: { dark: { danger: "#ff0000" } } }} preferences={{ theme: "light" }}>
         <Read onRead={value => values.push(value)} />
       </UIProvider>
     </UIProvider>)
 
-    expect(values).toEqual([appearance, { theme: "light", animations: true }, appearance.colors.light.background])
+    expect(values).toEqual([{
+      ...inherited,
+      colors: {
+        light: inherited.colors.light,
+        dark: { ...inherited.colors.dark, danger: "#ff0000" }
+      }
+    }, { theme: "light", animations: false }, inherited.colors.light.background])
   })
 
   it("does not alter arbitrary document scrollbars", function () {

@@ -12,6 +12,7 @@ test("package contract", async () => {
   const repository = resolve(dirname(fileURLToPath(import.meta.url)), "..")
   const temporary = mkdtempSync(join(tmpdir(), "phreshos-react-ui-package-"))
   const cache = join(temporary, "npm-cache")
+  const coreCandidate = process.env.PHRESHOS_CORE_PACKAGE
 
   assert.equal(typeof manifest.dependencies["@phreshos/core"], "string")
   assert.equal(manifest.peerDependencies["@phreshos/core"], undefined)
@@ -72,7 +73,8 @@ test("package contract", async () => {
         "--no-package-lock",
         archive,
         "@types/react@^19.2.18",
-        "@types/react-dom@^19.2.4"
+        "@types/react-dom@^19.2.4",
+        ...(coreCandidate ? [coreCandidate] : [])
       ],
       {
         cwd: consumer,
@@ -134,7 +136,7 @@ test("package contract", async () => {
 
     writeFileSync(
       join(consumer, "consumer.tsx"),
-      `import { Accordion, AlertDialog, UIProvider, Button, Calendar, ContextMenu, DateRangePicker, Dialog, Disclosure, DropdownMenu, Flex, Grid, Menu, Panel, Popover, RangeCalendar, Surface, Window, Tooltip, Input, Textarea, DateField, TimeField, DatePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, defaultAppearance, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type Preferences } from "@phreshos/react-ui"
+      `import { Accordion, AlertDialog, UIProvider, Button, Calendar, ContextMenu, DateRangePicker, Dialog, Disclosure, DropdownMenu, Flex, Grid, Menu, Panel, Popover, RangeCalendar, Surface, Window, Tooltip, Input, Textarea, DateField, TimeField, DatePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, defaultAppearance, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type AppearanceUpdate, type Preferences, type PreferencesUpdate } from "@phreshos/react-ui"
   import { CalendarDate, Time } from "@internationalized/date"
 
   const surface = <Surface as="button" type="button" color="background:soft" material={{ opacity: 0.4 }}>Surface</Surface>
@@ -151,8 +153,11 @@ test("package contract", async () => {
   } as const
   const compatibleAppearance: Appearance = systemAppearance
   const systemThemed = <UIProvider appearance={systemAppearance}><Surface>System appearance</Surface></UIProvider>
-  // @ts-expect-error Preferences is one complete value, not a partial override
-  const partialPreferences = <UIProvider preferences={{ theme: "dark" }}><Surface /></UIProvider>
+  const appearanceUpdate: AppearanceUpdate = { colors: { dark: { danger: "#ff0000" } } }
+  const preferencesUpdate: PreferencesUpdate = { theme: "dark" }
+  const partialProvider = <UIProvider appearance={appearanceUpdate} preferences={preferencesUpdate}><Surface /></UIProvider>
+  // @ts-expect-error A provider update must contain at least one owned field.
+  const emptyProvider = <UIProvider appearance={{}} preferences={{}}><Surface /></UIProvider>
 
   function Derived() {
     const browser = useBrowserPreferences()
@@ -225,7 +230,7 @@ test("package contract", async () => {
   void desktopThemed
   void compatibleAppearance
   void systemThemed
-  void partialPreferences
+  void partialProvider
   `
     )
     writeFileSync(
