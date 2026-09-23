@@ -1,10 +1,14 @@
 import { act, cleanup, render } from "@testing-library/react"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, expectTypeOf, it } from "vitest"
 import { UIProvider, defaultAppearance, useAppearance, useBrowserPreferences, usePreferences, useThemedValue, type Appearance, type Preferences } from "../source/main.js"
 
 afterEach(cleanup)
 
 describe("UIProvider", function () {
+  it("limits its Appearance contract to fields React UI consumes", function () {
+    expectTypeOf<"taskbar" extends keyof Appearance ? true : false>().toEqualTypeOf<false>()
+  })
+
   it("shares the browser's native preference subscriptions across consumers", function () {
     let subscriptions = 0
     let removals = 0
