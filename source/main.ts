@@ -62,6 +62,7 @@ export {
   type WindowMaximizeProps,
   type WindowCloseProps
 } from "./window.js"
+export { default as useWindowMoveHandle, type WindowMoveHandle } from "./use-window-move-handle.js"
 export { Button, type ButtonColor, type ButtonProps } from "./button.js"
 export { Input, type InputProps } from "./input.js"
 export { Textarea, type TextareaProps } from "./textarea.js"

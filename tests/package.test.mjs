@@ -36,6 +36,8 @@ test("package contract", async () => {
     assert(paths.has("dist/panel.d.ts"), "the package has no Panel contract")
     assert(paths.has("dist/window.js"), "the package has no Window implementation")
     assert(paths.has("dist/window.d.ts"), "the package has no Window contract")
+    assert(paths.has("dist/use-window-move-handle.js"), "the package has no Window move hook implementation")
+    assert(paths.has("dist/use-window-move-handle.d.ts"), "the package has no Window move hook contract")
     assert(!paths.has("dist/window-header.js"), "the removed WindowHeader implementation entered the package")
     assert(!paths.has("dist/window-header.d.ts"), "the removed WindowHeader contract entered the package")
     for (const name of ["ui-provider", "direction", "input", "textarea", "date-field", "time-field", "date-picker", "checkbox", "radio", "switch", "select", "slider", "progress-bar", "toolbar", "disclosure", "accordion", "tree", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
@@ -105,10 +107,11 @@ test("package contract", async () => {
     useDirection,
     useDocumentDirection,
     usePreferences,
+    useWindowMoveHandle,
     useScale
   } from "@phreshos/react-ui"
 
-  for (const exported of [UIProvider, Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu, Flex, Grid, ListBox, Menu, Panel, Popover, Surface, Table, Tabs, Window, Tooltip, Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale]) {
+  for (const exported of [UIProvider, Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu, Flex, Grid, ListBox, Menu, Panel, Popover, Surface, Table, Tabs, Window, Tooltip, Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, useWindowMoveHandle]) {
     assert.notEqual(exported, undefined)
   }
   assert.equal("signInWallpaper" in defaultAppearance, false)
@@ -205,7 +208,7 @@ test("package contract", async () => {
         </Grid></Panel.Content>
       </Panel>
       <Window>
-        <Window.Header><Window.Header.Identity title="Example" /><Window.Header.Actions><Window.Header.Close /></Window.Header.Actions></Window.Header>
+        <Window.Header beginMoveGesture={() => ({ ready: Promise.resolve(), finished: Promise.resolve(), cancel() {} })}><Window.Header.Identity title="Example" /><Window.Header.Actions><Window.Header.Close /></Window.Header.Actions></Window.Header>
         <Window.Content>Window content</Window.Content>
       </Window>
       <Popover><Popover.Trigger>Info</Popover.Trigger><Popover.Content><Popover.Dialog aria-label="Info"><Popover.Close>Close</Popover.Close></Popover.Dialog></Popover.Content></Popover>

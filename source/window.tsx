@@ -1,11 +1,13 @@
 import { createContext, forwardRef, useContext } from "react"
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react"
+import type { BeginWindowMoveGesture } from "@phreshos/core"
 import { useResolvedAppearance } from "./appearance-context.js"
 import { Button, type ButtonProps } from "./button.js"
 import { resolveColor, type Color } from "./color.js"
 import { transitionTiming } from "./motion-style.js"
 import { scale } from "./scale.js"
 import { Surface, type SurfaceProps } from "./surface.js"
+import useWindowMoveHandle from "./use-window-move-handle.js"
 
 interface HeaderState {
   readonly active: boolean
@@ -69,14 +71,26 @@ export interface WindowHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, 
 
   /** Base color inherited by header-owned text and icons. */
   readonly color?: Color
+
+  /** Hands an intentional header drag to its host after the pointer threshold. */
+  readonly beginMoveGesture?: BeginWindowMoveGesture
+
+  /** Receives a synchronous or asynchronous move handoff failure. */
+  readonly onMoveError?: (error: unknown) => void
 }
 
 /** The composable top region of a window; its enclosing Surface owns the material. */
 const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function HeaderRoot({
   active = true,
+  beginMoveGesture,
   children,
   color,
+  onLostPointerCapture,
+  onMoveError,
+  onPointerCancel,
   onPointerDown,
+  onPointerMove,
+  onPointerUp,
   style,
   ...properties
 }, ref) {
@@ -90,12 +104,20 @@ const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function Header
     spacing,
     transition: transitionTiming(resolved.transaction, resolved.preferences.animations)
   }
+  const move = useWindowMoveHandle(beginMoveGesture, onMoveError)
 
   return <HeaderContext.Provider value={state}>
     <div
       {...properties}
       ref={ref}
-      onPointerDown={onPointerDown}
+      onPointerDown={event => {
+        onPointerDown?.(event)
+        if (!event.defaultPrevented) move.onPointerDown(event)
+      }}
+      onPointerMove={event => { onPointerMove?.(event); move.onPointerMove(event) }}
+      onPointerUp={event => { onPointerUp?.(event); move.onPointerUp(event) }}
+      onPointerCancel={event => { onPointerCancel?.(event); move.onPointerCancel(event) }}
+      onLostPointerCapture={event => { onLostPointerCapture?.(event); move.onLostPointerCapture(event) }}
       style={{
         boxSizing: "border-box",
         display: "flex",
@@ -106,8 +128,8 @@ const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function Header
         paddingInline: spacing,
         flexShrink: 0,
         userSelect: "none",
-        touchAction: onPointerDown ? "none" : undefined,
-        cursor: onPointerDown ? "grab" : undefined,
+        touchAction: beginMoveGesture ? "none" : undefined,
+        cursor: beginMoveGesture ? "grab" : undefined,
         color: foreground,
         ...style
       }}
