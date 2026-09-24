@@ -181,6 +181,11 @@ it("shares Button height and responds to the nearest concrete theme colors", () 
 })
 
 describe.each([["Checkbox", Checkbox, "checkbox"], ["Switch", Switch, "switch"]] as const)("%s", (_, Control, role) => {
+    it("anchors its hidden native input to the visible control", () => {
+        renderUI(<Control label="Enabled" />)
+        expect(screen.getByRole(role).closest("label")?.style.position).toBe("relative")
+    })
+
     it("associates its label and description and toggles with pointer and Space", async () => {
         const onChange = vi.fn()
         const user = userEvent.setup()

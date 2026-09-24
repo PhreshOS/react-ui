@@ -69,6 +69,10 @@ export function ToggleIndicator({ kind, direction = "ltr", selected, indetermina
 export function toggleStyle(theme: ControlTheme, disabled: boolean, readOnly: boolean): CSSProperties {
 
     return {
+        // React Aria's focusable native input is visually hidden with absolute
+        // positioning. Anchor it here so focus cannot scroll an ancestor viewport
+        // toward a position outside the visible toggle.
+        position: "relative",
         display: "flex",
         alignItems: "center",
         gap: theme.gap,
