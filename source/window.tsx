@@ -13,6 +13,8 @@ interface HeaderState {
   readonly active: boolean
   readonly foreground: string
   readonly iconRadius: number
+  readonly maximized: boolean
+  readonly onMaximize?: () => void
   readonly spacing: number
   readonly transition: CSSProperties
 }
@@ -75,6 +77,12 @@ export interface WindowHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, 
   /** Hands an intentional header drag to its host after the pointer threshold. */
   readonly beginMoveGesture?: BeginWindowMoveGesture
 
+  /** Whether the represented window is currently maximized. */
+  readonly maximized?: boolean
+
+  /** Toggles the represented window between maximized and restored states. */
+  readonly onMaximize?: () => void
+
   /** Receives a synchronous or asynchronous move handoff failure. */
   readonly onMoveError?: (error: unknown) => void
 }
@@ -85,7 +93,10 @@ const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function Header
   beginMoveGesture,
   children,
   color,
+  maximized = false,
+  onDoubleClick,
   onLostPointerCapture,
+  onMaximize,
   onMoveError,
   onPointerCancel,
   onPointerDown,
@@ -101,6 +112,8 @@ const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function Header
     active,
     foreground,
     iconRadius: scale(resolved.appearance.radius, "xsmall"),
+    maximized,
+    onMaximize,
     spacing,
     transition: transitionTiming(resolved.transaction, resolved.preferences.animations)
   }
@@ -118,6 +131,10 @@ const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function Header
       onPointerUp={event => { onPointerUp?.(event); move.onPointerUp(event) }}
       onPointerCancel={event => { onPointerCancel?.(event); move.onPointerCancel(event) }}
       onLostPointerCapture={event => { onLostPointerCapture?.(event); move.onLostPointerCapture(event) }}
+      onDoubleClick={event => {
+        onDoubleClick?.(event)
+        if (!event.defaultPrevented) onMaximize?.()
+      }}
       style={{
         boxSizing: "border-box",
         display: "flex",
@@ -251,11 +268,14 @@ export interface WindowMaximizeProps extends WindowControlProps {
 
 const WindowMaximize = forwardRef<HTMLButtonElement, WindowMaximizeProps>(function WindowMaximize({
   "aria-label": label,
-  maximized = false,
+  maximized,
+  onPress,
   ...properties
 }, ref) {
-  return <WindowAction {...properties} ref={ref} aria-label={label ?? (maximized ? "Restore" : "Maximize")}>
-    <ControlIcon>{maximized
+  const header = useHeader()
+  const selected = maximized ?? header.maximized
+  return <WindowAction {...properties} ref={ref} onPress={onPress ?? header.onMaximize} aria-label={label ?? (selected ? "Restore" : "Maximize")}>
+    <ControlIcon>{selected
       ? <path d="M1 4h5v5H1zM4 1h5v5H6.5" strokeWidth="1.3" strokeLinejoin="round" />
       : <path d="M1.5 1.5h7v7h-7z" strokeWidth="1.3" strokeLinejoin="round" />}
     </ControlIcon>
@@ -291,8 +311,26 @@ const Header = Object.assign(HeaderRoot, {
   Close: WindowClose
 })
 
+export type WindowMoveCaptureProps = HTMLAttributes<HTMLDivElement>
+
+/** The active full-viewport side of a Window move handoff. */
+const WindowMoveCapture = forwardRef<HTMLDivElement, WindowMoveCaptureProps>(function WindowMoveCapture({
+  style,
+  ...properties
+}, ref) {
+  return <div {...properties} ref={ref} style={{
+    position: "fixed",
+    inset: 0,
+    touchAction: "none",
+    userSelect: "none",
+    cursor: "grab",
+    ...style
+  }} />
+})
+
 /** One Surface with a ready-to-use header-and-content composition. */
 export const Window = Object.assign(WindowRoot, {
   Header,
-  Content: WindowContent
+  Content: WindowContent,
+  MoveCapture: WindowMoveCapture
 })

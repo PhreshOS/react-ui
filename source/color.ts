@@ -1,5 +1,6 @@
 import { useMemo } from "react"
 import type { AppearanceColor, AppearanceColors } from "./appearance.js"
+import { useResolvedAppearance } from "./appearance-context.js"
 import ColorSpace from "colorjs.io/src/ColorSpace.js"
 import { mix } from "colorjs.io/src/interpolation.js"
 import parse from "colorjs.io/src/parse.js"
@@ -74,6 +75,12 @@ export function resolveColorLevel(value: string, level: ColorLevel): string {
 /** Returns the complete visual treatments derived from one concrete color. */
 export function useColor(value: string): ColorScale {
   return useMemo(() => color(value), [value])
+}
+
+/** Returns the readable Appearance content color for one semantic or CSS fill. */
+export function useContrastingColor(value: Color): string {
+  const { colors } = useResolvedAppearance()
+  return useMemo(() => contrastingColor(value, colors), [value, colors])
 }
 
 /** Resolves a semantic color from an already selected Appearance branch. */

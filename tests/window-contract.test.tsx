@@ -71,11 +71,11 @@ describe("Window", () => {
     const onClose = vi.fn()
     const onPin = vi.fn()
 
-    render(provider(<Window.Header onPointerDown={onGrab} onDoubleClick={onMaximize}>
+    render(provider(<Window.Header maximized onPointerDown={onGrab} onMaximize={onMaximize}>
       <Window.Header.Identity icon="/program.svg" title="Editor" data-testid="identity" />
       <Window.Header.Actions>
         <Window.Header.Minimize onPress={onMinimize} />
-        <Window.Header.Maximize maximized onPress={onMaximize} />
+        <Window.Header.Maximize />
         <Window.Header.Close onPress={onClose} />
         <Window.Header.Action aria-label="Pin" onPress={onPin}>+</Window.Header.Action>
       </Window.Header.Actions>
@@ -95,6 +95,17 @@ describe("Window", () => {
     fireEvent.doubleClick(screen.getByTestId("identity"))
     expect(onGrab).toHaveBeenCalledOnce()
     expect(onMaximize).toHaveBeenCalledTimes(2)
+  })
+
+  it("owns one drag-intent cursor before and after a move handoff", () => {
+    const beginMoveGesture = vi.fn()
+    render(provider(<>
+      <Window.Header beginMoveGesture={beginMoveGesture} data-testid="header" />
+      <Window.MoveCapture data-testid="capture" />
+    </>))
+
+    expect(screen.getByTestId("header").style.cursor).toBe("grab")
+    expect(screen.getByTestId("capture").style.cursor).toBe("grab")
   })
 
   it("uses danger as the overridable semantic default for Window Close", () => {

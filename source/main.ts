@@ -60,7 +60,8 @@ export {
   type WindowActionProps,
   type WindowControlProps,
   type WindowMaximizeProps,
-  type WindowCloseProps
+  type WindowCloseProps,
+  type WindowMoveCaptureProps
 } from "./window.js"
 export { default as useWindowMoveHandle, type WindowMoveHandle } from "./use-window-move-handle.js"
 export { Button, type ButtonColor, type ButtonProps } from "./button.js"
@@ -205,5 +206,5 @@ export type { ControlColor } from "./control.js"
 export type { LayoutAlignment, LayoutGap, LayoutJustification } from "./layout.js"
 export { resolveRadius, type Radius, type RadiusProps } from "./radius.js"
 export { resolveSpacing, type Spacing } from "./spacing.js"
-export { useColor } from "./color.js"
+export { useColor, useContrastingColor } from "./color.js"
 export { useScale, type NumericScale, type ScaleLevel } from "./scale.js"

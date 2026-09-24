@@ -104,6 +104,7 @@ test("package contract", async () => {
     resolveSpacing,
     useBrowserPreferences,
     useColor,
+    useContrastingColor,
     useDirection,
     useDocumentDirection,
     usePreferences,
@@ -111,7 +112,7 @@ test("package contract", async () => {
     useScale
   } from "@phreshos/react-ui"
 
-  for (const exported of [UIProvider, Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu, Flex, Grid, ListBox, Menu, Panel, Popover, Surface, Table, Tabs, Window, Tooltip, Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, useWindowMoveHandle]) {
+  for (const exported of [UIProvider, Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu, Flex, Grid, ListBox, Menu, Panel, Popover, Surface, Table, Tabs, Window, Tooltip, Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useScale, useWindowMoveHandle]) {
     assert.notEqual(exported, undefined)
   }
   assert.equal("signInWallpaper" in defaultAppearance, false)
@@ -139,7 +140,7 @@ test("package contract", async () => {
 
     writeFileSync(
       join(consumer, "consumer.tsx"),
-      `import { Accordion, AlertDialog, UIProvider, Button, Calendar, ContextMenu, DateRangePicker, Dialog, Disclosure, DropdownMenu, Flex, Grid, Menu, Panel, Popover, RangeCalendar, Surface, Window, Tooltip, Input, Textarea, DateField, TimeField, DatePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, defaultAppearance, useBrowserPreferences, useColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type AppearanceUpdate, type Preferences, type PreferencesUpdate } from "@phreshos/react-ui"
+      `import { Accordion, AlertDialog, UIProvider, Button, Calendar, ContextMenu, DateRangePicker, Dialog, Disclosure, DropdownMenu, Flex, Grid, Menu, Panel, Popover, RangeCalendar, Surface, Window, Tooltip, Input, Textarea, DateField, TimeField, DatePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, defaultAppearance, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type AppearanceUpdate, type Preferences, type PreferencesUpdate } from "@phreshos/react-ui"
   import { CalendarDate, Time } from "@internationalized/date"
 
   const surface = <Surface as="button" type="button" color="background:soft" material={{ opacity: 0.4 }}>Surface</Surface>
@@ -169,8 +170,9 @@ test("package contract", async () => {
     const scale = resolved.scale
     const spacing = useScale(defaultAppearance.spacing)
     const primary = useColor(defaultAppearance.colors.light.primary)
+    const primaryContent = useContrastingColor("primary:base")
 
-    return <span style={{ color: primary.base, padding: spacing.small }} data-browser-theme={browser.theme} data-animations={resolved.animations}>{String(scale)}</span>
+    return <span style={{ color: primaryContent, background: primary.base, padding: spacing.small }} data-browser-theme={browser.theme} data-animations={resolved.animations}>{String(scale)}</span>
   }
 
   function Direction() {

@@ -1,7 +1,7 @@
-import { renderHook } from "@testing-library/react"
+import { render, renderHook, screen } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
-import { defaultAppearance, resolveRadius, resolveSpacing, useColor, useScale } from "../source/main.js"
-import { color } from "../source/color.js"
+import { Button, defaultAppearance, resolveRadius, resolveSpacing, UIProvider, useColor, useContrastingColor, useScale } from "../source/main.js"
+import { color, contrastingColor } from "../source/color.js"
 import { isScaleLevel, scaleMultiplier } from "../source/scale.js"
 
 describe("visual derivation", function () {
@@ -28,6 +28,26 @@ describe("visual derivation", function () {
 
     hook.rerender({ value: "hotpink" })
     expect(hook.result.current).toBe(first)
+  })
+
+  it("returns the same readable content color used by a control fill", function () {
+    function Example() {
+      const color = "primary:soft" as const
+      const foreground = useContrastingColor(color)
+      return <><Button color={color}>Tab</Button><span data-testid="content" style={{ color: foreground }}>Close</span></>
+    }
+
+    render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: false }}><Example /></UIProvider>)
+
+    expect(screen.getByTestId("content").style.color).toBe(screen.getByRole("button", { name: "Tab" }).style.color)
+  })
+
+  it("accepts a direct CSS fill", function () {
+    const hook = renderHook(() => useContrastingColor("#101820"), {
+      wrapper: ({ children }) => <UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: false }}>{children}</UIProvider>
+    })
+
+    expect(hook.result.current).toBe(contrastingColor("#101820", defaultAppearance.colors.light))
   })
 
   it("preserves the concrete color and neutral multiplier values", function () {
