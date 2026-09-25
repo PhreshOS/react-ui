@@ -121,7 +121,8 @@ function SpinnerIndicator({ contextualColor, theme }: Readonly<{
     width="100%"
     height="100%"
     fill="none"
-    initial={false}
+    // A repeating animation must start on mount; initial={false} renders its final keyframe instead.
+    initial={{ rotate: 0 }}
     animate={{ rotate: theme.animations ? [0, 360] : 0 }}
     transition={theme.animations ? { duration, repeat: Infinity, ease: "linear" } : { duration: 0 }}
     style={{ display: "block", transformOrigin: "center" }}

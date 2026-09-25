@@ -51,6 +51,13 @@ it("derives a contextual track from the surrounding current color", function () 
     .toBe("color-mix(in srgb, currentColor 25%, transparent)")
 })
 
+it("does not render the final keyframe before starting its rotation", function () {
+  const { container } = renderSpinner(<Spinner label="Loading" />, true)
+  const indicator = container.querySelector<SVGElement>("[data-spinner-indicator]")
+
+  expect(indicator?.style.transform).toBe("none")
+})
+
 it("requires an accessible label unless the indicator is decorative", function () {
   expectTypeOf<SpinnerProps>().toMatchTypeOf<{ color?: string }>()
 
@@ -65,8 +72,8 @@ it("requires an accessible label unless the indicator is decorative", function (
   void unnamed
 })
 
-function renderSpinner(component: React.ReactNode) {
-  return render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: false }}>
+function renderSpinner(component: React.ReactNode, animations = false) {
+  return render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations }}>
     {component}
   </UIProvider>)
 }
