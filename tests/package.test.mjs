@@ -40,7 +40,7 @@ test("package contract", async () => {
     assert(paths.has("dist/use-window-move-handle.d.ts"), "the package has no Window move hook contract")
     assert(!paths.has("dist/window-header.js"), "the removed WindowHeader implementation entered the package")
     assert(!paths.has("dist/window-header.d.ts"), "the removed WindowHeader contract entered the package")
-    for (const name of ["ui-provider", "direction", "input", "textarea", "date-field", "time-field", "date-picker", "checkbox", "radio", "switch", "select", "slider", "progress-bar", "toolbar", "disclosure", "accordion", "tree", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
+    for (const name of ["ui-provider", "direction", "input", "textarea", "date-field", "time-field", "date-picker", "checkbox", "radio", "switch", "select", "slider", "progress-bar", "spinner", "readiness", "toolbar", "disclosure", "accordion", "tree", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
       assert(paths.has(`dist/${name}.js`), `the package has no ${name} implementation`)
       assert(paths.has(`dist/${name}.d.ts`), `the package has no ${name} contract`)
     }
@@ -97,7 +97,7 @@ test("package contract", async () => {
     ListBox, Menu, Panel, Popover, Table, Tabs,
     Surface, Window,
     Tooltip,
-    Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree,
+    Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Spinner, Readiness, Toolbar, Tree,
     UIProvider,
     defaultAppearance,
     resolveRadius,
@@ -108,11 +108,13 @@ test("package contract", async () => {
     useDirection,
     useDocumentDirection,
     usePreferences,
+    useReadiness,
     useWindowMoveHandle,
-    useScale
+    useScale,
+    useRequirement
   } from "@phreshos/react-ui"
 
-  for (const exported of [UIProvider, Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu, Flex, Grid, ListBox, Menu, Panel, Popover, Surface, Table, Tabs, Window, Tooltip, Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useScale, useWindowMoveHandle]) {
+  for (const exported of [UIProvider, Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu, Flex, Grid, ListBox, Menu, Panel, Popover, Surface, Table, Tabs, Window, Tooltip, Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Spinner, Readiness, Toolbar, Tree, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useReadiness, useRequirement, useScale, useWindowMoveHandle]) {
     assert.notEqual(exported, undefined)
   }
   assert.equal("signInWallpaper" in defaultAppearance, false)
@@ -140,7 +142,7 @@ test("package contract", async () => {
 
     writeFileSync(
       join(consumer, "consumer.tsx"),
-      `import { Accordion, AlertDialog, UIProvider, Button, Calendar, ContextMenu, DateRangePicker, Dialog, Disclosure, DropdownMenu, Flex, Grid, Menu, Panel, Popover, RangeCalendar, Surface, Window, Tooltip, Input, Textarea, DateField, TimeField, DatePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Toolbar, Tree, defaultAppearance, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type AppearanceUpdate, type Preferences, type PreferencesUpdate } from "@phreshos/react-ui"
+      `import { Accordion, AlertDialog, UIProvider, Button, Calendar, ContextMenu, DateRangePicker, Dialog, Disclosure, DropdownMenu, Flex, Grid, Menu, Panel, Popover, RangeCalendar, Surface, Window, Tooltip, Input, Textarea, DateField, TimeField, DatePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Spinner, Readiness, Toolbar, Tree, defaultAppearance, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useReadiness, useRequirement, useScale, type Appearance, type AppearanceUpdate, type Preferences, type PreferencesUpdate } from "@phreshos/react-ui"
   import { CalendarDate, Time } from "@internationalized/date"
 
   const surface = <Surface as="button" type="button" color="background:soft" material={{ opacity: 0.4 }}>Surface</Surface>
@@ -206,6 +208,8 @@ test("package contract", async () => {
             <Select label="Choice" options={[{value: "one", label: "One"}]} onChange={value => value?.toUpperCase()} />
             <Slider label="Volume" onChange={value => value.toFixed(0)} />
             <ProgressBar label="Upload" value={40} />
+            <Spinner label="Loading" />
+            <Readiness fallback={requirements => <span>{requirements.at(-1)?.message}</span>}><Readiness.Requirement message="Loading" /><span>Ready</span></Readiness>
           </Flex>
         </Grid></Panel.Content>
       </Panel>
