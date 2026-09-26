@@ -22,12 +22,14 @@ export function AlertDialogRoot(properties: AlertDialogRootProps) {
 
 export type AlertDialogBackdropProps = DialogBackdropProps
 
+// An alert asks for an explicit decision, so neither pressing outside nor
+// Escape dismisses it unless the caller allows that.
 export const AlertDialogBackdrop = forwardRef<HTMLDivElement, AlertDialogBackdropProps>(function AlertDialogBackdrop(properties, ref) {
   return <DialogBackdrop
     {...properties}
     ref={ref}
-    isDismissable={properties.isDismissable ?? false}
-    isKeyboardDismissDisabled={properties.isKeyboardDismissDisabled ?? true}
+    dismissable={properties.dismissable ?? false}
+    keyboardDismissable={properties.keyboardDismissable ?? false}
   />
 })
 

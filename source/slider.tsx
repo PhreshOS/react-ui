@@ -1,15 +1,20 @@
-// Base UI accepts direction directly; React Aria derives these keys from locale.
+// Base UI accepts an explicit direction; React Aria derives slider geometry
+// from the locale, which cannot follow a React UI direction boundary.
 import { Slider as BaseSlider } from "@base-ui/react/slider"
 import { DirectionProvider as BaseDirectionProvider } from "@base-ui/react/direction-provider"
 import { forwardRef, useEffect, useId, useRef, useState } from "react"
-import type { HTMLAttributes } from "react"
-import { controlFontWeight, controlOpacity, fieldStyle, useControlTheme } from "./control.js"
-import type { ControlProps, FieldProps } from "./control.js"
-import { resolveDirection, useDirection } from "./direction.js"
+import type { HTMLAttributes, Ref } from "react"
+import { controlFontWeight, controlOpacity, transition, useControlMetrics, type ControlProps, type FieldProps } from "./control/control.js"
+import { fieldStyle } from "./control/field.js"
+import { lightColor } from "./foundation/color.js"
+import { resolveDirection, useDirection } from "./foundation/direction.js"
+import type { MaterialOverrides } from "./surface/material-options.js"
+import { SurfaceView, dimmedClass } from "./surface/surface.js"
 
 export interface SliderProps extends
   Omit<HTMLAttributes<HTMLDivElement>, "children" | "className" | "color" | "defaultValue" | "onChange" | "style">,
   ControlProps,
+  MaterialOverrides,
   Pick<FieldProps, "label" | "description"> {
   readonly value?: number
   readonly defaultValue?: number
@@ -24,54 +29,43 @@ export interface SliderProps extends
   readonly onChangeEnd?: (value: number) => void
 }
 
-/** One numeric value with pointer, touch, keyboard, and form support. */
+/**
+ * One numeric value, drawn as a long Switch: a recessed bed, a raised fill in
+ * the owner's color up to the thumb, and the Switch thumb dragged along it.
+ */
 export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
-  label,
-  description,
-  name,
-  form,
-  disabled,
-  size,
-  color,
-  style,
-  orientation = "horizontal",
-  value,
-  defaultValue,
-  minValue = 0,
-  maxValue = 100,
-  step = 1,
-  formatOptions,
-  onChange,
-  onChangeEnd,
-  ...properties
+  label, description, name, form, disabled, size, color = "primary", style, className,
+  orientation = "horizontal", value, defaultValue, minValue = 0, maxValue = 100, step = 1,
+  formatOptions, onChange, onChangeEnd, material, ...properties
 }, ref) {
-  const theme = useControlTheme({ size, color })
+  const metrics = useControlMetrics(size)
+  const { colors } = metrics.visual
   const direction = resolveDirection(properties.dir, useDirection())
   const descriptionId = useId()
   const input = useRef<HTMLInputElement>(null)
   const initialValue = useRef(defaultValue ?? minValue)
   const [uncontrolledValue, setUncontrolledValue] = useState(initialValue.current)
-  const [hovered, setHovered] = useState(false)
   const vertical = orientation === "vertical"
-  const diameter = theme.indicatorSize
-  const rail = Math.max(4, Math.round(diameter / 3))
+  // The Switch's proportions: its bed height, and a thumb inset by the same gap.
+  const bed = metrics.indicator
+  const inset = 3
+  const thumb = bed - inset * 2
   const describedBy = [properties["aria-describedby"], description != null ? descriptionId : null].filter(Boolean).join(" ") || undefined
   const controlled = value !== undefined
-  const resolvedValue = controlled ? value : uncontrolledValue
 
   useEffect(() => {
     const formElement = input.current?.form
     if (controlled || formElement == null) return
-
     const reset = () => setUncontrolledValue(initialValue.current)
     formElement.addEventListener("reset", reset)
     return () => formElement.removeEventListener("reset", reset)
   }, [controlled])
 
-  const root = <BaseSlider.Root
+  return <BaseDirectionProvider direction={direction}><BaseSlider.Root
     {...properties}
     ref={ref}
-    value={resolvedValue}
+    className={dimmedClass(disabled ?? false, className)}
+    value={controlled ? value : uncontrolledValue}
     min={minValue}
     max={maxValue}
     step={step}
@@ -85,62 +79,77 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
       onChange?.(next)
     }}
     onValueCommitted={next => onChangeEnd?.(next)}
-    style={fieldStyle(theme, disabled, style)}
+    style={fieldStyle(metrics, style)}
   >
-    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: theme.gap }}>
+    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: metrics.gap }}>
       {label != null && <BaseSlider.Label style={{ fontWeight: controlFontWeight }}>{label}</BaseSlider.Label>}
       <BaseSlider.Value style={{ fontVariantNumeric: "tabular-nums", opacity: controlOpacity.secondary }} />
     </div>
-    <BaseSlider.Control style={{
-      position: "relative",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      touchAction: "none",
-      userSelect: "none",
-      width: vertical ? theme.height : "100%",
-      height: vertical ? theme.height * 4 : theme.height
-    }}>
-      <BaseSlider.Track style={{
-        position: "relative",
-        width: vertical ? rail : "100%",
-        height: vertical ? "100%" : rail,
-        borderRadius: rail,
-        background: theme.paints.subtle.rest.background
-      }}>
-        <BaseSlider.Indicator style={{
-          ...theme.transition,
-          borderRadius: rail,
-          background: theme.paints.palette.rest.background
-        }} />
-        <BaseSlider.Thumb
-          inputRef={input}
-          aria-label={properties["aria-label"]}
-          aria-labelledby={properties["aria-labelledby"]}
-          aria-describedby={describedBy}
-          onPointerEnter={() => setHovered(true)}
-          onPointerLeave={() => setHovered(false)}
-          style={state => {
-            const paint = state.dragging ? theme.paints.palette.pressed : hovered ? theme.paints.palette.hover : theme.paints.palette.rest
-            return {
-              ...theme.transition,
-              width: diameter,
-              height: diameter,
-              borderRadius: "50%",
-              boxSizing: "border-box",
-              background: paint.color,
-              border: `${Math.max(1, diameter / 6)}px solid ${paint.background}`,
-              outline: state.focused ? `1px solid ${theme.focusColor}` : "none",
-              outlineOffset: 1,
-              cursor: state.disabled ? "not-allowed" : state.dragging ? "grabbing" : "grab",
-              transform: `scale(${state.dragging ? 0.92 : hovered ? 1.08 : 1})`
-            }
-          }}
-        />
-      </BaseSlider.Track>
-    </BaseSlider.Control>
+    <SurfaceView
+      as="div"
+      color="background"
+      depth="recessed"
+      material={material}
+      radius="full"
+      style={{
+        display: "flex",
+        boxSizing: "border-box",
+        // The thumb center travels between the bed ends minus half a thumb,
+        // so the thumb keeps the Switch inset at both ends.
+        paddingBlock: vertical ? inset + thumb / 2 : inset,
+        paddingInline: vertical ? inset : inset + thumb / 2,
+        width: vertical ? bed : "100%",
+        height: vertical ? metrics.height * 4 : bed
+      }}
+    >
+      <BaseSlider.Control style={{ position: "relative", flex: 1, touchAction: "none", userSelect: "none" }}>
+        <BaseSlider.Track style={{ position: "relative", width: "100%", height: "100%" }}>
+          <BaseSlider.Indicator render={(fill, _state) => <SurfaceView
+            {...fill}
+            ref={(fill as { ref?: Ref<Element> }).ref}
+            as="div"
+            color={color}
+            material={material}
+            shadow={false}
+            radius="full"
+            style={{
+              ...fill.style,
+              position: "absolute",
+              boxSizing: "content-box",
+              // The fill starts at the bed's end and wraps the thumb with the
+              // bed's inset, like an enabled Switch.
+              ...(vertical
+                ? { insetInlineStart: -inset, width: bed, marginBottom: -(inset + thumb / 2), paddingTop: thumb + inset * 2 }
+                : { top: -inset, height: bed, marginInlineStart: -(inset + thumb / 2), paddingInlineEnd: thumb + inset * 2 })
+            }}
+          />} />
+          <BaseSlider.Thumb
+            inputRef={input}
+            aria-label={properties["aria-label"]}
+            aria-labelledby={properties["aria-labelledby"]}
+            aria-describedby={describedBy}
+            render={(native, state) => <SurfaceView
+              {...native}
+              ref={(native as { ref?: Ref<Element> }).ref}
+              as="div"
+              // A thumb is lit from above in every Theme.
+              color={lightColor(colors)}
+              radius="full"
+              interaction={{ hovered: false, pressed: state.dragging, focusVisible: state.focused, disabled: state.disabled }}
+              style={{
+                ...native.style,
+                ...transition(metrics.visual, "scale, outline-color, box-shadow"),
+                zIndex: 2,
+                width: thumb,
+                height: thumb,
+                cursor: state.disabled ? "not-allowed" : state.dragging ? "grabbing" : "grab",
+                scale: state.dragging ? "0.92" : "1"
+              }}
+            />}
+          />
+        </BaseSlider.Track>
+      </BaseSlider.Control>
+    </SurfaceView>
     {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</span>}
-  </BaseSlider.Root>
-
-  return <BaseDirectionProvider direction={direction}>{root}</BaseDirectionProvider>
+  </BaseSlider.Root></BaseDirectionProvider>
 })

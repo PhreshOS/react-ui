@@ -3,13 +3,14 @@ import type { ComponentProps } from "react"
 import { MenuTrigger as AriaMenuTrigger } from "react-aria-components"
 import type { MenuTriggerProps as AriaMenuTriggerProps } from "react-aria-components"
 import { Button, type ButtonProps } from "./button.js"
+import { ariaOpenState, type OverlayRootProps } from "./control/open-state.js"
 import { Menu } from "./menu.js"
-import { PopoverContent } from "./popover.js"
+import { MenuContent } from "./popover.js"
 
-export type DropdownMenuRootProps = AriaMenuTriggerProps
+export type DropdownMenuRootProps = OverlayRootProps & Readonly<Pick<AriaMenuTriggerProps, "trigger">>
 
-export function DropdownMenuRoot(properties: DropdownMenuRootProps) {
-  return <AriaMenuTrigger {...properties} />
+export function DropdownMenuRoot({ children, trigger, ...state }: DropdownMenuRootProps) {
+  return <AriaMenuTrigger {...ariaOpenState(state)} trigger={trigger}>{children}</AriaMenuTrigger>
 }
 
 export type DropdownMenuTriggerProps = ButtonProps
@@ -21,7 +22,7 @@ export const DropdownMenuTrigger = forwardRef<HTMLButtonElement, DropdownMenuTri
 /** A button-triggered overlay. Its Content owns positioning; Menu owns commands and selection. */
 export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   Trigger: DropdownMenuTrigger,
-  Content: PopoverContent,
+  Content: MenuContent,
   Menu
 })
 

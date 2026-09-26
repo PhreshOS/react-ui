@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { createRef, type ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { UIProvider, Surface, Window, defaultAppearance } from "../source/main.js"
-import { resolveColorLevel } from "../source/color.js"
+import { surfaceFill } from "./support/paint.js"
 
 afterEach(cleanup)
 
@@ -32,7 +32,8 @@ describe("Window", () => {
     const actions = screen.getByTestId("actions")
 
     expect(root.current).toBe(window)
-    expect(window.querySelectorAll(":scope > [data-material]")).toHaveLength(1)
+    expect(window.classList.contains("phreshos-surface")).toBe(true)
+    expect(window.children).toHaveLength(2)
     expect(window.style.display).toBe("flex")
     expect(window.style.flexDirection).toBe("column")
     expect(window.style.minWidth).toBe("0px")
@@ -45,7 +46,7 @@ describe("Window", () => {
     expect(identity.textContent).toBe("Editor")
     expect(center.style.flex).toBe("1 1 auto")
     expect(actions.style.marginInlineStart).toBe("auto")
-    expect(screen.getByRole("button", { name: "Pin" }).style.height).toBe("27px")
+    expect(screen.getByRole("button", { name: "Pin" }).style.height).toBe("25px")
     expect(content.current).toBe(screen.getByTestId("content"))
     expect(content.current?.style.flex).toBe("1 1 auto")
     expect(content.current?.style.minWidth).toBe("0px")
@@ -113,9 +114,7 @@ describe("Window", () => {
       <Window.Header.Actions><Window.Header.Close /></Window.Header.Actions>
     </Window.Header>))
 
-    const paint = screen.getByRole("button", { name: "Close" })
-      .querySelector<HTMLElement>("[data-material-base]")
-    expect(paint?.style.background).toBe(css(resolveColorLevel(defaultAppearance.colors.light.danger, "base")))
+    expect(surfaceFill(screen.getByRole("button", { name: "Close" }))).toBe(defaultAppearance.colors.light.danger)
   })
 
   it("applies active treatment and animation preferences to identity only", () => {
@@ -128,7 +127,7 @@ describe("Window", () => {
     const close = screen.getByRole("button", { name: "Close" })
 
     expect(identity.style.opacity).toBe("0.6")
-    expect(identity.style.transitionDuration).toBe("120ms")
+    expect(identity.style.transitionDuration).toBe(`${defaultAppearance.transaction.duration}ms`)
     expect(close.hasAttribute("disabled")).toBe(true)
     rendered.rerender(content(true))
     expect(identity.style.opacity).toBe("1")
@@ -137,27 +136,21 @@ describe("Window", () => {
   })
 
   it("lets the header and its action controls own their base colors", () => {
-    const content = (header: "primary:base" | "secondary:base", close: "danger:base" | "success:base") => provider(
+    const content = (header: "primary" | "secondary", close: "danger" | "success") => provider(
       <Window.Header color={header} data-testid="header">
         <Window.Header.Identity title="Editor" />
         <Window.Header.Actions><Window.Header.Close color={close} /></Window.Header.Actions>
       </Window.Header>
     )
-    const rendered = render(content("primary:base", "danger:base"))
+    const rendered = render(content("primary", "danger"))
     const header = screen.getByTestId("header")
     const close = screen.getByRole("button", { name: "Close" })
     const headerColor = header.style.color
-    const closeColor = close.querySelector<HTMLElement>("[data-material-base]")?.style.background
+    const closeColor = surfaceFill(close)
 
-    rendered.rerender(content("secondary:base", "success:base"))
+    rendered.rerender(content("secondary", "success"))
 
     expect(header.style.color).not.toBe(headerColor)
-    expect(close.querySelector<HTMLElement>("[data-material-base]")?.style.background).not.toBe(closeColor)
+    expect(surfaceFill(close)).not.toBe(closeColor)
   })
 })
-
-function css(value: string) {
-  const element = document.createElement("div")
-  element.style.background = value
-  return element.style.background
-}

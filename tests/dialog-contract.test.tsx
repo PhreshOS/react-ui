@@ -2,14 +2,14 @@ import { cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { AlertDialog, Dialog, UIProvider, defaultAppearance } from "../source/main.js"
-import { resolveColorLevel } from "../source/color.js"
+import { surfaceFill } from "./support/paint.js"
 
 afterEach(cleanup)
 
 function Example({ onOpenChange }: Readonly<{ onOpenChange?(open: boolean): void }>) {
   return <Dialog onOpenChange={onOpenChange}>
     <Dialog.Trigger>Open settings</Dialog.Trigger>
-    <Dialog.Backdrop data-testid="dialog-backdrop" isDismissable>
+    <Dialog.Backdrop data-testid="dialog-backdrop" dismissable>
       <Dialog.Content>
         <Dialog.Header>
           <Dialog.Title>Workspace settings</Dialog.Title>
@@ -19,7 +19,7 @@ function Example({ onOpenChange }: Readonly<{ onOpenChange?(open: boolean): void
         <Dialog.Footer>
           <Dialog>
             <Dialog.Trigger>Open advanced</Dialog.Trigger>
-            <Dialog.Backdrop isDismissable>
+            <Dialog.Backdrop dismissable>
               <Dialog.Content>
                 <Dialog.Title>Advanced settings</Dialog.Title>
                 <Dialog.Close>Close advanced</Dialog.Close>
@@ -34,21 +34,23 @@ function Example({ onOpenChange }: Readonly<{ onOpenChange?(open: boolean): void
 }
 
 describe("Dialog", function () {
-  it("derives the backdrop paint from its color", function () {
-    const content = (color: "primary:base" | "danger:base") => <UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
-      <Dialog isOpen>
-        <Dialog.Backdrop color={color} data-testid="dialog-backdrop">
+  it("dims by default, and blurs with the Appearance material while dimming less", function () {
+    const content = (variant?: "dim" | "blur") => <UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+      <Dialog open>
+        <Dialog.Backdrop variant={variant} data-testid="dialog-backdrop">
           <Dialog.Content aria-label="Example">Content</Dialog.Content>
         </Dialog.Backdrop>
       </Dialog>
     </UIProvider>
-    const view = render(content("primary:base"))
+    const view = render(content())
     const backdrop = screen.getByTestId("dialog-backdrop")
-    const primary = backdrop.style.background
+    const dimmed = backdrop.style.background
+    expect(backdrop.style.backdropFilter).toBe("")
 
-    view.rerender(content("danger:base"))
+    view.rerender(content("blur"))
 
-    expect(backdrop.style.background).not.toBe(primary)
+    expect(backdrop.style.backdropFilter).toBe(`blur(${defaultAppearance.material.light.backdrop}px)`)
+    expect(backdrop.style.background).not.toBe(dimmed)
   })
 
   it("opens as an accessible modal dialog and focuses its content", async function () {
@@ -123,15 +125,15 @@ describe("AlertDialog", function () {
         <AlertDialog.Content>
           <AlertDialog.Title>Delete permanently?</AlertDialog.Title>
           <AlertDialog.Close>Cancel</AlertDialog.Close>
-          <AlertDialog.Close color="danger:base">Delete</AlertDialog.Close>
+          <AlertDialog.Close color="danger">Delete</AlertDialog.Close>
         </AlertDialog.Content>
       </AlertDialog.Backdrop>
     </AlertDialog>)
 
     await user.click(screen.getByRole("button", { name: "Delete workspace" }))
     expect(screen.getByRole("alertdialog", { name: "Delete permanently?" })).toBeTruthy()
-    expect(materialColor(screen.getByRole("button", { name: "Cancel" }))).toBe(css(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
-    expect(materialColor(screen.getByRole("button", { name: "Delete" }))).toBe(css(resolveColorLevel(defaultAppearance.colors.light.danger, "base")))
+    expect(surfaceFill(screen.getByRole("button", { name: "Cancel" }))).toBe(defaultAppearance.colors.light.default)
+    expect(surfaceFill(screen.getByRole("button", { name: "Delete" }))).toBe(defaultAppearance.colors.light.danger)
 
     await user.keyboard("[Escape]")
     await user.click(screen.getByTestId("alert-backdrop"))
@@ -141,13 +143,3 @@ describe("AlertDialog", function () {
     expect(screen.queryByRole("alertdialog")).toBeNull()
   })
 })
-
-function materialColor(element: HTMLElement) {
-  return element.querySelector<HTMLElement>("[data-material-base]")?.style.background
-}
-
-function css(value: string) {
-  const element = document.createElement("div")
-  element.style.background = value
-  return element.style.background
-}

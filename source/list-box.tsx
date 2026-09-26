@@ -9,226 +9,141 @@ import {
 import type {
   HeaderProps as AriaHeaderProps,
   ListBoxItemProps as AriaListBoxItemProps,
+  ListBoxItemRenderProps,
   ListBoxProps as AriaListBoxProps,
-  ListBoxSectionProps as AriaListBoxSectionProps,
-  Selection
+  ListBoxSectionProps as AriaListBoxSectionProps
 } from "react-aria-components"
-import { controlFontWeight, controlOpacity, useControlTheme } from "./control.js"
-import type { ControlColor, ControlTheme } from "./control.js"
-import type { RadiusProps } from "./radius.js"
-import type { ScaleLevel } from "./scale.js"
-import { resolveDirection, useDirection } from "./direction.js"
+import { controlFontWeight, controlOpacity, useControlMetrics, type ControlMetrics } from "./control/control.js"
+import { itemStyle, itemSurface, SelectionMark } from "./control/item.js"
 import {
-  multipleSelection,
-  singleSelection,
-  toAriaSelection,
+  ariaSelection,
+  type MultipleSelectionProps,
   type MultipleStringSelection,
-  type MultipleStringSelectionProps,
   type SingleStringSelectionProps
-} from "./selection.js"
-import { AriaDirectionBoundary } from "./aria-direction.js"
+} from "./control/selection.js"
+import { surfaceRender } from "./control/surface-render.js"
+import { AriaDirectionBoundary } from "./foundation/aria-direction.js"
+import type { Color } from "./foundation/color.js"
+import { resolveDirection, useDirection } from "./foundation/direction.js"
+import type { RadiusProps } from "./foundation/radius.js"
+import type { ScaleLevel } from "./foundation/scale.js"
 
-type ListBoxTheme = Readonly<{
-  color?: ControlColor
-  radius: RadiusProps["radius"]
-  size: ScaleLevel
-  theme: ControlTheme
-}>
+type ListBoxContext = Readonly<{ color: Color, metrics: ControlMetrics, itemRadius: CSSProperties["borderRadius"] }>
 
-const ListBoxThemeContext = createContext<ListBoxTheme | null>(null)
+const ListBoxStyleContext = createContext<ListBoxContext | null>(null)
 
 type ListBoxRootBaseProps<T extends object> = Omit<
   AriaListBoxProps<T>,
-  "className" | "defaultSelectedKeys" | "disabledKeys" | "onSelectionChange" | "selectedKeys" | "selectionMode" | "style"
+  | "className" | "defaultSelectedKeys" | "disabledKeys" | "onSelectionChange" | "selectedKeys" | "selectionMode" | "style"
+  | "shouldFocusOnHover" | "shouldFocusWrap" | "shouldSelectOnPressUp"
 > & RadiusProps & Readonly<{
   className?: string
-  color?: ControlColor
-  disabledValues?: readonly string[]
+  /** Color laid beneath selected Items. */
+  color?: Color
+  /** Whether pointing at an Item moves focus to it. */
+  focusOnHover?: boolean
+  /** Whether arrow keys wrap from the last Item to the first. */
+  focusWrap?: boolean
+  /** Whether an Item is selected when the press ends instead of when it starts. */
+  selectOnPressUp?: boolean
   size?: ScaleLevel
   style?: CSSProperties
 }>
 
-export type ListBoxSingleSelectionProps = SingleStringSelectionProps & Readonly<{
-  selectionMode?: "single"
-}>
+export type ListBoxSingleSelectionProps = SingleStringSelectionProps & Readonly<{ selectionMode?: "single" }>
 
 export type ListBoxMultipleValue = MultipleStringSelection
 
-export type ListBoxMultipleSelectionProps = MultipleStringSelectionProps & Readonly<{
-  selectionMode: "multiple"
-}>
+export type ListBoxMultipleSelectionProps = MultipleSelectionProps
 
-/** Properties accepted by the selectable collection. Single selection is the default. */
+/** A selectable collection. Single selection is the default. */
 export type ListBoxRootProps<T extends object = object> = ListBoxRootBaseProps<T>
   & (ListBoxSingleSelectionProps | ListBoxMultipleSelectionProps)
 
-const ListBoxRootImplementation = forwardRef(function ListBoxRoot<T extends object = object>(
+const ListBoxRootImplementation = forwardRef(function ListBox<T extends object = object>(
   properties: ListBoxRootProps<T>,
   ref: ForwardedRef<HTMLDivElement>
 ) {
   const {
-    className,
-    color,
-    defaultValue,
-    disabledValues,
-    onChange,
-    radius = "medium",
-    selectionMode = "single",
-    shouldFocusOnHover = false,
-    size = "medium",
-    style,
-    value,
-    ...native
+    className, color = "primary", defaultValue: _defaultValue, onChange: _onChange, radius,
+    selectionMode: _selectionMode, focusOnHover = false, focusWrap, selectOnPressUp, size, style, value: _value, ...native
   } = properties
-  const theme = useControlTheme({ color, radius, size })
-  const context = useMemo(() => ({ color, radius, size, theme }), [color, radius, size, theme])
+  const metrics = useControlMetrics(size, radius)
+  // Items are controls: they take the control radius at their size.
+  const itemRadius = metrics.radius
+  const context = useMemo(() => ({ color, metrics, itemRadius }), [color, metrics, itemRadius])
   const direction = resolveDirection(native.dir, useDirection())
-  const selection = selectionProperties(properties)
 
-  return <ListBoxThemeContext.Provider value={context}>
+  return <ListBoxStyleContext.Provider value={context}>
     <AriaDirectionBoundary direction={direction}><AriaListBox
       {...native}
-      {...selection}
+      {...ariaSelection(properties, "single")}
       ref={ref}
       dir={direction}
-      selectionMode={selectionMode}
-      shouldFocusOnHover={shouldFocusOnHover}
+      shouldFocusOnHover={focusOnHover}
+      shouldFocusWrap={focusWrap}
+      shouldSelectOnPressUp={selectOnPressUp}
       className={className}
       style={{
         display: "grid",
-        gap: theme.gap,
+        gap: 2,
         minWidth: 0,
-        padding: theme.gap,
+        padding: metrics.listInset,
         boxSizing: "border-box",
         outline: "none",
         fontFamily: "inherit",
-        fontSize: theme.fontSize,
+        fontSize: metrics.fontSize,
         ...style
       }}
     /></AriaDirectionBoundary>
-  </ListBoxThemeContext.Provider>
+  </ListBoxStyleContext.Provider>
 })
 
 export type ListBoxRootComponent = <T extends object = object>(
   properties: ListBoxRootProps<T> & RefAttributes<HTMLDivElement>
 ) => ReactElement | null
 
-export const ListBoxRoot = ListBoxRootImplementation as ListBoxRootComponent
-
-function selectionProperties<T extends object>(properties: ListBoxRootProps<T>) {
-  const selectedKeys = toAriaSelection(properties.value)
-  const defaultSelectedKeys = toAriaSelection(properties.defaultValue)
-  const disabledKeys = properties.disabledValues
-  const onSelectionChange = properties.onChange == null
-    ? undefined
-    : (selection: Selection) => {
-        if (properties.selectionMode === "multiple") {
-          properties.onChange?.(multipleSelection(selection))
-          return
-        }
-
-        properties.onChange?.(singleSelection(selection))
-      }
-
-  return {
-    ...(selectedKeys !== undefined ? { selectedKeys } : {}),
-    ...(defaultSelectedKeys !== undefined ? { defaultSelectedKeys } : {}),
-    ...(disabledKeys !== undefined ? { disabledKeys } : {}),
-    ...(onSelectionChange !== undefined ? { onSelectionChange } : {})
-  }
-}
-
-export interface ListBoxItemProps<T = object> extends Omit<AriaListBoxItemProps<T>, "className" | "id" | "isDisabled" | "style"> {
-  readonly className?: string
-  readonly color?: ControlColor
-  readonly disabled?: boolean
+export interface ListBoxItemProps<T = object> extends Omit<AriaListBoxItemProps<T>, "className" | "id" | "isDisabled" | "render" | "style"> {
+  /** Identity of this Item within its collection. */
   readonly id: string
+  readonly className?: string
+  /** Color laid beneath this Item when it is selected. */
+  readonly color?: Color
+  readonly disabled?: boolean
   readonly style?: CSSProperties
 }
 
 const ListBoxItemImplementation = forwardRef(function ListBoxItem<T = object>(
-  { children, className, color, disabled = false, style, ...properties }: ListBoxItemProps<T>,
+  { children, className, color, disabled = false, style, textValue, ...properties }: ListBoxItemProps<T>,
   ref: ForwardedRef<HTMLDivElement>
 ) {
-  const inherited = useContext(ListBoxThemeContext)
-  const item = {
-    children,
-    className,
-    disabled,
-    properties: {
-      ...properties,
-      textValue: properties.textValue ?? (typeof children === "string" ? children : undefined)
-    },
-    ref,
-    style
-  }
+  const inherited = useListBoxStyle()
+  const itemColor = color ?? inherited.color
+  const { metrics, itemRadius } = inherited
 
-  return inherited != null && color === undefined
-    ? <ListBoxItemView {...item} theme={inherited.theme} />
-    : <ResolvedListBoxItem {...item} color={color ?? inherited?.color} radius={inherited?.radius} size={inherited?.size} />
-})
-
-function ResolvedListBoxItem<T>({ color, radius, size, ...properties }: Readonly<{
-  color?: ControlColor
-  radius?: RadiusProps["radius"]
-  size?: ScaleLevel
-}> & ListBoxItemViewProps<T>) {
-  return <ListBoxItemView {...properties} theme={useControlTheme({ color, radius, size })} />
-}
-
-type ListBoxItemViewProps<T> = Readonly<{
-  children: ListBoxItemProps<T>["children"]
-  className?: string
-  disabled: boolean
-  properties: Omit<ListBoxItemProps<T>, "children" | "className" | "color" | "disabled" | "style">
-  ref: ForwardedRef<HTMLDivElement>
-  style?: CSSProperties
-}>
-
-function ListBoxItemView<T>({ children, className, disabled, properties, ref, style, theme }: ListBoxItemViewProps<T> & Readonly<{ theme: ControlTheme }>) {
   return <AriaListBoxItem
     {...properties}
     ref={ref}
+    textValue={textValue ?? (typeof children === "string" ? children : undefined)}
     className={className}
     isDisabled={disabled}
-    style={state => ({
-      ...theme.transition,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: theme.gap,
-      minWidth: 0,
-      minHeight: theme.height,
-      paddingInline: Math.max(8, theme.spacing),
-      boxSizing: "border-box",
-      borderRadius: theme.radius,
-      outline: state.isFocusVisible && !state.isSelected ? `1px solid ${theme.focusColor}` : "none",
-      outlineOffset: 1,
-      cursor: disabled ? "not-allowed" : "pointer",
-      opacity: disabled ? controlOpacity.disabled : 1,
-      userSelect: "none",
-      ...(state.isSelected
-        ? state.isPressed
-          ? theme.paints.palette.pressed
-          : state.isHovered
-            ? theme.paints.palette.hover
-            : theme.paints.palette.rest
-        : state.isHovered
-          ? theme.paints.subtle.hover
-          : { background: "transparent", color: "inherit" }),
-      ...style
-    })}
+    render={surfaceRender<ListBoxItemRenderProps>("div", state => itemSurface(metrics.visual, itemColor, {
+      selected: state.isSelected,
+      hovered: state.isHovered,
+      pressed: state.isPressed,
+      focusVisible: state.isFocusVisible,
+      disabled: state.isDisabled
+    }, itemRadius))}
+    style={{ ...itemStyle(metrics, disabled), ...style }}
   >{state => <>
     {typeof children === "function" ? children(state) : children}
-    <span aria-hidden="true" style={{ flexShrink: 0, width: "1em", textAlign: "center" }}>{state.isSelected ? "✓" : null}</span>
+    <SelectionMark visible={state.isSelected} />
   </>}</AriaListBoxItem>
-}
+})
 
 export type ListBoxItemComponent = <T = object>(
   properties: ListBoxItemProps<T> & RefAttributes<HTMLDivElement>
 ) => ReactElement | null
-
-export const ListBoxItem = ListBoxItemImplementation as ListBoxItemComponent
 
 export interface ListBoxSectionProps<T extends object = object> extends Omit<AriaListBoxSectionProps<T>, "className" | "style"> {
   readonly className?: string
@@ -239,55 +154,43 @@ const ListBoxSectionImplementation = forwardRef(function ListBoxSection<T extend
   { className, style, ...properties }: ListBoxSectionProps<T>,
   ref: ForwardedRef<HTMLElement>
 ) {
-  const theme = useListBoxTheme()
-
-  return <AriaListBoxSection
-    {...properties}
-    ref={ref}
-    className={className}
-    style={{
-      display: "grid",
-      gap: theme.gap,
-      minWidth: 0,
-      ...style
-    }}
-  />
+  useListBoxStyle()
+  return <AriaListBoxSection {...properties} ref={ref} className={className} style={{ display: "grid", gap: 2, minWidth: 0, ...style }} />
 })
 
 export type ListBoxSectionComponent = <T extends object = object>(
   properties: ListBoxSectionProps<T> & RefAttributes<HTMLElement>
 ) => ReactElement | null
 
-export const ListBoxSection = ListBoxSectionImplementation as ListBoxSectionComponent
-
 export type ListBoxHeaderProps = AriaHeaderProps
 
-export const ListBoxHeader = forwardRef<HTMLElement, ListBoxHeaderProps>(function ListBoxHeader({ style, ...properties }, ref) {
-  const theme = useListBoxTheme()
-
-  return <AriaHeader
-    {...properties}
-    ref={ref}
-    style={{
-      paddingInline: Math.max(8, theme.spacing),
-      paddingBlock: theme.gap,
-      fontWeight: controlFontWeight,
-      opacity: controlOpacity.secondary,
-      ...style
-    }}
-  />
+const ListBoxHeader = forwardRef<HTMLElement, ListBoxHeaderProps>(function ListBoxHeader({ style, ...properties }, ref) {
+  const { metrics } = useListBoxStyle()
+  return <AriaHeader {...properties} ref={ref} style={collectionHeaderStyle(metrics, style)} />
 })
 
-function useListBoxTheme() {
-  const inherited = useContext(ListBoxThemeContext)
-  if (inherited == null) throw new Error("ListBox parts must be used inside ListBox")
-  return inherited.theme
+/** Heading treatment shared by list and menu sections. */
+export function collectionHeaderStyle(metrics: ControlMetrics, style?: CSSProperties): CSSProperties {
+  return {
+    paddingInline: metrics.inset,
+    paddingBlock: metrics.gap,
+    fontSize: "0.92em",
+    fontWeight: controlFontWeight,
+    opacity: controlOpacity.secondary,
+    ...style
+  }
 }
 
-/** A selectable collection whose items and groups remain independently composable. */
-export const ListBox = Object.assign(ListBoxRoot, {
-  Item: ListBoxItem,
-  Section: ListBoxSection,
+function useListBoxStyle() {
+  const context = useContext(ListBoxStyleContext)
+  if (context == null) throw new Error("ListBox parts must be used inside ListBox")
+  return context
+}
+
+/** A selectable collection whose Items and Sections remain independently composable. */
+export const ListBox = Object.assign(ListBoxRootImplementation as ListBoxRootComponent, {
+  Item: ListBoxItemImplementation as ListBoxItemComponent,
+  Section: ListBoxSectionImplementation as ListBoxSectionComponent,
   Header: ListBoxHeader
 })
 

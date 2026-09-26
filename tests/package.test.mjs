@@ -40,7 +40,7 @@ test("package contract", async () => {
     assert(paths.has("dist/use-window-move-handle.d.ts"), "the package has no Window move hook contract")
     assert(!paths.has("dist/window-header.js"), "the removed WindowHeader implementation entered the package")
     assert(!paths.has("dist/window-header.d.ts"), "the removed WindowHeader contract entered the package")
-    for (const name of ["ui-provider", "direction", "input", "textarea", "date-field", "time-field", "date-picker", "checkbox", "radio", "switch", "select", "slider", "progress-bar", "spinner", "readiness", "toolbar", "disclosure", "accordion", "tree", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
+    for (const name of ["foundation/provider", "foundation/direction", "foundation/appearance", "surface/surface", "input", "textarea", "date-field", "time-field", "date-picker", "checkbox", "radio", "switch", "select", "slider", "progress-bar", "spinner", "toolbar", "disclosure", "accordion", "tree", "popover", "menu", "dropdown-menu", "context-menu", "dialog", "alert-dialog", "tooltip"]) {
       assert(paths.has(`dist/${name}.js`), `the package has no ${name} implementation`)
       assert(paths.has(`dist/${name}.d.ts`), `the package has no ${name} contract`)
     }
@@ -97,7 +97,7 @@ test("package contract", async () => {
     ListBox, Menu, Panel, Popover, Table, Tabs,
     Surface, Window,
     Tooltip,
-    Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Spinner, Readiness, Toolbar, Tree,
+    Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Spinner, Toolbar, Tree,
     UIProvider,
     defaultAppearance,
     resolveRadius,
@@ -108,13 +108,11 @@ test("package contract", async () => {
     useDirection,
     useDocumentDirection,
     usePreferences,
-    useReadiness,
     useWindowMoveHandle,
-    useScale,
-    useRequirement
+    useScale
   } from "@phreshos/react-ui"
 
-  for (const exported of [UIProvider, Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu, Flex, Grid, ListBox, Menu, Panel, Popover, Surface, Table, Tabs, Window, Tooltip, Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Spinner, Readiness, Toolbar, Tree, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useReadiness, useRequirement, useScale, useWindowMoveHandle]) {
+  for (const exported of [UIProvider, Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu, Flex, Grid, ListBox, Menu, Panel, Popover, Surface, Table, Tabs, Window, Tooltip, Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Spinner, Toolbar, Tree, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useScale, useWindowMoveHandle]) {
     assert.notEqual(exported, undefined)
   }
   assert.equal("signInWallpaper" in defaultAppearance, false)
@@ -135,14 +133,15 @@ test("package contract", async () => {
     assert.equal("Root" in family, false)
   }
   assert.notEqual(RadioGroup.Item, undefined)
-  assert.deepEqual(Object.keys(icons), [])
+  // Every Lucide icon, under its Lucide name, through the one icons entry.
+  for (const name of ["Settings", "Palette", "X", "Maximize2", "Minimize2"]) assert.equal(typeof icons[name], "object", name)
   `
     )
     execFileSync(process.execPath, [join(consumer, "runtime.mjs")], { stdio: "inherit" })
 
     writeFileSync(
       join(consumer, "consumer.tsx"),
-      `import { Accordion, AlertDialog, UIProvider, Button, Calendar, ContextMenu, DateRangePicker, Dialog, Disclosure, DropdownMenu, Flex, Grid, Menu, Panel, Popover, RangeCalendar, Surface, Window, Tooltip, Input, Textarea, DateField, TimeField, DatePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Spinner, Readiness, Toolbar, Tree, defaultAppearance, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useReadiness, useRequirement, useScale, type Appearance, type AppearanceUpdate, type Preferences, type PreferencesUpdate } from "@phreshos/react-ui"
+      `import { Accordion, AlertDialog, UIProvider, Button, Calendar, ContextMenu, DateRangePicker, Dialog, Disclosure, DropdownMenu, Flex, Grid, Menu, Panel, Popover, RangeCalendar, Surface, Window, Tooltip, Input, Textarea, DateField, TimeField, DatePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Spinner, Toolbar, Tree, defaultAppearance, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useScale, type Appearance, type AppearanceUpdate, type Preferences, type PreferencesUpdate } from "@phreshos/react-ui"
   import { CalendarDate, Time } from "@internationalized/date"
 
   const surface = <Surface as="button" type="button" color="background:soft" material={{ opacity: 0.4 }}>Surface</Surface>
@@ -172,7 +171,7 @@ test("package contract", async () => {
     const scale = resolved.scale
     const spacing = useScale(defaultAppearance.spacing)
     const primary = useColor(defaultAppearance.colors.light.primary)
-    const primaryContent = useContrastingColor("primary:base")
+    const primaryContent = useContrastingColor("primary")
 
     return <span style={{ color: primaryContent, background: primary.base, padding: spacing.small }} data-browser-theme={browser.theme} data-animations={resolved.animations}>{String(scale)}</span>
   }
@@ -205,11 +204,10 @@ test("package contract", async () => {
             <Checkbox label="Remember" onChange={value => !value} />
             <Switch label="Enabled" defaultChecked />
             <RadioGroup label="Mode" defaultValue="one"><RadioGroup.Item label="One" value="one" /></RadioGroup>
-            <Select label="Choice" options={[{value: "one", label: "One"}]} onChange={value => value?.toUpperCase()} />
+            <Select label="Choice" onChange={value => value?.toUpperCase()}><Select.Item id="one">One</Select.Item></Select>
             <Slider label="Volume" onChange={value => value.toFixed(0)} />
             <ProgressBar label="Upload" value={40} />
             <Spinner label="Loading" />
-            <Readiness fallback={requirements => <span>{requirements.at(-1)?.message}</span>}><Readiness.Requirement message="Loading" /><span>Ready</span></Readiness>
           </Flex>
         </Grid></Panel.Content>
       </Panel>
@@ -218,9 +216,9 @@ test("package contract", async () => {
         <Window.Content>Window content</Window.Content>
       </Window>
       <Popover><Popover.Trigger>Info</Popover.Trigger><Popover.Content><Popover.Dialog aria-label="Info"><Popover.Close>Close</Popover.Close></Popover.Dialog></Popover.Content></Popover>
-      <DropdownMenu><DropdownMenu.Trigger>Actions</DropdownMenu.Trigger><DropdownMenu.Content><Menu aria-label="Actions"><Menu.Item>Open</Menu.Item></Menu></DropdownMenu.Content></DropdownMenu>
+      <DropdownMenu><DropdownMenu.Trigger>Actions</DropdownMenu.Trigger><DropdownMenu.Content><Menu aria-label="Actions"><Menu.Item id="open">Open</Menu.Item></Menu></DropdownMenu.Content></DropdownMenu>
       <Menu aria-label="Dynamic actions" items={commands}>{command => <Menu.Item id={command.id}>{command.label}</Menu.Item>}</Menu>
-      <ContextMenu><ContextMenu.Trigger><button>Target</button></ContextMenu.Trigger><ContextMenu.Content><Menu aria-label="Context actions"><Menu.Item>Open</Menu.Item></Menu></ContextMenu.Content></ContextMenu>
+      <ContextMenu><ContextMenu.Trigger><button>Target</button></ContextMenu.Trigger><ContextMenu.Content><Menu aria-label="Context actions"><Menu.Item id="open">Open</Menu.Item></Menu></ContextMenu.Content></ContextMenu>
       <Dialog><Dialog.Trigger>Open</Dialog.Trigger><Dialog.Backdrop><Dialog.Content><Dialog.Title>Dialog</Dialog.Title><Dialog.Close>Close</Dialog.Close></Dialog.Content></Dialog.Backdrop></Dialog>
       <AlertDialog><AlertDialog.Trigger>Delete</AlertDialog.Trigger><AlertDialog.Backdrop><AlertDialog.Content><AlertDialog.Title>Delete?</AlertDialog.Title><AlertDialog.Close>Cancel</AlertDialog.Close></AlertDialog.Content></AlertDialog.Backdrop></AlertDialog>
       <Tooltip><Tooltip.Trigger>Help</Tooltip.Trigger><Tooltip.Content>Help text</Tooltip.Content></Tooltip>

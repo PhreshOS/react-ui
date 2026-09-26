@@ -1,46 +1,30 @@
-import { forwardRef, useMemo } from "react"
-import {
-  Button,
-  ComboBox as AriaComboBox,
-  Group,
-  Input as AriaInput
-} from "react-aria-components"
-import type { ComboBoxProps as AriaComboBoxProps } from "react-aria-components"
-import { controlPaint, FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
-import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
-import { SurfaceField } from "./control-surface.js"
-import { resolveDirection, useDirection } from "./direction.js"
-import FieldStyle, { textControlClass } from "./field-style.js"
+import { forwardRef } from "react"
+import type { ReactNode } from "react"
+import { Button as AriaButton, ComboBox as AriaComboBox, Group, Input as AriaInput } from "react-aria-components"
+import type { ComboBoxProps as AriaComboBoxProps, GroupRenderProps } from "react-aria-components"
+import { useControlMetrics, type ControlOverrides, type ControlProps, type FieldProps } from "./control/control.js"
+import { FieldFeedback, FieldLabel, fieldStyle } from "./control/field.js"
+import { surfaceRender } from "./control/surface-render.js"
+import { nativeTextStyle } from "./control/text-control.js"
+import { resolveDirection, useDirection } from "./foundation/direction.js"
+import MotionStyle, { textControlClass } from "./foundation/motion-style.js"
+import { resolveRadius, type RadiusProps } from "./foundation/radius.js"
 import { ListBox } from "./list-box.js"
-import type { MaterialOverrides } from "./material-options.js"
 import { PopoverContent } from "./popover.js"
-import type { RadiusProps } from "./radius.js"
 import { ScrollArea } from "./scroll-area.js"
-import type { SelectOption } from "./select.js"
-import type { ShadowOverrides } from "./shadow-options.js"
-
-export type ComboBoxOption = SelectOption
+import { Chevron } from "./select.js"
+import type { MaterialOverrides } from "./surface/material-options.js"
+import { dimmedClass } from "./surface/surface.js"
 
 export interface ComboBoxProps extends Omit<
-  AriaComboBoxProps<ComboBoxOption>,
+  AriaComboBoxProps<object>,
   | ControlOverrides
-  | "allowsCustomValue"
-  | "defaultItems"
-  | "defaultInputValue"
-  | "defaultSelectedKey"
-  | "defaultValue"
-  | "disabledKeys"
-  | "inputValue"
-  | "isReadOnly"
-  | "items"
-  | "onChange"
-  | "onInputChange"
-  | "onSelectionChange"
-  | "selectedKey"
-  | "selectionMode"
-  | "value"
->, ControlProps, FieldProps, RadiusProps, MaterialOverrides, ShadowOverrides {
-  readonly options: readonly ComboBoxOption[]
+  | "allowsCustomValue" | "defaultItems" | "defaultInputValue" | "defaultSelectedKey" | "defaultValue" | "disabledKeys"
+  | "inputValue" | "items" | "onChange" | "onInputChange" | "onSelectionChange" | "selectedKey" | "selectionMode" | "value"
+  | "onOpenChange" | "allowsEmptyCollection" | "shouldFocusWrap"
+>, ControlProps, FieldProps, RadiusProps, MaterialOverrides {
+  /** `ComboBox.Item` and `ComboBox.Section` entries filtered by the typed query. */
+  readonly children: ReactNode
   readonly value?: string | null
   readonly defaultValue?: string | null
   readonly onChange?: (value: string | null) => void
@@ -49,46 +33,35 @@ export interface ComboBoxProps extends Omit<
   readonly onInputChange?: (value: string) => void
   readonly placeholder?: string
   readonly readOnly?: boolean
+  // The list opens from typing, so a ComboBox reports its open state but
+  // cannot be opened from outside like the other overlays.
+  readonly onOpenChange?: (open: boolean) => void
+  /** Whether the list can open while no Item matches. */
+  readonly openWhenEmpty?: boolean
+  /** Whether arrow keys wrap from the last Item to the first. */
+  readonly focusWrap?: boolean
 }
 
-/** A searchable single-selection field whose query filters string-valued options. */
-export const ComboBox = forwardRef<HTMLDivElement, ComboBoxProps>(function ComboBox({
-  label,
-  description,
-  errorMessage,
-  disabled = false,
-  readOnly = false,
-  required = false,
-  invalid = false,
-  options,
-  value,
-  defaultValue,
-  onChange,
-  inputValue,
-  defaultInputValue,
-  onInputChange,
-  placeholder,
-  size = "medium",
-  color,
-  radius = "medium",
-  style,
-  material,
-  shadow,
-  ...properties
+/** A searchable single-choice field whose options are its Items. */
+const ComboBoxRoot = forwardRef<HTMLDivElement, ComboBoxProps>(function ComboBox({
+  label, description, errorMessage, disabled = false, readOnly = false, required = false, invalid = false,
+  children, value, defaultValue, onChange, inputValue, defaultInputValue, onInputChange, placeholder,
+  size, color = "background", radius, style, className, material, onOpenChange, openWhenEmpty, focusWrap, ...properties
 }, ref) {
-  const theme = useControlTheme({ size, color, radius })
+  const metrics = useControlMetrics(size, radius)
+  // The list shell keeps the Appearance radius at the chosen level.
+  const shell = resolveRadius(radius ?? "medium", metrics.visual.radius)
   const direction = resolveDirection(properties.dir, useDirection())
-  const disabledValues = useMemo(
-    () => options.filter(option => option.disabled).map(option => option.value),
-    [options]
-  )
 
   return <AriaComboBox
     {...properties}
+    onOpenChange={onOpenChange === undefined ? undefined : open => onOpenChange(open)}
+    allowsEmptyCollection={openWhenEmpty}
+    shouldFocusWrap={focusWrap}
     ref={ref}
     dir={direction}
-    value={value}
-    defaultValue={defaultValue}
+    {...(value !== undefined ? { value } : {})}
+    {...(defaultValue !== undefined ? { defaultValue } : {})}
     onChange={key => onChange?.(key == null ? null : String(key))}
     inputValue={inputValue}
     defaultInputValue={defaultInputValue}
@@ -97,111 +70,56 @@ export const ComboBox = forwardRef<HTMLDivElement, ComboBoxProps>(function Combo
     isReadOnly={readOnly}
     isRequired={required}
     isInvalid={invalid}
-    style={fieldStyle(theme, disabled, style)}
+    className={dimmedClass(disabled, className)}
+    style={fieldStyle(metrics, style)}
   >{state => <>
-    <FieldStyle />
+    <MotionStyle />
     <FieldLabel label={label} />
-    <Group style={group => ({
-      position: "relative",
-      minWidth: 0,
-      height: theme.height,
-      borderRadius: theme.radius,
-      outline: group.isFocusVisible ? `1px solid ${theme.focusColor}` : "none",
-      outlineOffset: 1
-    })}>
-      {group => <SurfaceField
-        material={material}
-        shadow={shadow}
-        radius={theme.radius}
-        paint={controlPaint(theme, group.isFocusWithin, group.isInvalid, group.isHovered)}
-        style={{
-          position: "absolute",
-          inset: 0,
-          gridTemplateColumns: "minmax(0, 1fr) auto"
-        }}
-      >
-        <AriaInput
-          className={textControlClass}
-          placeholder={placeholder}
-          style={{
-            appearance: "none",
-            boxSizing: "border-box",
-            width: "100%",
-            minWidth: 0,
-            height: theme.height,
-            paddingBlock: 0,
-            paddingInlineStart: Math.max(8, theme.spacing),
-            paddingInlineEnd: theme.gap,
-            border: 0,
-            borderRadius: "inherit",
-            outline: "none",
-            background: "transparent",
-            color: "inherit",
-            caretColor: "currentColor",
-            font: "inherit",
-            lineHeight: 1.5
-          }}
-        />
-        <Button
-          aria-label="Show options"
-          style={{
-            ...theme.transition,
-            display: "grid",
-            placeItems: "center",
-            width: theme.height,
-            height: theme.height,
-            padding: 0,
-            border: 0,
-            borderRadius: "inherit",
-            outline: "none",
-            background: "transparent",
-            color: "inherit",
-            cursor: disabled || readOnly ? "default" : "pointer"
-          }}
-        >
-          <svg
-            aria-hidden="true"
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            style={{
-              ...theme.transition,
-              transitionProperty: "transform",
-              transform: `rotate(${state.isOpen ? 180 : 0}deg)`
-            }}
-          ><path d="m2 4 4 4 4-4" /></svg>
-        </Button>
-      </SurfaceField>}
-    </Group>
-    <PopoverContent
-      dir={direction}
-      placement="bottom start"
-      offset={theme.gap}
-      style={{
-        width: "var(--trigger-width)",
-        maxHeight: `min(calc(100vh - ${theme.spacing * 2}px), ${theme.height * 8}px)`,
-        padding: 0,
-        display: "flex",
-        flexDirection: "column"
-      }}
+    <Group
+      render={surfaceRender<GroupRenderProps>("div", group => ({
+        color,
+        depth: "recessed",
+        material,
+        radius: metrics.radius,
+        interaction: { hovered: group.isHovered, focusVisible: group.isFocusWithin, invalid: group.isInvalid, disabled: group.isDisabled }
+      }))}
+      style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", alignItems: "center", minWidth: 0, height: metrics.height }}
     >
+      <AriaInput className={textControlClass} placeholder={placeholder} style={{ ...nativeTextStyle(metrics, false), paddingInlineEnd: metrics.gap }} />
+      <AriaButton aria-label="Show options" style={{
+        display: "grid",
+        placeItems: "center",
+        width: metrics.height,
+        height: metrics.height,
+        padding: 0,
+        border: 0,
+        borderRadius: "inherit",
+        outline: "none",
+        background: "transparent",
+        color: "inherit",
+        cursor: disabled || readOnly ? "default" : "pointer"
+      }}>
+        <Chevron metrics={metrics} open={state.isOpen} />
+      </AriaButton>
+    </Group>
+    <PopoverContent dir={direction} placement="bottom start" offset={metrics.gap} radius={shell} style={{
+      width: "var(--trigger-width)",
+      maxHeight: `min(calc(100vh - ${metrics.spacing * 2}px), ${metrics.height * 8}px)`,
+      padding: 0,
+      display: "flex",
+      flexDirection: "column"
+    }}>
       <ScrollArea style={{ flex: "1 1 auto", minHeight: 0 }}>
-        <ListBox
-          color={color}
-          radius={radius}
-          size={size}
-          disabledValues={disabledValues}
-        >
-          {options.map(option => <ListBox.Item key={option.value} id={option.value} textValue={option.label} disabled={option.disabled}>
-              {option.label}
-          </ListBox.Item>)}
-        </ListBox>
+        <ListBox size={size}>{children}</ListBox>
       </ScrollArea>
     </PopoverContent>
-    <FieldFeedback theme={theme} description={description} errorMessage={errorMessage} />
-  </>}
-  </AriaComboBox>
+    <FieldFeedback metrics={metrics} description={description} errorMessage={errorMessage} />
+  </>}</AriaComboBox>
+})
+
+/** A searchable single-choice field whose options are its Items. */
+export const ComboBox = Object.assign(ComboBoxRoot, {
+  Item: ListBox.Item,
+  Section: ListBox.Section,
+  Header: ListBox.Header
 })

@@ -2,15 +2,12 @@ import { forwardRef } from "react"
 import type { CalendarDate } from "@internationalized/date"
 import { Calendar as AriaCalendar } from "react-aria-components"
 import type { CalendarProps as AriaCalendarProps } from "react-aria-components"
-import { AriaDirectionBoundary } from "./aria-direction.js"
+import { AriaDirectionBoundary } from "./foundation/aria-direction.js"
 import { CalendarLayout, calendarRootStyle } from "./calendar-layout.js"
-import {
-  useControlTheme,
-  type ControlOverrides,
-  type ControlProps
-} from "./control.js"
-import { resolveDirection, useDirection } from "./direction.js"
-import type { RadiusProps } from "./radius.js"
+import { useControlMetrics, type ControlOverrides, type ControlProps } from "./control/control.js"
+import { resolveDirection, useDirection } from "./foundation/direction.js"
+import type { RadiusProps } from "./foundation/radius.js"
+import { dimmedClass } from "./surface/surface.js"
 
 type CalendarOverrides = ControlOverrides
   | "children"
@@ -55,20 +52,20 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
   isDateUnavailable,
   ...properties
 }, ref) {
-  const theme = useControlTheme({ size, color, radius })
+  const metrics = useControlMetrics(size, radius)
   const direction = resolveDirection(properties.dir, useDirection())
 
   return <AriaDirectionBoundary direction={direction}><AriaCalendar
     {...properties}
     ref={ref}
     dir={direction}
-    className={className}
+    className={dimmedClass(disabled ?? false, className)}
     isDisabled={disabled}
     isReadOnly={readOnly}
     isInvalid={invalid}
     isDateUnavailable={isDateUnavailable == null ? undefined : date => isDateUnavailable(date as CalendarDate)}
-    style={calendarRootStyle(theme, disabled, style)}
+    style={calendarRootStyle(metrics, style)}
   >
-    <CalendarLayout color={color} size={size} theme={theme} />
+    <CalendarLayout color={color ?? "primary"} size={size} metrics={metrics} />
   </AriaCalendar></AriaDirectionBoundary>
 })

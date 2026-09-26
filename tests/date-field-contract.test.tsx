@@ -9,6 +9,7 @@ import {
   defaultAppearance,
   type DateFieldProps
 } from "../source/main.js"
+import { lifted, paintDeclarations } from "./support/paint.js"
 
 afterEach(cleanup)
 
@@ -67,11 +68,13 @@ it("associates feedback and preserves disabled, read-only, required, and invalid
   expect(screen.getByRole("group", { name: "Date" }).getAttribute("data-readonly")).toBe("true")
 })
 
-it("uses one Surface for the field boundary", function () {
-  const { container } = renderDate(<DateField aria-label="Date" color="secondary:base" material="basic" />)
+it("holds its segments in one recessed Surface", function () {
+  const { container } = renderDate(<DateField aria-label="Date" color="secondary" material="basic" />)
 
-  expect(container.querySelectorAll("[data-material-base]")).toHaveLength(1)
-  expect(screen.getByRole("group", { name: "Date" }).parentElement?.style.height).not.toBe("")
+  const wells = container.querySelectorAll<HTMLElement>(".phreshos-surface")
+  expect(wells).toHaveLength(1)
+  expect(wells[0]!.style.height).not.toBe("")
+  expect(lifted(paintDeclarations(wells[0]!)["box-shadow"])).toBe(false)
 })
 
 it("keeps the public contract date-only", function () {

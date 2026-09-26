@@ -2,21 +2,22 @@ import { createContext, forwardRef, useContext, useMemo } from "react"
 import type { CSSProperties, ReactElement, ReactNode } from "react"
 import { DisclosureGroup as AriaDisclosureGroup } from "react-aria-components"
 import type { DisclosureGroupProps as AriaDisclosureGroupProps, Key } from "react-aria-components"
-import type { ControlColor } from "./control.js"
+import type { Color } from "./foundation/color.js"
 import {
   DisclosureContent,
   DisclosureRoot,
   DisclosureTrigger,
   type DisclosureRootProps
 } from "./disclosure.js"
-import { resolveGap, type LayoutGap } from "./layout.js"
-import type { RadiusProps } from "./radius.js"
-import type { ScaleLevel } from "./scale.js"
-import { stringKeys } from "./selection.js"
-import { useAppearance } from "./ui-provider.js"
+import type { LayoutGap } from "./foundation/layout.js"
+import { resolveSpacing } from "./foundation/spacing.js"
+import type { RadiusProps } from "./foundation/radius.js"
+import type { ScaleLevel } from "./foundation/scale.js"
+import { useVisual } from "./foundation/visual.js"
+import { stringKeys } from "./control/selection.js"
 
 type AccordionTheme = Readonly<{
-  color?: ControlColor
+  color?: Color
   radius: RadiusProps["radius"]
   size: ScaleLevel
 }>
@@ -29,7 +30,7 @@ type AccordionRootBaseProps = Omit<
 > & RadiusProps & Readonly<{
   children?: ReactNode
   className?: string
-  color?: ControlColor
+  color?: Color
   disabled?: boolean
   gap?: LayoutGap
   size?: ScaleLevel
@@ -73,7 +74,7 @@ export const AccordionRoot = forwardRef<HTMLDivElement, AccordionRootProps>(func
     value,
     ...native
   } = properties
-  const appearance = useAppearance()
+  const { spacing } = useVisual()
   const context = useMemo<AccordionTheme>(() => ({ color, radius, size }), [color, radius, size])
 
   return <AccordionThemeContext.Provider value={context}>
@@ -86,7 +87,7 @@ export const AccordionRoot = forwardRef<HTMLDivElement, AccordionRootProps>(func
       isDisabled={disabled}
       style={{
         display: "grid",
-        gap: resolveGap(gap, appearance),
+        gap: resolveSpacing(gap, spacing),
         width: "100%",
         minWidth: 0,
         ...style
@@ -121,8 +122,9 @@ function expansionKeys(value: string | null | readonly string[] | undefined) {
 
 export interface AccordionItemProps extends Omit<
   DisclosureRootProps,
-  "defaultExpanded" | "expanded" | "onChange"
+  "defaultExpanded" | "expanded" | "id" | "onExpandedChange"
 > {
+  /** Identity of this Item within its Accordion. */
   readonly id: string
 }
 

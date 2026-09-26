@@ -96,7 +96,7 @@ it("keeps directional keyboard behavior and portalled layout in RTL", async func
       <RadioGroup.Item value="two" label="Two" />
       <RadioGroup.Item value="three" label="Three" />
     </RadioGroup>
-    <Select aria-label="Choice" options={[{ value: "one", label: "One" }]} />
+    <Select aria-label="Choice"><Select.Item id="one">One</Select.Item></Select>
   </UIProvider>)
 
   const slider = screen.getByRole("slider") as HTMLInputElement
@@ -107,7 +107,7 @@ it("keeps directional keyboard behavior and portalled layout in RTL", async func
   const second = screen.getByRole("radio", { name: "Two" }) as HTMLInputElement
   second.focus()
   await user.keyboard("[ArrowRight]")
-  expect(screen.getByRole("radio", { name: "One" }).getAttribute("aria-checked")).toBe("true")
+  expect((screen.getByRole("radio", { name: "One" }) as HTMLInputElement).checked).toBe(true)
 
   await user.click(screen.getByRole("button"))
   expect(screen.getByRole("listbox").closest("[dir=rtl]")).not.toBeNull()

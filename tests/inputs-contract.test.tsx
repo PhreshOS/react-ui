@@ -3,42 +3,35 @@ import userEvent from "@testing-library/user-event"
 import { createRef, useState, type ReactNode } from "react"
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "../source/main.js"
-import { colorOpacity, opaqueColor, resolveColorLevel, solidColors, subtleColors } from "../source/color.js"
-import { shadowStyle } from "../source/shadow-options.js"
+import { luminance, mixColor } from "../source/foundation/color.js"
+import { resolveVisual } from "../source/foundation/visual.js"
+import { surfacePaint } from "../source/surface/surface.js"
 import {
     UIProvider, Button, Input, Textarea, Checkbox, Switch, RadioGroup, Select, Slider,
     type InputProps, type TextareaProps, type CheckboxProps, type SwitchProps, type RadioGroupProps,
-    type SelectProps, type SliderProps, type ControlColor, type ScaleLevel
+    type SelectProps, type SliderProps, type Color, type ScaleLevel
 } from "../source/main.js"
+import { cssColor as normalized, hairline, lifted, paintDeclarations, surfaceFill } from "./support/paint.js"
+
+const colors = defaultAppearance.colors.light
 
 afterEach(cleanup)
 
-it.each(["checkbox", "switch", "radio"] as const)("shares Surface material on the %s indicator while retaining selection colors", async kind => {
-    const sample = kind === "checkbox" ? <Checkbox label="Choice" color="secondary:base" />
-        : kind === "switch" ? <Switch label="Choice" color="secondary:base" />
-        : <RadioGroup label="Choices" color="secondary:base"><RadioGroup.Item value="one" label="Choice" /></RadioGroup>
-    const { container } = renderUI(sample)
-    const base = container.querySelector<HTMLElement>("[data-material-base]")
-    const material = container.querySelector("[data-material-fill]")
-    const border = container.querySelector<HTMLElement>("[data-surface-edge]")
-    const indicator = border?.parentElement
-    expect(base).not.toBeNull()
-    expect(indicator?.tagName).toBe("SPAN")
-    expect(indicator?.style.background).toBe("transparent")
-    expect(indicator?.style.boxShadow).toBe(shadowStyle(defaultAppearance.shadow.light))
-    expect((material as HTMLElement | null)?.style.opacity).toBe("1")
-    expect(css(base?.style.background ?? "")).toBe(css(subtleColors(
-        defaultAppearance.colors.light.secondary,
-        defaultAppearance.colors.light.background,
-        defaultAppearance.colors.light.foreground
-    ).rest.background))
+it.each(["checkbox", "switch", "radio"] as const)("rises the %s indicator in its color when selected", async kind => {
+    const sample = kind === "checkbox" ? <Checkbox label="Choice" color="secondary" />
+        : kind === "switch" ? <Switch label="Choice" color="secondary" />
+        : <RadioGroup label="Choices" color="secondary"><RadioGroup.Item value="one" label="Choice" /></RadioGroup>
+    renderUI(sample)
+    const input = screen.getByRole(kind, { name: "Choice" })
+    const indicator = input.closest("label")!.querySelector<HTMLElement>(".phreshos-surface")!
+    expect(lifted(paintDeclarations(indicator)["box-shadow"])).toBe(false)
+    expect(surfaceFill(indicator)).toBe(mixColor(colors.background, "#000000", 0.03))
 
     const user = userEvent.setup()
-    await user.click(screen.getByRole(kind, { name: "Choice" }))
-    await user.unhover(screen.getByRole(kind, { name: "Choice" }))
-    expect(kind === "radio" ? screen.getByRole(kind).getAttribute("aria-checked") === "true" : (screen.getByRole(kind) as HTMLInputElement).checked).toBe(true)
-    expect(css(base?.style.background ?? "")).toBe(css(resolveColorLevel(defaultAppearance.colors.light.secondary, "base")))
-    expect(indicator?.style.borderRadius).toBe(kind === "checkbox" ? "4.75px" : "19px")
+    await user.click(input)
+    await user.unhover(input)
+    expect((input as HTMLInputElement).checked).toBe(true)
+    expect(surfaceFill(indicator)).toBe(colors.secondary)
 })
 
 it("exposes value callbacks and one shared color and size contract", () => {
@@ -48,7 +41,7 @@ it("exposes value callbacks and one shared color and size contract", () => {
     expectTypeOf<SwitchProps["onChange"]>().toEqualTypeOf<CheckboxProps["onChange"]>()
     expectTypeOf<SelectProps["onChange"]>().toEqualTypeOf<((value: string | null) => void) | undefined>()
     expectTypeOf<SliderProps["onChange"]>().toEqualTypeOf<((value: number) => void) | undefined>()
-    expectTypeOf<InputProps["color"]>().toEqualTypeOf<ControlColor | undefined>()
+    expectTypeOf<InputProps["color"]>().toEqualTypeOf<Color | undefined>()
     expectTypeOf<RadioGroupProps["size"]>().toEqualTypeOf<ScaleLevel | undefined>()
     expectTypeOf<"isDisabled">().not.toExtend<keyof InputProps>()
     expectTypeOf<"isSelected">().not.toExtend<keyof CheckboxProps>()
@@ -63,7 +56,7 @@ describe.each([["Input", Input], ["Textarea", Textarea]] as const)("%s", (_, Con
         const sheets = [...document.head.querySelectorAll("style")].filter(sheet => sheet.textContent?.includes(".phreshos-ui-text-control::placeholder"))
         expect(sheets).toHaveLength(1)
         expect(sheets[0]?.textContent).toContain("color: inherit")
-        expect(sheets[0]?.textContent).toContain("opacity: 0.6")
+        expect(sheets[0]?.textContent).toContain("opacity: 0.55")
     })
 
     it("associates labels, descriptions, and invalid errors", () => {
@@ -110,49 +103,42 @@ describe.each([["Input", Input], ["Textarea", Textarea]] as const)("%s", (_, Con
         expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("Initial")
     })
 
-    it("shows hover and pointer focus without changing its value or dimensions", async () => {
+    it("recesses, rings its boundary on focus, and keeps its value and dimensions", async () => {
         const user = userEvent.setup()
-        renderUI(<Control label="Name" color="secondary:base" defaultValue="Example" />)
+        renderUI(<Control label="Name" defaultValue="Example" />)
         const field = screen.getByRole("textbox") as HTMLInputElement
+        const well = field.parentElement!
         const height = field.style.height
-        const paints = solidColors(defaultAppearance.colors.light.secondary, defaultAppearance.colors.light.background, defaultAppearance.colors.light.foreground)
-
-        await user.hover(field)
-        expect(materialColor(field)).toBe(css(paints.hover.background))
-
+        expect(surfaceFill(well)).toBe(mixColor(colors.background, "#000000", 0.03))
         await user.click(field)
-        expect(materialColor(field)).toBe(css(paints.pressed.background))
-        expect(field.style.caretColor).toBe(css(paints.pressed.color))
+        expect(normalized(hairline(paintDeclarations(well)["box-shadow"]))).toBe(normalized(colors.primary))
+        expect(paintDeclarations(well).outline).toContain(colors.primary)
         expect(field.style.height).toBe(height)
         expect(field.value).toBe("Example")
     })
 })
 
-it.each(["primary", "secondary", "success", "warning", "danger", "info"] as const)("shows %s on resting fields and follows theme changes", role => {
+it.each(["primary", "secondary", "success", "warning", "danger", "info"] as const)("recesses a %s field paint and follows theme changes", role => {
     const sample = <>
-        <Input label="Single" color={`${role}:base`} />
-        <Textarea label="Multiple" color={`${role}:base`} />
-        <Select label="Choice" color={`${role}:base`} options={[{ value: "one", label: "One" }]} />
+        <Input label="Single" color={role} />
+        <Textarea label="Multiple" color={role} />
+        <Select label="Choice" color={role}><Select.Item id="one">One</Select.Item></Select>
     </>
     const view = renderUI(sample)
 
     for (const theme of ["light", "dark"] as const) {
-        view.rerender(<UIProvider appearance={defaultAppearance} preferences={{ theme, animations: true }}>{sample}</UIProvider>)
-        const tint = defaultAppearance.colors[theme][role]
-        const paint = solidColors(tint, defaultAppearance.colors[theme].background, defaultAppearance.colors[theme].foreground).rest
-
-        for (const field of [...screen.getAllByRole("textbox"), screen.getByRole("button")]) {
-            expect(materialColor(field)).toBe(css(paint.background))
-            expect(field.style.background).toBe("transparent")
-            expect(field.style.color).toBe(css(paint.color))
-            expect(field.style.borderWidth).toBe("0px")
+        view.rerender(<UIProvider preferences={{ theme, animations: true }}>{sample}</UIProvider>)
+        const expected = surfacePaint(resolveVisual(defaultAppearance, { theme, animations: true }), role, "recessed", undefined, undefined, undefined).fill
+        for (const well of [...screen.getAllByRole("textbox").map(field => field.parentElement!), screen.getByRole("button")]) {
+            expect(surfaceFill(well)).toBe(expected)
+            expect(lifted(paintDeclarations(well)["box-shadow"])).toBe(false)
         }
     }
 })
 
-it("gives invalid fields danger precedence over their chosen color", () => {
-    renderUI(<Input label="Name" color="success:base" invalid />)
-    expect(materialColor(screen.getByRole("textbox"))).toBe(css(resolveColorLevel(defaultAppearance.colors.light.danger, "base")))
+it("gives invalid fields a danger boundary over their chosen color", () => {
+    renderUI(<Input label="Name" color="success" invalid />)
+    expect(normalized(hairline(paintDeclarations(screen.getByRole("textbox").parentElement!)["box-shadow"]))).toBe(normalized(colors.danger))
 })
 
 it("forwards native text-control refs and preserves textarea rows", () => {
@@ -163,21 +149,18 @@ it("forwards native text-control refs and preserves textarea rows", () => {
     expect(textarea.current?.rows).toBe(7)
 })
 
-it("shares Button height and responds to the nearest concrete theme colors", () => {
-    const appearance = {
-        ...defaultAppearance,
-        colors: {
-            light: { ...defaultAppearance.colors.light, background: "#111111", foreground: "#eeeeee", default: "#223344" },
-            dark: { ...defaultAppearance.colors.dark, background: "#eeeeee", foreground: "#111111", default: "#ccddee" }
-        }
-    }
+it("shares Button height and follows the nearest Appearance", () => {
+    const appearance = { colors: { light: { background: "#223344" }, dark: { background: "#ccddee" } } }
     const sample = <><Input aria-label="Name" size="large" /><Button size="large">Save</Button></>
     const view = render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>{sample}</UIProvider>)
     const field = screen.getByRole("textbox")
     expect(field.style.height).toBe(screen.getByRole("button").style.height)
-    expect(materialColor(field)).toBe(css(resolveColorLevel("#223344", "base")))
+    const lightWell = surfaceFill(field.parentElement!)
+    // A dark canvas has no room below it, so its recess rises instead.
+    expect(luminance(lightWell)!).toBeGreaterThan(luminance("#223344")!)
     view.rerender(<UIProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>{sample}</UIProvider>)
-    expect(materialColor(field)).toBe(css(resolveColorLevel("#ccddee", "base")))
+    expect(luminance(surfaceFill(field.parentElement!))!).toBeLessThan(luminance("#ccddee")!)
+    expect(surfaceFill(field.parentElement!)).not.toBe(lightWell)
 })
 
 describe.each([["Checkbox", Checkbox, "checkbox"], ["Switch", Switch, "switch"]] as const)("%s", (_, Control, role) => {
@@ -257,7 +240,7 @@ it("keeps RadioGroup selection exclusive, skips disabled options, and submits th
     screen.getByRole("radio", { name: "One" }).focus()
     await userEvent.setup().keyboard("[ArrowDown]")
     expect(onChange).toHaveBeenLastCalledWith("three")
-    expect(screen.getByRole("radio", { name: "One" }).getAttribute("aria-checked")).toBe("false")
+    expect((screen.getByRole("radio", { name: "One" }) as HTMLInputElement).checked).toBe(false)
     expect(firstInput.current?.checked).toBe(false)
     expect(new FormData(screen.getByTestId("form") as HTMLFormElement).get("mode")).toBe("three")
 })
@@ -280,62 +263,47 @@ it("RadioGroup follows controlled props without repeating its validation error f
     </RadioGroup>)
     expect(screen.getAllByText("Choose another mode")).toHaveLength(1)
     view.rerender(wrap(<RadioGroup label="Mode" value="two"><RadioGroup.Item label="One" value="one" /><RadioGroup.Item label="Two" value="two" /></RadioGroup>))
-    expect(screen.getByRole("radio", { name: "Two" }).getAttribute("aria-checked")).toBe("true")
+    expect((screen.getByRole("radio", { name: "Two" }) as HTMLInputElement).checked).toBe(true)
     view.rerender(wrap(<RadioGroup label="Mode" value={null}><RadioGroup.Item label="One" value="one" /><RadioGroup.Item label="Two" value="two" /></RadioGroup>))
-    expect(screen.getAllByRole("radio").every(radio => radio.getAttribute("aria-checked") === "false")).toBe(true)
+    expect(screen.getAllByRole("radio").every(radio => !(radio as HTMLInputElement).checked)).toBe(true)
 })
 
-const options = [{ value: "one", label: "One" }, { value: "two", label: "Two", disabled: true }, { value: "three", label: "Three" }]
+const options = <>
+    <Select.Item id="one">One</Select.Item>
+    <Select.Item id="two" disabled>Two</Select.Item>
+    <Select.Item id="three">Three</Select.Item>
+</>
 
-it("spaces Select options and distinguishes hover from keyboard focus", async () => {
+it("lays selection beneath the chosen option and veils hover without keyboard focus", async () => {
     const user = userEvent.setup()
-    renderUI(<Select label="Choice" options={options} defaultValue="one" />)
+    renderUI(<Select label="Choice" defaultValue="one">{options}</Select>)
     await user.click(screen.getByRole("button"))
-    const list = screen.getByRole("listbox")
-    expect(list.style.display).toBe("grid")
-    expect(parseFloat(list.style.gap)).toBeGreaterThan(0)
-    expect(screen.getByRole("option", { name: "One" }).style.background).not.toBe("transparent")
-    expect(screen.getByRole("option", { name: "Two" }).style.background).toBe("transparent")
+    const selected = screen.getByRole("option", { name: "One" })
     const third = screen.getByRole("option", { name: "Three" })
-    expect(third.style.background).toBe("transparent")
+    expect(surfaceFill(selected)).not.toBe("transparent")
+    expect(surfaceFill(third)).toBe("transparent")
     await user.hover(third)
     expect(third.getAttribute("data-focused")).toBeNull()
-    expect(third.style.background).not.toBe("transparent")
-    expect(third.style.outline).toBe("none")
+    expect(surfaceFill(third)).not.toBe("transparent")
     await user.keyboard("[ArrowDown]")
     expect(third.getAttribute("data-focused")).toBe("true")
-    expect(third.style.background).not.toBe("transparent")
-    expect(third.style.outline).toBe(`1px solid ${colorOpacity(opaqueColor(defaultAppearance.colors.light.default), 0.2)}`)
-    expect(third.style.outlineOffset).toBe("1px")
 })
 
-it("refreshes Select-owned paint when the theme changes while its collection remains open", async () => {
-    const appearance = {
-        ...defaultAppearance,
-        colors: {
-            light: { ...defaultAppearance.colors.light, default: "#123456" },
-            dark: { ...defaultAppearance.colors.dark, default: "#fedcba" }
-        }
-    }
-    const select = <Select label="Choice" options={options} defaultValue="one" />
-    const view = render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>{select}</UIProvider>)
+it("refreshes Select paint when the theme changes while its collection remains open", async () => {
+    const select = <Select label="Choice" defaultValue="one">{options}</Select>
+    const view = render(<UIProvider preferences={{ theme: "light", animations: true }}>{select}</UIProvider>)
     await userEvent.setup().click(screen.getByRole("button"))
-
     const selected = screen.getByRole("option", { name: "One" })
-    const light = selected.style.background
-    expect(screen.getByRole("option", { name: "Three" }).style.color).toBe("inherit")
-
-    view.rerender(<UIProvider appearance={appearance} preferences={{ theme: "dark", animations: true }}>{select}</UIProvider>)
-
-    expect(selected.style.background).not.toBe(light)
-    expect(screen.getByRole("option", { name: "Three" }).style.color).toBe("inherit")
+    const light = surfaceFill(selected)
+    view.rerender(<UIProvider preferences={{ theme: "dark", animations: true }}>{select}</UIProvider>)
+    expect(surfaceFill(selected)).not.toBe(light)
     expect(screen.getByRole("listbox")).not.toBeNull()
 })
 
 it("Select typeahead changes a string value, closes, and restores trigger focus", async () => {
     const onChange = vi.fn()
     const user = userEvent.setup()
-    renderUI(<Select label="Choice" options={options} onChange={onChange} />)
+    renderUI(<Select label="Choice" onChange={onChange}>{options}</Select>)
     const trigger = screen.getByRole("button", { name: /Choice/ })
     trigger.focus()
     await user.keyboard("[Space]thr[Enter]")
@@ -348,7 +316,7 @@ it("keeps a long controlled Select open across rerenders and constrains scrollin
     const user = userEvent.setup()
     const entries = Array.from({ length: 100 }, (_, index) => ({ value: String(index), label: `Model ${index}` }))
     const onChange = vi.fn()
-    const view = renderUI(<Select label="Model" options={entries} value="80" onChange={onChange} />)
+    const view = renderUI(<Select label="Model" value="80" onChange={onChange}>{entries.map(entry => <Select.Item key={entry.value} id={entry.value}>{entry.label}</Select.Item>)}</Select>)
     const trigger = screen.getByRole("button", { name: /Model/ })
 
     await user.click(trigger)
@@ -357,7 +325,6 @@ it("keeps a long controlled Select open across rerenders and constrains scrollin
     const material = scrollArea.parentElement!
     const popover = material.parentElement!
     expect(material.style.maxHeight).toContain("min(")
-    expect(material.style.boxSizing).toBe("border-box")
     expect(material.style.display).toBe("flex")
     expect(material.style.flexDirection).toBe("column")
     expect(scrollArea.style.minHeight).toBe("0px")
@@ -366,7 +333,7 @@ it("keeps a long controlled Select open across rerenders and constrains scrollin
     expect(list.style.maxHeight).toBe("")
     expect(popover.style.maxHeight).not.toBe("")
 
-    view.rerender(wrap(<Select label="Model" options={entries.map(entry => ({ ...entry }))} value="80" onChange={onChange} />))
+    view.rerender(wrap(<Select label="Model" value="80" onChange={onChange}>{entries.map(entry => <Select.Item key={entry.value} id={entry.value}>{entry.label}</Select.Item>)}</Select>))
     fireEvent.scroll(list)
     expect(screen.getByRole("listbox")).toBe(list)
     expect(onChange).not.toHaveBeenCalled()
@@ -378,7 +345,7 @@ it("keeps a long controlled Select open across rerenders and constrains scrollin
 it("Select rejects disabled options, dismisses with Escape, and cleans up its portal", async () => {
     const onChange = vi.fn()
     const user = userEvent.setup()
-    const view = renderUI(<Select label="Choice" options={options} onChange={onChange} />)
+    const view = renderUI(<Select label="Choice" onChange={onChange}>{options}</Select>)
     await user.click(screen.getByRole("button"))
     fireEvent.click(screen.getByRole("option", { name: "Two" }))
     expect(onChange).not.toHaveBeenCalled()
@@ -389,18 +356,26 @@ it("Select rejects disabled options, dismisses with Escape, and cleans up its po
     expect(screen.queryByRole("listbox")).toBeNull()
 })
 
+it("Select shows only the chosen Item's text in its trigger", () => {
+    renderUI(<Select label="Choice" defaultValue="one">{options}</Select>)
+    const value = screen.getByRole("button").querySelector(".react-aria-SelectValue")!
+    // The list's selection mark stays in the list; in the trigger it would add height.
+    expect(value.querySelector("svg")).toBeNull()
+    expect(value.textContent).toBe(screen.getByRole("button").textContent)
+})
+
 it("Select supports controlled null, uncontrolled form values, and disabled triggers", () => {
-    const view = renderUI(<form data-testid="form"><Select label="Choice" name="choice" options={options} defaultValue="one" /></form>)
+    const view = renderUI(<form data-testid="form"><Select label="Choice" name="choice" defaultValue="one">{options}</Select></form>)
     expect(new FormData(screen.getByTestId("form") as HTMLFormElement).get("choice")).toBe("one")
-    view.rerender(wrap(<Select label="Choice" options={options} value={null} disabled placeholder="Choose" />))
+    view.rerender(wrap(<Select label="Choice" value={null} disabled placeholder="Choose">{options}</Select>))
     const button = screen.getByRole("button") as HTMLButtonElement
     expect(button.disabled).toBe(true)
     expect(button.textContent).toContain("Choose")
 })
 
 it("Select restores its default on form reset and associates validation feedback", async () => {
-    renderUI(<form data-testid="form"><Select label="Choice" name="choice" options={options} defaultValue="one"
-        description="Choose one item" invalid errorMessage="Selection unavailable" /></form>)
+    renderUI(<form data-testid="form"><Select label="Choice" name="choice" defaultValue="one"
+        description="Choose one item" invalid errorMessage="Selection unavailable">{options}</Select></form>)
     const trigger = screen.getByRole("button")
     expect(descriptions(trigger)).toContain("Choose one item")
     expect(descriptions(trigger)).toContain("Selection unavailable")
@@ -459,22 +434,4 @@ function renderUI(children: ReactNode) {
 
 function descriptions(element: HTMLElement) {
     return element.getAttribute("aria-describedby")?.split(" ").map(id => document.getElementById(id)?.textContent) ?? []
-}
-
-function css(value: string) {
-    const element = document.createElement("div")
-    element.style.background = value
-    return element.style.background
-}
-
-function materialColor(control: HTMLElement) {
-    const host = control instanceof HTMLButtonElement ? control : control.parentElement
-    const base = host?.querySelector<HTMLElement>("[data-material-base]")
-    expect(base).not.toBeNull()
-    if (!(control instanceof HTMLButtonElement)) {
-        expect(host?.tagName).toBe("SPAN")
-        expect(host?.querySelector("label")).toBeNull()
-        expect(host?.style.padding).toBe("")
-    }
-    return css(base?.style.background ?? "")
 }

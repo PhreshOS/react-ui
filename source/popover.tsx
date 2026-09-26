@@ -8,23 +8,24 @@ import {
 } from "react-aria-components"
 import type {
   DialogProps as AriaDialogProps,
-  DialogTriggerProps as AriaDialogTriggerProps,
   HeadingProps as AriaHeadingProps,
   PopoverProps as AriaPopoverProps
 } from "react-aria-components"
-import { useResolvedAppearance } from "./appearance-context.js"
 import { Button, type ButtonProps } from "./button.js"
-import { controlFontSizes, controlFontWeight } from "./control.js"
-import MotionStyle, { overlayMotionClass, overlayTransition } from "./motion-style.js"
-import { scale } from "./scale.js"
-import { Surface, type SurfaceOwnProps } from "./surface.js"
-import { resolveDirection, useDirection } from "./direction.js"
-import { resolveDirectionalPlacement } from "./overlay-placement.js"
+import { controlFontSizes, controlFontWeight } from "./control/control.js"
+import { ariaOpenState, type AriaOverlayInternals, type OverlayRootProps } from "./control/open-state.js"
+import { resolveDirection, useDirection, type Direction } from "./foundation/direction.js"
+import MotionStyle, { overlayMotionClass, overlayTransition } from "./foundation/motion-style.js"
+import { resolveDirectionalPlacement } from "./foundation/overlay-placement.js"
+import { scale } from "./foundation/scale.js"
+import { useVisual } from "./foundation/visual.js"
+import { floatingShadow } from "./surface/shadow-options.js"
+import { Surface, type SurfaceOwnProps } from "./surface/surface.js"
 
-export type PopoverRootProps = AriaDialogTriggerProps
+export type PopoverRootProps = OverlayRootProps
 
-export function PopoverRoot(properties: PopoverRootProps) {
-  return <AriaDialogTrigger {...properties} />
+export function PopoverRoot({ children, ...state }: PopoverRootProps) {
+  return <AriaDialogTrigger {...ariaOpenState(state)}>{children}</AriaDialogTrigger>
 }
 
 export type PopoverTriggerProps = ButtonProps
@@ -33,15 +34,27 @@ export const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>
   return <Button {...properties} ref={ref} />
 })
 
+/**
+ * The floating Surface of an overlay. Its open state belongs to the family
+ * root, so this part takes placement, its own Surface, and ordinary element
+ * attributes.
+ */
 export interface PopoverContentProps extends
-  Omit<AriaPopoverProps, "children" | "className" | "color" | "style">,
+  Omit<AriaPopoverProps, AriaOverlayInternals | "children" | "className" | "color" | "style" | "dir">,
   SurfaceOwnProps {
   readonly children?: ReactNode
   readonly className?: string
+  readonly dir?: Direction
+  /** DOM container that owns the positioned overlay's coordinate space. */
+  readonly portalContainer?: Element
   readonly style?: CSSProperties
 }
 
-export const PopoverContent = forwardRef<HTMLElement, PopoverContentProps>(function PopoverContent({
+// A context menu must not trap the page like a modal overlay; that choice
+// belongs to ContextMenu and is not part of the public content contract.
+type PositionedContentProps = PopoverContentProps & Readonly<{ nonModal?: boolean }>
+
+const PositionedContent = forwardRef<HTMLElement, PositionedContentProps>(function PositionedContent({
   children,
   className,
   color,
@@ -51,19 +64,24 @@ export const PopoverContent = forwardRef<HTMLElement, PopoverContentProps>(funct
   style,
   offset,
   placement = "bottom",
-  ...properties
+  nonModal,
+  dir,
+  portalContainer,
+  ...attributes
 }, ref) {
-  const resolved = useResolvedAppearance()
-  const inset = scale(resolved.appearance.spacing, "small")
-  const transition = overlayTransition(resolved.transaction, resolved.preferences.animations)
-  const direction = resolveDirection(properties.dir, useDirection())
+  const visual = useVisual()
+  const inset = scale(visual.spacing, "small")
+  const transition = overlayTransition(visual)
+  const direction = resolveDirection(dir, useDirection())
 
   return <><MotionStyle /><AriaPopover
-    {...properties}
+    {...attributes}
+    isNonModal={nonModal}
     ref={ref}
     dir={direction}
     offset={offset ?? inset}
     placement={resolveDirectionalPlacement(placement, direction)}
+    UNSTABLE_portalContainer={portalContainer}
     className={overlayMotionClass}
     style={transition}
   >
@@ -72,8 +90,8 @@ export const PopoverContent = forwardRef<HTMLElement, PopoverContentProps>(funct
       className={className}
       color={color}
       material={material}
+      shadow={shadow ?? floatingShadow(visual.shadow)}
       radius={radius}
-      shadow={shadow}
       style={{
         boxSizing: "border-box",
         maxWidth: `calc(100vw - ${inset * 2}px)`,
@@ -83,6 +101,10 @@ export const PopoverContent = forwardRef<HTMLElement, PopoverContentProps>(funct
       }}
     >{children}</Surface>
   </AriaPopover></>
+})
+
+export const PopoverContent = forwardRef<HTMLElement, PopoverContentProps>(function PopoverContent(properties, ref) {
+  return <PositionedContent {...properties} ref={ref} />
 })
 
 export type PopoverDialogProps = AriaDialogProps
@@ -116,6 +138,9 @@ export type PopoverCloseProps = ButtonProps
 export const PopoverClose = forwardRef<HTMLButtonElement, PopoverCloseProps>(function PopoverClose(properties, ref) {
   return <Button {...properties} ref={ref} slot="close" />
 })
+
+/** Positioned content that holds a Menu; it keeps the Appearance radius like every shell. */
+export const MenuContent = PositionedContent
 
 /** An anchored non-modal overlay with explicit trigger, surface, and dialog roles. */
 export const Popover = Object.assign(PopoverRoot, {

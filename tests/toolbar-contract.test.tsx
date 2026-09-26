@@ -108,17 +108,17 @@ it("leaves actions owned by their controls", async function () {
 })
 
 it("derives its separator from the Toolbar color", function () {
-  const content = (color: "primary:base" | "danger:base") => <Toolbar aria-label="Actions" color={color}>
+  const content = (color: "primary" | "danger") => <Toolbar aria-label="Actions" color={color}>
     <Button>First</Button>
     <Toolbar.Separator />
     <Button>Second</Button>
   </Toolbar>
-  const view = renderToolbar(content("primary:base"))
+  const view = renderToolbar(content("primary"))
   const separator = screen.getByRole("separator")
   const primary = separator.style.background
 
   view.rerender(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
-    {content("danger:base")}
+    {content("danger")}
   </UIProvider>)
 
   expect(separator.style.background).not.toBe(primary)

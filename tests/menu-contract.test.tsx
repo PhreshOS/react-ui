@@ -12,22 +12,23 @@ import {
 afterEach(cleanup)
 
 it("uses the shared string selection contract", function () {
-  expectTypeOf<MenuItemProps["id"]>().toEqualTypeOf<string | undefined>()
+  expectTypeOf<MenuItemProps["id"]>().toEqualTypeOf<string>()
   expectTypeOf<MenuSingleSelectionProps["value"]>().toEqualTypeOf<string | null | undefined>()
   expectTypeOf<MenuMultipleSelectionProps["value"]>().toEqualTypeOf<readonly string[] | "all" | undefined>()
-  expectTypeOf<MenuProps["disabledValues"]>().toEqualTypeOf<readonly string[] | undefined>()
+  expectTypeOf<MenuProps["onAction"]>().toEqualTypeOf<((value: string) => void) | undefined>()
+  expectTypeOf<"disabledValues">().not.toExtend<keyof MenuProps>()
 })
 
 it("reports selected values and actions as string identities", async function () {
   const onChange = vi.fn()
-  const onItemAction = vi.fn()
+  const onAction = vi.fn()
 
   render(<Menu
     aria-label="View"
     selectionMode="single"
     defaultValue="comfortable"
     onChange={onChange}
-    onItemAction={onItemAction}
+    onAction={onAction}
   >
     <Menu.Item id="comfortable">Comfortable</Menu.Item>
     <Menu.Item id="compact">Compact</Menu.Item>
@@ -36,15 +37,15 @@ it("reports selected values and actions as string identities", async function ()
   await userEvent.setup().click(screen.getByRole("menuitemradio", { name: "Compact" }))
 
   expect(onChange).toHaveBeenLastCalledWith("compact")
-  expect(onItemAction).toHaveBeenLastCalledWith("compact")
+  expect(onAction).toHaveBeenLastCalledWith("compact")
 })
 
 it("keeps command menus selection-free by default", async function () {
-  const onItemAction = vi.fn()
-  render(<Menu aria-label="Actions" onItemAction={onItemAction}>
+  const onAction = vi.fn()
+  render(<Menu aria-label="Actions" onAction={onAction}>
     <Menu.Item id="open">Open</Menu.Item>
   </Menu>)
 
   await userEvent.setup().click(screen.getByRole("menuitem", { name: "Open" }))
-  expect(onItemAction).toHaveBeenLastCalledWith("open")
+  expect(onAction).toHaveBeenLastCalledWith("open")
 })

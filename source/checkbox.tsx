@@ -1,38 +1,45 @@
 import { forwardRef } from "react"
-import { CheckboxField, CheckboxButton } from "react-aria-components"
+import { CheckboxButton, CheckboxField } from "react-aria-components"
 import type { CheckboxFieldProps } from "react-aria-components"
-import { FieldFeedback, fieldStyle, useControlTheme } from "./control.js"
-import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
-import { ToggleIndicator, toggleStyle } from "./toggle-indicator.js"
-import type { MaterialOverrides } from "./material-options.js"
-import type { ShadowOverrides } from "./shadow-options.js"
+import { useControlMetrics, type ControlOverrides, type ControlProps, type FieldProps } from "./control/control.js"
+import { FieldFeedback, fieldStyle } from "./control/field.js"
+import { ToggleIndicator, toggleRowStyle } from "./control/toggle.js"
+import type { RadiusProps } from "./foundation/radius.js"
+import type { MaterialOverrides } from "./surface/material-options.js"
+import { dimmedClass } from "./surface/surface.js"
 
-export interface CheckboxProps extends Omit<CheckboxFieldProps, ControlOverrides | "isReadOnly" | "isSelected" | "defaultSelected" | "isIndeterminate">, ControlProps, FieldProps, MaterialOverrides, ShadowOverrides {
-    readonly checked?: boolean
-    readonly defaultChecked?: boolean
-    readonly indeterminate?: boolean
-    readonly readOnly?: boolean
+export interface CheckboxProps extends Omit<CheckboxFieldProps, ControlOverrides | "isSelected" | "defaultSelected" | "isIndeterminate">, ControlProps, FieldProps, MaterialOverrides, RadiusProps {
+  readonly checked?: boolean
+  readonly defaultChecked?: boolean
+  readonly indeterminate?: boolean
+  readonly readOnly?: boolean
 }
 
 /** An independent boolean field with optional mixed-state presentation. */
 export const Checkbox = forwardRef<HTMLDivElement, CheckboxProps>(function Checkbox({
-    label, description, errorMessage, disabled, required, invalid, readOnly,
-    checked, defaultChecked, indeterminate, size, color, style, material, shadow, ...properties
+  label, description, errorMessage, disabled, required, invalid, readOnly, className,
+  checked, defaultChecked, indeterminate, size, color = "primary", style, material, radius, ...properties
 }, ref) {
+  const metrics = useControlMetrics(size)
 
-    const theme = useControlTheme({ size, color })
-    return <CheckboxField {...properties} ref={ref} isDisabled={disabled} isRequired={required} isInvalid={invalid}
-        isReadOnly={readOnly} isSelected={checked} defaultSelected={defaultChecked} isIndeterminate={indeterminate}
-        style={state => fieldStyle(theme, state.isDisabled, style)}>
-        <CheckboxButton style={state => toggleStyle(theme, state.isDisabled, state.isReadOnly)}>
-            {state => <>
-                <ToggleIndicator kind="checkbox" material={material} shadow={shadow} theme={theme} selected={state.isSelected} indeterminate={state.isIndeterminate}
-                    focused={state.isFocusVisible} invalid={state.isInvalid}
-                    hovered={!state.isDisabled && !state.isReadOnly && state.isHovered}
-                    pressed={!state.isDisabled && !state.isReadOnly && state.isPressed} />
-                {label}
-            </>}
-        </CheckboxButton>
-        <FieldFeedback theme={theme} description={description} errorMessage={errorMessage} />
-    </CheckboxField>
+  return <CheckboxField {...properties} ref={ref} isDisabled={disabled} isRequired={required} isInvalid={invalid}
+    isReadOnly={readOnly} isSelected={checked} defaultSelected={defaultChecked} isIndeterminate={indeterminate}
+    className={state => dimmedClass(state.isDisabled, className ?? state.defaultClassName) ?? ""}
+    style={fieldStyle(metrics, style)}>
+    <CheckboxButton style={state => toggleRowStyle(metrics, state.isDisabled, state.isReadOnly)}>
+      {state => <>
+        <ToggleIndicator kind="checkbox" color={color} material={material} metrics={metrics} radius={radius} state={{
+          selected: state.isSelected,
+          indeterminate: state.isIndeterminate,
+          hovered: !state.isReadOnly && state.isHovered,
+          pressed: !state.isReadOnly && state.isPressed,
+          focusVisible: state.isFocusVisible,
+          invalid: state.isInvalid,
+          disabled: state.isDisabled
+        }} />
+        {label}
+      </>}
+    </CheckboxButton>
+    <FieldFeedback metrics={metrics} description={description} errorMessage={errorMessage} />
+  </CheckboxField>
 })

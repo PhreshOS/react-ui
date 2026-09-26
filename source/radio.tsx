@@ -1,175 +1,110 @@
-// Base UI accepts direction directly; React Aria derives these keys from locale.
-import { Radio as BaseRadio } from "@base-ui/react/radio"
-import { RadioGroup as BaseRadioGroup } from "@base-ui/react/radio-group"
-import { DirectionProvider as BaseDirectionProvider } from "@base-ui/react/direction-provider"
-import type { RadioRootProps as BaseRadioProps } from "@base-ui/react/radio"
-import type { RadioGroupProps as BaseRadioGroupProps } from "@base-ui/react/radio-group"
-import { createContext, forwardRef, useContext, useId, useState } from "react"
-import type { ReactNode } from "react"
-import { controlFontWeight, controlOpacity, fieldStyle, useControlTheme } from "./control.js"
-import type { ControlProps, FieldProps } from "./control.js"
-import { ToggleIndicator, toggleStyle } from "./toggle-indicator.js"
-import type { MaterialOverrides } from "./material-options.js"
-import type { ShadowOverrides } from "./shadow-options.js"
-import { resolveDirection, useDirection } from "./direction.js"
+import { createContext, forwardRef, useContext, useMemo } from "react"
+import type { CSSProperties, ReactNode } from "react"
+import { Label, RadioButton, RadioField, RadioGroup as AriaRadioGroup, Text } from "react-aria-components"
+import type { RadioFieldProps, RadioGroupProps as AriaRadioGroupProps } from "react-aria-components"
+import { controlFontWeight, controlOpacity, useControlMetrics, type ControlMetrics, type ControlOverrides, type ControlProps, type FieldProps } from "./control/control.js"
+import { FieldFeedback, fieldStyle } from "./control/field.js"
+import { ToggleIndicator, toggleRowStyle } from "./control/toggle.js"
+import { AriaDirectionBoundary } from "./foundation/aria-direction.js"
+import type { Color } from "./foundation/color.js"
+import { resolveDirection, useDirection, type Direction } from "./foundation/direction.js"
+import type { MaterialOverrides } from "./surface/material-options.js"
+import { dimmedClass } from "./surface/surface.js"
 
-type RadioStyle = Pick<ControlProps, "size" | "color" | "disabled"> & MaterialOverrides & ShadowOverrides & Readonly<{
-  invalid: boolean
-  readOnly: boolean
+type RadioStyle = Readonly<{
+  color: Color
+  direction: Direction
+  material: MaterialOverrides["material"]
+  metrics: ControlMetrics
 }>
 
 const RadioStyleContext = createContext<RadioStyle | null>(null)
 
 export interface RadioGroupProps extends
-  Omit<BaseRadioGroupProps<string | null>, "children" | "className" | "defaultValue" | "disabled" | "onChange" | "onValueChange" | "readOnly" | "required" | "style" | "value">,
+  Omit<AriaRadioGroupProps, ControlOverrides | "value" | "defaultValue" | "onChange">,
   ControlProps,
   FieldProps,
-  MaterialOverrides,
-  ShadowOverrides {
+  MaterialOverrides {
   readonly children: ReactNode
   readonly value?: string | null
   readonly defaultValue?: string | null
+  /** Receives the newly selected value; a radio selection cannot be cleared. */
   readonly onChange?: (value: string) => void
   readonly readOnly?: boolean
-  readonly orientation?: "horizontal" | "vertical"
 }
 
-export interface RadioGroupItemProps extends
-  Omit<BaseRadioProps<string>, "children" | "className" | "disabled" | "readOnly" | "required" | "style" | "value">,
-  ControlProps,
-  Pick<FieldProps, "label" | "description">,
-  MaterialOverrides,
-  ShadowOverrides {
-  readonly value: string
-}
-
-/** One string value selected from its Items, with direction-aware arrow navigation. */
-const RadioGroupRoot = forwardRef<HTMLDivElement, RadioGroupProps>(function RadioGroupRoot({
-  label,
-  description,
-  errorMessage,
-  children,
-  disabled = false,
-  readOnly = false,
-  required = false,
-  invalid = false,
-  value,
-  defaultValue,
-  onChange,
-  orientation = "vertical",
-  size,
-  color,
-  style,
-  className,
-  material,
-  shadow,
-  "aria-describedby": ariaDescribedBy,
-  "aria-labelledby": ariaLabelledBy,
-  ...properties
+/** One string value chosen from its Items. */
+const RadioGroupRoot = forwardRef<HTMLDivElement, RadioGroupProps>(function RadioGroup({
+  label, description, errorMessage, children, disabled, readOnly, required, invalid,
+  value, defaultValue, onChange, orientation = "vertical", size, color = "primary", style, className, material, ...properties
 }, ref) {
-  const theme = useControlTheme({ size, color })
+  const metrics = useControlMetrics(size)
   const direction = resolveDirection(properties.dir, useDirection())
-  const labelId = useId()
-  const descriptionId = useId()
-  const errorId = useId()
-  const describedBy = [ariaDescribedBy, description != null ? descriptionId : null, invalid && errorMessage != null ? errorId : null].filter(Boolean).join(" ") || undefined
+  const context = useMemo(() => ({ color, direction, material, metrics }), [color, direction, material, metrics])
 
-  const root = <BaseRadioGroup
+  return <AriaDirectionBoundary direction={direction}><AriaRadioGroup
     {...properties}
     ref={ref}
-    className={className}
-    value={value}
-    defaultValue={defaultValue}
-    onValueChange={next => {
-      if (next != null) onChange?.(next)
-    }}
-    disabled={disabled}
-    readOnly={readOnly}
-    required={required}
-    aria-invalid={invalid || undefined}
-    aria-labelledby={ariaLabelledBy ?? (label != null ? labelId : undefined)}
-    aria-describedby={describedBy}
-    style={fieldStyle(theme, disabled, style)}
+    dir={direction}
+    className={dimmedClass(disabled ?? false, className)}
+    orientation={orientation}
+    {...(value !== undefined ? { value } : {})}
+    {...(defaultValue !== undefined ? { defaultValue } : {})}
+    onChange={next => onChange?.(next)}
+    isDisabled={disabled}
+    isReadOnly={readOnly}
+    isRequired={required}
+    isInvalid={invalid}
+    style={fieldStyle(metrics, style)}
   >
-    {label != null && <div id={labelId} style={{ fontWeight: controlFontWeight }}>{label}</div>}
-    <RadioStyleContext.Provider value={{ size, color, disabled, invalid, readOnly, material, shadow }}>
-      <div style={{ display: "flex", flexDirection: orientation === "vertical" ? "column" : "row", gap: theme.gap, flexWrap: "wrap" }}>
+    {label != null && <Label style={{ fontWeight: controlFontWeight }}>{label}</Label>}
+    <RadioStyleContext.Provider value={context}>
+      <div style={{ display: "flex", flexDirection: orientation === "vertical" ? "column" : "row", flexWrap: "wrap", gap: metrics.gap }}>
         {children}
       </div>
     </RadioStyleContext.Provider>
-    {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</span>}
-    {invalid && errorMessage != null && <span id={errorId} style={{ fontSize: "0.92em", color: theme.danger }}>{errorMessage}</span>}
-  </BaseRadioGroup>
-
-  return <BaseDirectionProvider direction={direction}>{root}</BaseDirectionProvider>
+    <FieldFeedback metrics={metrics} description={description} errorMessage={errorMessage} />
+  </AriaRadioGroup></AriaDirectionBoundary>
 })
 
-/** An option in a RadioGroup. Selection and validation belong to the group. */
+export interface RadioGroupItemProps extends Omit<RadioFieldProps, "children" | "className" | "isDisabled" | "style" | "value"> {
+  readonly value: string
+  readonly label?: ReactNode
+  readonly description?: ReactNode
+  readonly disabled?: boolean
+  readonly className?: string
+  readonly style?: CSSProperties
+}
+
+/** One option in a RadioGroup. Selection, validation, and paint belong to the group. */
 const RadioGroupItem = forwardRef<HTMLDivElement, RadioGroupItemProps>(function RadioGroupItem({
-  label,
-  description,
-  value,
-  disabled = false,
-  size,
-  color,
-  style,
-  className,
-  material,
-  shadow,
-  onFocus,
-  onBlur,
-  "aria-describedby": ariaDescribedBy,
-  ...properties
+  label, description, disabled, className, style, ...properties
 }, ref) {
   const inherited = useContext(RadioStyleContext)
   if (inherited == null) throw new Error("RadioGroup.Item must be used inside RadioGroup")
+  const { color, direction, material, metrics } = inherited
 
-  const theme = useControlTheme({ size: size ?? inherited.size, color: color ?? inherited.color })
-  const descriptionId = useId()
-  const [hovered, setHovered] = useState(false)
-  const [pressed, setPressed] = useState(false)
-  const [focusVisible, setFocusVisible] = useState(false)
-  const describedBy = [ariaDescribedBy, description != null ? descriptionId : null].filter(Boolean).join(" ") || undefined
-
-  return <div ref={ref} className={className} style={fieldStyle(theme, disabled && !inherited.disabled, style)}>
-    <BaseRadio.Root
-      {...properties}
-      value={value}
-      disabled={disabled}
-      aria-describedby={describedBy}
-      onPointerEnter={() => setHovered(true)}
-      onPointerLeave={() => { setHovered(false); setPressed(false) }}
-      onPointerDown={() => setPressed(true)}
-      onPointerUp={() => setPressed(false)}
-      onFocus={event => {
-        setFocusVisible(event.currentTarget.matches(":focus-visible"))
-        onFocus?.(event)
-      }}
-      onBlur={event => {
-        setFocusVisible(false)
-        onBlur?.(event)
-      }}
-      style={state => toggleStyle(theme, state.disabled, state.readOnly)}
-      render={(native, state) => <span {...native}>
-        <ToggleIndicator
-          kind="radio"
-          material={material ?? inherited.material}
-          shadow={shadow ?? inherited.shadow}
-          theme={theme}
-          selected={state.checked}
-          focused={focusVisible}
-          invalid={inherited.invalid}
-          hovered={!state.disabled && !state.readOnly && hovered}
-          pressed={!state.disabled && !state.readOnly && pressed}
-        />
+  // Items inherit the group's text scale; only the group root applies it.
+  return <RadioField {...properties} ref={ref} className={state => dimmedClass(state.isDisabled, className ?? state.defaultClassName) ?? ""} isDisabled={disabled}
+    style={{ display: "grid", gap: 2, minWidth: 0, ...style }}>
+    <RadioButton style={state => toggleRowStyle(metrics, state.isDisabled, state.isReadOnly)}>
+      {state => <>
+        <ToggleIndicator kind="radio" direction={direction} color={color} material={material} metrics={metrics} state={{
+          selected: state.isSelected,
+          hovered: !state.isReadOnly && state.isHovered,
+          pressed: !state.isReadOnly && state.isPressed,
+          focusVisible: state.isFocusVisible,
+          invalid: state.isInvalid,
+          disabled: state.isDisabled
+        }} />
         {label}
-      </span>}
-    />
-    {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</span>}
-  </div>
+      </>}
+    </RadioButton>
+    {description != null && <Text slot="description" style={{ fontSize: "0.92em", opacity: controlOpacity.secondary, paddingInlineStart: metrics.indicator + metrics.gap }}>{description}</Text>}
+  </RadioField>
 })
 
-/** One exclusive-choice field whose context-dependent options are grouped as Items. */
+/** One exclusive-choice field whose options are its Items. */
 export const RadioGroup = Object.assign(RadioGroupRoot, {
   Item: RadioGroupItem
 })

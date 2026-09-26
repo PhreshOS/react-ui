@@ -10,227 +10,154 @@ import {
 import type {
   CollectionProps as AriaCollectionProps,
   Key,
-  Selection,
   TreeItemContentProps as AriaTreeItemContentProps,
   TreeItemProps as AriaTreeItemProps,
   TreeProps as AriaTreeProps
 } from "react-aria-components"
-import { controlOpacity, useControlTheme } from "./control.js"
-import type { ControlColor, ControlTheme } from "./control.js"
-import { resolveDirection, useDirection } from "./direction.js"
-import type { RadiusProps } from "./radius.js"
-import type { ScaleLevel } from "./scale.js"
+import { proportionalRadius, transition, useControlMetrics, type ControlMetrics } from "./control/control.js"
+import { itemPaint, itemStyle } from "./control/item.js"
 import {
-  multipleSelection,
-  singleSelection,
+  ariaSelection,
   stringKey,
   stringKeys,
-  toAriaSelection,
+  type MultipleSelectionProps,
   type MultipleStringSelection,
-  type MultipleStringSelectionProps,
-  type SingleStringSelectionProps
-} from "./selection.js"
-import { AriaDirectionBoundary } from "./aria-direction.js"
+  type NoSelectionProps,
+  type SingleSelectionProps
+} from "./control/selection.js"
+import { AriaDirectionBoundary } from "./foundation/aria-direction.js"
+import { colorOpacity, type Color } from "./foundation/color.js"
+import { resolveDirection, useDirection, type Direction } from "./foundation/direction.js"
+import type { RadiusProps } from "./foundation/radius.js"
+import type { ScaleLevel } from "./foundation/scale.js"
+import { dimmedClass } from "./surface/surface.js"
+import { ChevronRight } from "lucide-react"
+import { iconProps } from "./control/icon.js"
 
-type TreeTheme = Readonly<{
-  direction: "ltr" | "rtl"
-  interactive: boolean
-  theme: ControlTheme
-}>
+type TreeContext = Readonly<{ color: Color, direction: Direction, interactive: boolean, metrics: ControlMetrics, itemRadius: CSSProperties["borderRadius"] }>
 
-const TreeThemeContext = createContext<TreeTheme | null>(null)
+const TreeStyleContext = createContext<TreeContext | null>(null)
 
 type TreeRootBaseProps<T extends object> = Omit<
   AriaTreeProps<T>,
-  | "className"
-  | "defaultExpandedKeys"
-  | "defaultSelectedKeys"
-  | "disabledKeys"
-  | "expandedKeys"
-  | "onAction"
-  | "onExpandedChange"
-  | "onSelectionChange"
-  | "selectedKeys"
-  | "selectionMode"
-  | "style"
+  | "className" | "defaultExpandedKeys" | "defaultSelectedKeys" | "disabledKeys" | "expandedKeys" | "onAction"
+  | "onExpandedChange" | "onSelectionChange" | "selectedKeys" | "selectionMode" | "style"
+  | "shouldSelectOnPressUp"
 > & RadiusProps & Readonly<{
   className?: string
-  color?: ControlColor
+  /** Color laid beneath selected Items. */
+  color?: Color
   defaultExpanded?: readonly string[]
-  disabledValues?: readonly string[]
   expanded?: readonly string[]
   onExpandedChange?: (values: readonly string[]) => void
-  onItemAction?: (value: string) => void
+  /** Runs with the value of the Item that was activated. */
+  onAction?: (value: string) => void
+  /** Whether an Item is selected when the press ends instead of when it starts. */
+  selectOnPressUp?: boolean
   size?: ScaleLevel
   style?: CSSProperties
 }>
 
-export type TreeNoSelectionProps = Readonly<{
-  selectionMode?: "none"
-  value?: never
-  defaultValue?: never
-  onChange?: never
-}>
-
-export type TreeSingleSelectionProps = SingleStringSelectionProps & Readonly<{
-  selectionMode: "single"
-}>
-
+export type TreeNoSelectionProps = NoSelectionProps
+export type TreeSingleSelectionProps = SingleSelectionProps
 export type TreeMultipleValue = MultipleStringSelection
-
-export type TreeMultipleSelectionProps = MultipleStringSelectionProps & Readonly<{
-  selectionMode: "multiple"
-}>
+export type TreeMultipleSelectionProps = MultipleSelectionProps
 
 export type TreeRootProps<T extends object = object> = TreeRootBaseProps<T>
   & (TreeNoSelectionProps | TreeSingleSelectionProps | TreeMultipleSelectionProps)
 
-const TreeRootImplementation = forwardRef(function TreeRoot<T extends object = object>(
+const TreeRootImplementation = forwardRef(function Tree<T extends object = object>(
   properties: TreeRootProps<T>,
   ref: ForwardedRef<HTMLDivElement>
 ) {
   const {
-    className,
-    color,
-    defaultExpanded,
-    defaultValue,
-    disabledValues,
-    expanded,
-    onChange,
-    onExpandedChange,
-    onItemAction,
-    radius = "medium",
-    selectionMode = "none",
-    size = "medium",
-    style,
-    value,
-    ...native
+    className, color = "primary", defaultExpanded, defaultValue: _defaultValue, expanded, onAction,
+    onChange: _onChange, onExpandedChange, radius, selectOnPressUp, selectionMode = "none", size, style, value: _value, ...native
   } = properties
-  const theme = useControlTheme({ color, radius, size })
+  const metrics = useControlMetrics(size, radius)
+  // Items are controls: they take the control radius at their size.
+  const itemRadius = metrics.radius
   const direction = resolveDirection(native.dir, useDirection())
-  const context = useMemo<TreeTheme>(
-    () => ({ direction, interactive: selectionMode !== "none" || onItemAction != null, theme }),
-    [direction, onItemAction, selectionMode, theme]
+  const context = useMemo<TreeContext>(
+    () => ({ color, direction, interactive: selectionMode !== "none" || onAction != null, metrics, itemRadius }),
+    [color, direction, metrics, itemRadius, onAction, selectionMode]
   )
 
-  return <TreeThemeContext.Provider value={context}>
+  return <TreeStyleContext.Provider value={context}>
     <AriaDirectionBoundary direction={direction}><AriaTree
       {...native}
-      {...selectionProperties(properties)}
-      {...expansionProperties({ defaultExpanded, expanded, onExpandedChange })}
+      shouldSelectOnPressUp={selectOnPressUp}
+      {...ariaSelection(properties, "none")}
+      {...(expanded !== undefined ? { expandedKeys: new Set(expanded) } : {})}
+      {...(defaultExpanded !== undefined ? { defaultExpandedKeys: new Set(defaultExpanded) } : {})}
+      {...(onExpandedChange !== undefined ? { onExpandedChange: (keys: Set<Key>) => onExpandedChange(stringKeys(keys)) } : {})}
       ref={ref}
       dir={direction}
       className={className}
-      disabledKeys={disabledValues}
-      selectionMode={selectionMode}
-      onAction={onItemAction == null ? undefined : key => onItemAction(stringKey(key))}
+      onAction={onAction == null ? undefined : key => onAction(stringKey(key))}
       style={{
         display: "grid",
         alignContent: "start",
-        gap: theme.gap,
+        gap: 2,
         minWidth: 0,
-        padding: theme.gap,
+        padding: metrics.listInset,
         boxSizing: "border-box",
         outline: "none",
         fontFamily: "inherit",
-        fontSize: theme.fontSize,
+        fontSize: metrics.fontSize,
         ...style
       }}
     /></AriaDirectionBoundary>
-  </TreeThemeContext.Provider>
+  </TreeStyleContext.Provider>
 })
 
 export type TreeRootComponent = <T extends object = object>(
   properties: TreeRootProps<T> & RefAttributes<HTMLDivElement>
 ) => ReactElement | null
 
-export const TreeRoot = TreeRootImplementation as TreeRootComponent
-
-function selectionProperties<T extends object>(properties: TreeRootProps<T>) {
-  const selectedKeys = toAriaSelection(properties.value)
-  const defaultSelectedKeys = toAriaSelection(properties.defaultValue)
-  const onSelectionChange = properties.onChange == null
-    ? undefined
-    : (selection: Selection) => {
-        if (properties.selectionMode === "multiple") {
-          properties.onChange?.(multipleSelection(selection))
-          return
-        }
-
-        if (properties.selectionMode === "single") properties.onChange?.(singleSelection(selection))
-      }
-
-  return {
-    ...(selectedKeys !== undefined ? { selectedKeys } : {}),
-    ...(defaultSelectedKeys !== undefined ? { defaultSelectedKeys } : {}),
-    ...(onSelectionChange !== undefined ? { onSelectionChange } : {})
-  }
-}
-
-function expansionProperties({ defaultExpanded, expanded, onExpandedChange }: Pick<
-  TreeRootBaseProps<object>,
-  "defaultExpanded" | "expanded" | "onExpandedChange"
->) {
-  return {
-    ...(expanded !== undefined ? { expandedKeys: new Set(expanded) } : {}),
-    ...(defaultExpanded !== undefined ? { defaultExpandedKeys: new Set(defaultExpanded) } : {}),
-    ...(onExpandedChange !== undefined
-      ? { onExpandedChange: (keys: Set<Key>) => onExpandedChange(stringKeys(keys)) }
-      : {})
-  }
-}
-
-export interface TreeItemProps<T = object> extends Omit<
-  AriaTreeItemProps<T>,
-  "className" | "id" | "isDisabled" | "style"
-> {
+export interface TreeItemProps<T = object> extends Omit<AriaTreeItemProps<T>, "className" | "id" | "isDisabled" | "style" | "hasChildItems" | "allowsArrowNavigation"> {
+  /** Identity of this Item within its Tree. */
+  readonly id: string
+  /** Whether arrow keys move between cells while focus is inside this one. */
+  readonly arrowNavigation?: boolean
+  /** Whether this Item can expand before its children have loaded. */
+  readonly expandable?: boolean
   readonly className?: string
   readonly disabled?: boolean
-  readonly id: string
   readonly style?: CSSProperties
 }
 
+/** Tree entries use the collection Item treatment as their own paint. */
 const TreeItemImplementation = forwardRef(function TreeItem<T = object>(
-  { className, disabled = false, onAction, style, ...properties }: TreeItemProps<T>,
+  { arrowNavigation, className, disabled = false, expandable, onAction, style, ...properties }: TreeItemProps<T>,
   ref: ForwardedRef<HTMLDivElement>
 ) {
-  const { interactive, theme } = useTreeTheme()
+  const { color, interactive, itemRadius, metrics } = useTreeStyle()
 
   return <AriaTreeItem
     {...properties}
+    allowsArrowNavigation={arrowNavigation}
+    hasChildItems={expandable}
     ref={ref}
-    className={className}
+    className={state => dimmedClass(state.isDisabled, className ?? state.defaultClassName) ?? ""}
     isDisabled={disabled}
     onAction={onAction}
     style={state => {
       const responds = interactive || onAction != null || state.hasChildItems
-
       return {
-        ...theme.transition,
-        display: "flex",
-        alignItems: "center",
-        gap: theme.gap,
-        minWidth: 0,
-        minHeight: theme.height,
-        paddingBlock: 0,
-        paddingInlineEnd: Math.max(8, theme.spacing),
-        paddingInlineStart: Math.max(8, theme.spacing) + Math.max(0, state.level - 1) * theme.spacing,
-        boxSizing: "border-box",
-        borderRadius: theme.radius,
-        outline: state.isFocusVisible ? `1px solid ${theme.focusColor}` : "none",
+        ...itemStyle(metrics, state.isDisabled),
+        ...itemPaint(metrics.visual, color, {
+          selected: state.isSelected,
+          hovered: responds && state.isHovered,
+          pressed: responds && state.isPressed,
+          focusVisible: false,
+          disabled: state.isDisabled
+        }),
+        paddingInlineStart: metrics.inset / 2 + Math.max(0, state.level - 1) * metrics.spacing,
+        borderRadius: itemRadius,
+        outline: `3px solid ${state.isFocusVisible ? colorOpacity(metrics.visual.colors.primary, 0.34) : "transparent"}`,
         outlineOffset: 1,
-        cursor: disabled ? "not-allowed" : responds ? "pointer" : "default",
-        opacity: disabled ? controlOpacity.disabled : 1,
-        userSelect: "none",
-        ...(state.isSelected
-          ? state.isPressed
-            ? theme.paints.palette.pressed
-            : state.isHovered
-              ? theme.paints.palette.hover
-              : theme.paints.palette.rest
-          : state.isHovered && responds
-            ? theme.paints.subtle.hover
-            : { background: "transparent", color: "inherit" }),
+        cursor: state.isDisabled ? "not-allowed" : responds ? "pointer" : "default",
         ...style
       }
     }}
@@ -241,92 +168,56 @@ export type TreeItemComponent = <T = object>(
   properties: TreeItemProps<T> & RefAttributes<HTMLDivElement>
 ) => ReactElement | null
 
-export const TreeItem = TreeItemImplementation as TreeItemComponent
-
 export interface TreeContentProps extends AriaTreeItemContentProps {
   readonly children: AriaTreeItemContentProps["children"]
 }
 
-export const TreeContent = forwardRef<Element, TreeContentProps>(function TreeContent(
-  { children },
-  ref
-) {
-  const { direction, theme } = useTreeTheme()
+const TreeContent = forwardRef<Element, TreeContentProps>(function TreeContent({ children }, ref) {
+  const { direction, metrics } = useTreeStyle()
+  const box = Math.round(metrics.indicator)
 
   return <AriaTreeItemContent ref={ref}>
     {state => <>
       {state.hasChildItems
-        ? <AriaButton
-            slot="chevron"
-            style={({ isFocusVisible }) => ({
-              ...theme.transition,
-              appearance: "none",
-              display: "inline-grid",
-              flex: "0 0 auto",
-              placeItems: "center",
-              width: theme.indicatorSize,
-              height: theme.indicatorSize,
-              padding: 0,
-              border: 0,
-              borderRadius: theme.radius,
-              outline: isFocusVisible ? `1px solid ${theme.focusColor}` : "none",
-              outlineOffset: 1,
-              background: "transparent",
-              color: "inherit",
-              cursor: state.isDisabled ? "not-allowed" : "pointer",
-              font: "inherit"
-            })}
-          >
-            <Chevron direction={direction} expanded={state.isExpanded} theme={theme} />
-          </AriaButton>
-        : <span aria-hidden="true" style={{ flex: `0 0 ${theme.indicatorSize}px`, width: theme.indicatorSize }} />}
-      <span style={{ flex: "1 1 auto", minWidth: 0 }}>
+        ? <AriaButton slot="chevron" style={({ isFocusVisible }) => ({
+          display: "inline-grid",
+          flex: "0 0 auto",
+          placeItems: "center",
+          width: box,
+          height: box,
+          padding: 0,
+          border: 0,
+          borderRadius: proportionalRadius(metrics.visual, box),
+          outline: `3px solid ${isFocusVisible ? colorOpacity(metrics.visual.colors.primary, 0.34) : "transparent"}`,
+          background: "transparent",
+          color: "inherit",
+          cursor: state.isDisabled ? "not-allowed" : "pointer",
+          font: "inherit"
+        })}>
+          <ChevronRight {...iconProps(14)} style={{ ...transition(metrics.visual, "rotate"), rotate: state.isExpanded ? "90deg" : direction === "rtl" ? "180deg" : "0deg" }} />
+        </AriaButton>
+        : <span aria-hidden="true" style={{ flex: `0 0 ${box}px` }} />}
+      {/* A label may lead with an icon: its parts sit centered, a gap apart, as in Menu and Tabs. */}
+      <span style={{ flex: "1 1 auto", minWidth: 0, display: "flex", alignItems: "center", gap: metrics.gap }}>
         {typeof children === "function" ? children(state) : children}
       </span>
     </>}
   </AriaTreeItemContent>
 })
 
-function Chevron({ direction, expanded, theme }: Readonly<{
-  direction: "ltr" | "rtl"
-  expanded: boolean
-  theme: ControlTheme
-}>) {
-  const collapsedRotation = direction === "rtl" ? 180 : 0
-
-  return <svg
-    aria-hidden="true"
-    width="12"
-    height="12"
-    viewBox="0 0 12 12"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    style={{
-      ...theme.transition,
-      transitionProperty: "transform",
-      transform: `rotate(${expanded ? 90 : collapsedRotation}deg)`
-    }}
-  ><path d="m4 2 4 4-4 4" /></svg>
-}
-
 export type TreeCollectionProps<T extends object = object> = AriaCollectionProps<T>
 
-export const TreeCollection = AriaCollection
+function useTreeStyle() {
+  const context = useContext(TreeStyleContext)
+  if (context == null) throw new Error("Tree parts must be used inside Tree")
+  return context
+}
 
-/** Hierarchical navigation with independently controlled expansion, selection, and item actions. */
-export const Tree = Object.assign(TreeRoot, {
-  Item: TreeItem,
+/** Hierarchical navigation with independently controlled expansion, selection, and actions. */
+export const Tree = Object.assign(TreeRootImplementation as TreeRootComponent, {
+  Item: TreeItemImplementation as TreeItemComponent,
   Content: TreeContent,
-  Collection: TreeCollection
+  Collection: AriaCollection
 })
 
 export type TreeProps<T extends object = object> = TreeRootProps<T>
-
-function useTreeTheme() {
-  const value = useContext(TreeThemeContext)
-  if (value == null) throw new Error("Tree parts must be used inside Tree")
-  return value
-}

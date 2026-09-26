@@ -10,7 +10,8 @@ import {
   type ListBoxMultipleSelectionProps,
   type ListBoxSingleSelectionProps
 } from "../source/main.js"
-import { colorOpacity, opaqueColor, solidColors } from "../source/color.js"
+import { colorLevel } from "../source/foundation/color.js"
+import { surfaceFill } from "./support/paint.js"
 
 afterEach(cleanup)
 
@@ -119,42 +120,26 @@ it("supports dynamic collections while keeping identities explicit", function ()
   expect(screen.getAllByRole("option").map(option => option.textContent?.replace("✓", ""))).toEqual(["One", "Two"])
 })
 
-it("shares Select option paint and keeps pointer hover separate from keyboard focus", async function () {
+it("lays the selection level of its color beneath selection and veils hover without keyboard focus", async function () {
   const user = userEvent.setup()
-  renderListBox(<ListBox aria-label="Colors" color="secondary:base" defaultValue="one">
+  renderListBox(<ListBox aria-label="Colors" color="secondary" defaultValue="one">
     <ListBox.Item id="one">One</ListBox.Item>
     <ListBox.Item id="two">Two</ListBox.Item>
   </ListBox>)
 
+  const colors = defaultAppearance.colors.light
   const selected = screen.getByRole("option", { name: "One" })
   const available = screen.getByRole("option", { name: "Two" })
-  const palette = solidColors(
-    defaultAppearance.colors.light.secondary,
-    defaultAppearance.colors.light.background,
-    defaultAppearance.colors.light.foreground
-  )
-
-  expect(selected.style.background).toBe(css(palette.rest.background))
-  expect(available.style.background).toBe("transparent")
+  expect(surfaceFill(selected)).toBe(colorLevel(colors.secondary, "subtle", colors))
+  expect(surfaceFill(available)).toBe("transparent")
 
   await user.hover(available)
   expect(available.getAttribute("data-focused")).toBeNull()
-  expect(available.style.background).not.toBe("transparent")
-  expect(available.style.outline).toBe("none")
-
-  selected.focus()
-  await user.keyboard("[ArrowDown]")
-  expect(available.style.outline).toBe(`1px solid ${colorOpacity(opaqueColor(defaultAppearance.colors.light.secondary), 0.2)}`)
+  expect(surfaceFill(available)).not.toBe("transparent")
 })
 
 function renderListBox(component: ReactNode) {
   return render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     {component}
   </UIProvider>)
-}
-
-function css(value: string) {
-  const element = document.createElement("div")
-  element.style.background = value
-  return element.style.background
 }

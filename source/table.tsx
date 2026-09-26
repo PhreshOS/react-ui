@@ -12,38 +12,34 @@ import type {
   CellProps as AriaCellProps,
   ColumnProps as AriaColumnProps,
   RowProps as AriaRowProps,
-  Selection,
   SortDescriptor,
   TableBodyProps as AriaTableBodyProps,
   TableHeaderProps as AriaTableHeaderProps,
   TableProps as AriaTableProps
 } from "react-aria-components"
-import { colorOpacity } from "./color.js"
-import { controlFontWeight, controlOpacity, useControlTheme } from "./control.js"
-import type { ControlColor, ControlTheme } from "./control.js"
-import { resolveDirection, useDirection } from "./direction.js"
-import type { RadiusProps } from "./radius.js"
-import type { ScaleLevel } from "./scale.js"
+import { controlFontWeight, controlOpacity, transition, useControlMetrics, type ControlMetrics } from "./control/control.js"
+import { separatorColor } from "./control/field.js"
+import { itemPaint } from "./control/item.js"
 import {
-  multipleSelection,
-  singleSelection,
+  ariaSelection,
   stringKey,
-  toAriaSelection,
+  type MultipleSelectionProps,
   type MultipleStringSelection,
-  type MultipleStringSelectionProps,
-  type SingleStringSelectionProps
-} from "./selection.js"
-import { AriaDirectionBoundary } from "./aria-direction.js"
+  type NoSelectionProps,
+  type SingleSelectionProps
+} from "./control/selection.js"
+import { AriaDirectionBoundary } from "./foundation/aria-direction.js"
+import { colorOpacity, type Color } from "./foundation/color.js"
+import { resolveDirection, useDirection } from "./foundation/direction.js"
+import type { RadiusProps } from "./foundation/radius.js"
+import type { ScaleLevel } from "./foundation/scale.js"
+import { dimmedClass } from "./surface/surface.js"
+import { ChevronUp } from "lucide-react"
+import { iconProps } from "./control/icon.js"
 
-type TableTheme = Readonly<{
-  color?: ControlColor
-  interactive: boolean
-  radius: RadiusProps["radius"]
-  size: ScaleLevel
-  theme: ControlTheme
-}>
+type TableContext = Readonly<{ color: Color, interactive: boolean, metrics: ControlMetrics }>
 
-const TableThemeContext = createContext<TableTheme | null>(null)
+const TableStyleContext = createContext<TableContext | null>(null)
 
 export type TableSortDirection = "ascending" | "descending"
 
@@ -54,85 +50,56 @@ export interface TableSort {
 
 type TableRootBaseProps = Omit<
   AriaTableProps,
-  | "className"
-  | "defaultSelectedKeys"
-  | "disabledKeys"
-  | "onRowAction"
-  | "onSelectionChange"
-  | "onSortChange"
-  | "selectedKeys"
-  | "selectionMode"
-  | "sortDescriptor"
-  | "style"
+  | "className" | "defaultSelectedKeys" | "disabledKeys" | "onRowAction" | "onSelectionChange"
+  | "onSortChange" | "selectedKeys" | "selectionMode" | "sortDescriptor" | "style"
+  // Expandable rows are not part of Table; use Tree for hierarchy.
+  | "expandedKeys" | "defaultExpandedKeys" | "onExpandedChange" | "treeColumn"
+  | "shouldSelectOnPressUp"
 > & RadiusProps & Readonly<{
   className?: string
-  color?: ControlColor
-  disabledValues?: readonly string[]
-  onRowAction?: (value: string) => void
+  /** Color laid beneath selected Rows. */
+  color?: Color
+  /** Runs with the value of the Row that was activated. */
+  onAction?: (value: string) => void
   onSortChange?: (sort: TableSort) => void
+  /** Whether a Row is selected when the press ends instead of when it starts. */
+  selectOnPressUp?: boolean
   size?: ScaleLevel
   sort?: TableSort
   style?: CSSProperties
 }>
 
-export type TableNoSelectionProps = Readonly<{
-  selectionMode?: "none"
-  value?: never
-  defaultValue?: never
-  onChange?: never
-}>
-
-export type TableSingleSelectionProps = SingleStringSelectionProps & Readonly<{
-  selectionMode: "single"
-}>
-
+export type TableNoSelectionProps = NoSelectionProps
+export type TableSingleSelectionProps = SingleSelectionProps
 export type TableMultipleValue = MultipleStringSelection
-
-export type TableMultipleSelectionProps = MultipleStringSelectionProps & Readonly<{
-  selectionMode: "multiple"
-}>
+export type TableMultipleSelectionProps = MultipleSelectionProps
 
 export type TableRootProps = TableRootBaseProps
   & (TableNoSelectionProps | TableSingleSelectionProps | TableMultipleSelectionProps)
 
-export const TableRoot = forwardRef<HTMLTableElement | HTMLDivElement, TableRootProps>(function TableRoot(
-  properties,
-  ref
-) {
+/** Structured rows and columns with optional selection and consumer-owned sorting. */
+const TableRoot = forwardRef<HTMLTableElement | HTMLDivElement, TableRootProps>(function Table(properties, ref) {
   const {
-    className,
-    color,
-    defaultValue,
-    disabledValues,
-    onChange,
-    onRowAction,
-    onSortChange,
-    radius = "medium",
-    selectionMode = "none",
-    size = "medium",
-    sort,
-    style,
-    value,
-    ...native
+    className, color = "primary", defaultValue: _defaultValue, onAction, onChange: _onChange, onSortChange,
+    radius, selectOnPressUp, selectionMode = "none", size, sort, style, value: _value, ...native
   } = properties
-  const theme = useControlTheme({ color, radius, size })
-  const context = useMemo<TableTheme>(
-    () => ({ color, interactive: selectionMode !== "none" || onRowAction != null, radius, size, theme }),
-    [color, onRowAction, radius, selectionMode, size, theme]
+  const metrics = useControlMetrics(size, radius)
+  const context = useMemo<TableContext>(
+    () => ({ color, interactive: selectionMode !== "none" || onAction != null, metrics }),
+    [color, metrics, onAction, selectionMode]
   )
   const direction = resolveDirection(native.dir, useDirection())
 
-  return <TableThemeContext.Provider value={context}>
+  return <TableStyleContext.Provider value={context}>
     <AriaDirectionBoundary direction={direction}><AriaTable
       {...native}
-      {...selectionProperties(properties)}
+      shouldSelectOnPressUp={selectOnPressUp}
+      {...ariaSelection(properties, "none")}
       {...(sort === undefined ? {} : { sortDescriptor: sort })}
       ref={ref}
       dir={direction}
       className={className}
-      disabledKeys={disabledValues}
-      selectionMode={selectionMode}
-      onRowAction={onRowAction == null ? undefined : key => onRowAction(stringKey(key))}
+      onRowAction={onAction == null ? undefined : key => onAction(stringKey(key))}
       onSortChange={onSortChange == null ? undefined : descriptor => onSortChange(tableSort(descriptor))}
       style={{
         width: "100%",
@@ -140,38 +107,16 @@ export const TableRoot = forwardRef<HTMLTableElement | HTMLDivElement, TableRoot
         borderCollapse: "separate",
         borderSpacing: 0,
         boxSizing: "border-box",
-        borderRadius: theme.radius,
-        // Header and row paints belong to the table, so the table must clip
-        // them rather than relying on a surrounding surface for its radius.
+        // Row paints belong to the table, so the table clips them to its own radius.
+        borderRadius: metrics.radius,
         overflow: "hidden",
         fontFamily: "inherit",
-        fontSize: theme.fontSize,
+        fontSize: metrics.fontSize,
         ...style
       }}
     /></AriaDirectionBoundary>
-  </TableThemeContext.Provider>
+  </TableStyleContext.Provider>
 })
-
-function selectionProperties(properties: TableRootProps) {
-  const selectedKeys = toAriaSelection(properties.value)
-  const defaultSelectedKeys = toAriaSelection(properties.defaultValue)
-  const onSelectionChange = properties.onChange == null
-    ? undefined
-    : (selection: Selection) => {
-        if (properties.selectionMode === "multiple") {
-          properties.onChange?.(multipleSelection(selection))
-          return
-        }
-
-        if (properties.selectionMode === "single") properties.onChange?.(singleSelection(selection))
-      }
-
-  return {
-    ...(selectedKeys !== undefined ? { selectedKeys } : {}),
-    ...(defaultSelectedKeys !== undefined ? { defaultSelectedKeys } : {}),
-    ...(onSelectionChange !== undefined ? { onSelectionChange } : {})
-  }
-}
 
 function tableSort(descriptor: SortDescriptor): TableSort {
   return { column: stringKey(descriptor.column), direction: descriptor.direction }
@@ -179,92 +124,71 @@ function tableSort(descriptor: SortDescriptor): TableSort {
 
 export interface TableHeaderProps<T extends object = object> extends Omit<AriaTableHeaderProps<T>, "className" | "style"> {
   readonly className?: string
-  readonly color?: ControlColor
   readonly style?: CSSProperties
 }
 
 const TableHeaderImplementation = forwardRef(function TableHeader<T extends object = object>(
-  { className, color, style, ...properties }: TableHeaderProps<T>,
+  { className, style, ...properties }: TableHeaderProps<T>,
   ref: ForwardedRef<HTMLTableSectionElement | HTMLDivElement>
 ) {
-  const inherited = useTableContext()
-  const resolvedColor = color ?? inherited.color
-  const theme = useControlTheme({ color: resolvedColor, radius: inherited.radius, size: inherited.size })
-  const context = useMemo<TableTheme>(() => ({ ...inherited, color: resolvedColor, theme }), [inherited, resolvedColor, theme])
-
-  return <TableThemeContext.Provider value={context}>
-    <AriaTableHeader
-      {...properties}
-      ref={ref}
-      className={className}
-      style={{ ...style }}
-    />
-  </TableThemeContext.Provider>
+  useTableStyle()
+  return <AriaTableHeader {...properties} ref={ref} className={className} style={style} />
 })
 
 export type TableHeaderComponent = <T extends object = object>(
   properties: TableHeaderProps<T> & RefAttributes<HTMLTableSectionElement | HTMLDivElement>
 ) => ReactElement | null
 
-export const TableHeader = TableHeaderImplementation as TableHeaderComponent
+export interface TableColumnProps extends Omit<AriaColumnProps, "allowsSorting" | "allowsArrowNavigation" | "className" | "id" | "isRowHeader" | "style"> {
+  /** Whether arrow keys move between cells while focus is inside this one. */
+  readonly arrowNavigation?: boolean
 
-export interface TableColumnProps extends Omit<AriaColumnProps, "className" | "id" | "style"> {
-  readonly className?: string
+  /** Identity of this Column, reported in sort changes. */
   readonly id: string
+  /** Whether cells in this Column label their Row. */
+  readonly rowHeader?: boolean
+  /** Whether pressing this Column requests a sort. */
+  readonly sortable?: boolean
+  readonly className?: string
   readonly style?: CSSProperties
 }
 
-export const TableColumn = forwardRef<HTMLTableCellElement | HTMLDivElement, TableColumnProps>(function TableColumn(
-  { allowsSorting = false, children, className, style, textValue, ...properties },
+const TableColumn = forwardRef<HTMLTableCellElement | HTMLDivElement, TableColumnProps>(function TableColumn(
+  { sortable = false, rowHeader, arrowNavigation, children, className, style, textValue, ...properties },
   ref
 ) {
-  const theme = useTableTheme()
+  const { metrics } = useTableStyle()
+  const { colors } = metrics.visual
 
   return <AriaColumn
     {...properties}
+    allowsArrowNavigation={arrowNavigation}
     ref={ref}
-    allowsSorting={allowsSorting}
+    isRowHeader={rowHeader}
+    allowsSorting={sortable}
     className={className}
     textValue={textValue ?? (typeof children === "string" ? children : undefined)}
     style={state => ({
-      ...theme.transition,
-      minWidth: 0,
-      height: theme.height,
-      paddingBlock: theme.gap,
-      paddingInline: Math.max(8, theme.spacing),
+      ...transition(metrics.visual, "color, outline-color"),
+      height: metrics.height,
+      paddingInline: metrics.inset,
       boxSizing: "border-box",
-      outline: state.isFocusVisible ? `1px solid ${theme.focusColor}` : "none",
-      outlineOffset: -1,
-      ...(state.isHovered && allowsSorting ? theme.paints.palette.hover : theme.paints.palette.rest),
-      cursor: allowsSorting ? "pointer" : "default",
+      outline: `3px solid ${state.isFocusVisible ? colorOpacity(colors.primary, 0.34) : "transparent"}`,
+      outlineOffset: -3,
+      cursor: sortable ? "pointer" : "default",
+      fontSize: "0.92em",
       fontWeight: controlFontWeight,
       textAlign: "start",
       userSelect: "none",
+      opacity: state.isHovered && sortable ? 1 : controlOpacity.secondary,
       ...style
     })}
-  >{state => <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: theme.gap, minWidth: 0 }}>
+  >{state => <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: metrics.gap, minWidth: 0 }}>
     <span style={{ minWidth: 0 }}>{typeof children === "function" ? children(state) : children}</span>
-    {allowsSorting && state.sortDirection != null && <SortIndicator direction={state.sortDirection} theme={theme} />}
+    {sortable && state.sortDirection != null && <ChevronUp {...iconProps(14)}
+      style={{ ...transition(metrics.visual, "rotate"), flexShrink: 0, rotate: state.sortDirection === "descending" ? "180deg" : "0deg" }} />}
   </span>}</AriaColumn>
 })
-
-function SortIndicator({ direction, theme }: Readonly<{ direction: TableSortDirection, theme: ControlTheme }>) {
-  return <svg
-    aria-hidden="true"
-    width="12"
-    height="12"
-    viewBox="0 0 12 12"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    style={{
-      ...theme.transition,
-      flexShrink: 0,
-      transitionProperty: "transform",
-      transform: `rotate(${direction === "descending" ? 180 : 0}deg)`
-    }}
-  ><path d="m2 8 4-4 4 4" /></svg>
-}
 
 export interface TableBodyProps<T extends object = object> extends Omit<AriaTableBodyProps<T>, "className" | "style"> {
   readonly className?: string
@@ -275,54 +199,47 @@ const TableBodyImplementation = forwardRef(function TableBody<T extends object =
   { className, style, ...properties }: TableBodyProps<T>,
   ref: ForwardedRef<HTMLTableSectionElement | HTMLDivElement>
 ) {
-  return <AriaTableBody
-    {...properties}
-    ref={ref}
-    className={className}
-    style={{ ...style }}
-  />
+  return <AriaTableBody {...properties} ref={ref} className={className} style={style} />
 })
 
 export type TableBodyComponent = <T extends object = object>(
   properties: TableBodyProps<T> & RefAttributes<HTMLTableSectionElement | HTMLDivElement>
 ) => ReactElement | null
 
-export const TableBody = TableBodyImplementation as TableBodyComponent
-
-export interface TableRowProps<T extends object = object> extends Omit<AriaRowProps<T>, "className" | "id" | "isDisabled" | "style"> {
+export interface TableRowProps<T extends object = object> extends Omit<AriaRowProps<T>, "className" | "id" | "isDisabled" | "style" | "hasChildItems"> {
+  /** Identity of this Row within its Table. */
+  readonly id: string
   readonly className?: string
   readonly disabled?: boolean
-  readonly id: string
   readonly style?: CSSProperties
 }
 
+/** Rows use the collection Item treatment as their own paint. */
 const TableRowImplementation = forwardRef(function TableRow<T extends object = object>(
   { className, disabled = false, onAction, style, ...properties }: TableRowProps<T>,
   ref: ForwardedRef<HTMLTableRowElement | HTMLDivElement>
 ) {
-  const { interactive, theme } = useTableContext()
+  const { color, interactive, metrics } = useTableStyle()
+  const responds = interactive || onAction != null
 
   return <AriaRow
     {...properties}
     ref={ref}
-    className={className}
+    className={state => dimmedClass(state.isDisabled, className ?? state.defaultClassName) ?? ""}
     isDisabled={disabled}
     onAction={onAction}
     style={state => ({
-      ...theme.transition,
-      outline: state.isFocusVisible ? `1px solid ${theme.focusColor}` : "none",
-      outlineOffset: -1,
-      cursor: disabled ? "not-allowed" : interactive || onAction != null ? "pointer" : "default",
-      opacity: disabled ? controlOpacity.disabled : 1,
-      ...(state.isSelected
-        ? state.isPressed
-          ? theme.paints.palette.pressed
-          : state.isHovered
-            ? theme.paints.palette.hover
-            : theme.paints.palette.rest
-        : state.isHovered && (interactive || onAction != null)
-          ? theme.paints.subtle.hover
-          : { background: "transparent", color: "inherit" }),
+      ...transition(metrics.visual, "background-color, color, outline-color"),
+      ...itemPaint(metrics.visual, color, {
+        selected: state.isSelected,
+        hovered: responds && state.isHovered,
+        pressed: responds && state.isPressed,
+        focusVisible: false,
+        disabled: state.isDisabled
+      }),
+      outline: `3px solid ${state.isFocusVisible ? colorOpacity(metrics.visual.colors.primary, 0.34) : "transparent"}`,
+      outlineOffset: -3,
+      cursor: state.isDisabled ? "not-allowed" : responds ? "pointer" : "default",
       ...style
     })}
   />
@@ -332,59 +249,51 @@ export type TableRowComponent = <T extends object = object>(
   properties: TableRowProps<T> & RefAttributes<HTMLTableRowElement | HTMLDivElement>
 ) => ReactElement | null
 
-export const TableRow = TableRowImplementation as TableRowComponent
+export interface TableCellProps extends Omit<AriaCellProps, "className" | "style" | "allowsArrowNavigation"> {
+  /** Whether arrow keys move between cells while focus is inside this one. */
+  readonly arrowNavigation?: boolean
 
-export interface TableCellProps extends Omit<AriaCellProps, "className" | "style"> {
   readonly className?: string
   readonly style?: CSSProperties
 }
 
-export const TableCell = forwardRef<HTMLTableCellElement | HTMLDivElement, TableCellProps>(function TableCell(
-  { className, style, ...properties },
+const TableCell = forwardRef<HTMLTableCellElement | HTMLDivElement, TableCellProps>(function TableCell(
+  { arrowNavigation, className, style, ...properties },
   ref
 ) {
-  const theme = useTableTheme()
-  const separator = colorOpacity(theme.tint, controlOpacity.separator)
+  const { metrics } = useTableStyle()
 
   return <AriaCell
     {...properties}
+    allowsArrowNavigation={arrowNavigation}
     ref={ref}
     className={className}
     style={state => ({
-      minWidth: 0,
-      height: theme.height,
-      paddingBlock: theme.gap,
-      paddingInline: Math.max(8, theme.spacing),
+      height: metrics.height,
+      paddingInline: metrics.inset,
       boxSizing: "border-box",
-      // Separators belong to the row that follows them. This preserves every
-      // internal boundary while leaving the final row without a bottom edge.
-      borderBlockStart: `1px solid ${separator}`,
-      outline: state.isFocusVisible ? `1px solid ${theme.focusColor}` : "none",
-      outlineOffset: -1,
-      background: "transparent",
-      color: "inherit",
+      // Separators belong to the row that follows them, so the last row has no bottom edge.
+      borderBlockStart: `1px solid ${separatorColor(metrics)}`,
+      outline: `3px solid ${state.isFocusVisible ? colorOpacity(metrics.visual.colors.primary, 0.34) : "transparent"}`,
+      outlineOffset: -3,
       textAlign: "start",
       ...style
     })}
   />
 })
 
-function useTableContext() {
-  const value = useContext(TableThemeContext)
-  if (value == null) throw new Error("Table parts must be used inside Table")
-  return value
-}
-
-function useTableTheme() {
-  return useTableContext().theme
+function useTableStyle() {
+  const context = useContext(TableStyleContext)
+  if (context == null) throw new Error("Table parts must be used inside Table")
+  return context
 }
 
 /** Structured rows and columns with optional selection and consumer-owned sorting. */
 export const Table = Object.assign(TableRoot, {
-  Header: TableHeader,
+  Header: TableHeaderImplementation as TableHeaderComponent,
   Column: TableColumn,
-  Body: TableBody,
-  Row: TableRow,
+  Body: TableBodyImplementation as TableBodyComponent,
+  Row: TableRowImplementation as TableRowComponent,
   Cell: TableCell
 })
 

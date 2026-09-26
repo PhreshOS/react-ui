@@ -12,7 +12,7 @@ describe("DropdownMenu", function () {
       <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
       <DropdownMenu.Content data-testid="menu-surface">
         <Menu aria-label="Actions">
-          <Menu.Item onAction={action}>Rename</Menu.Item>
+          <Menu.Item id="rename" onAction={action}>Rename</Menu.Item>
         </Menu>
       </DropdownMenu.Content>
     </DropdownMenu>)
@@ -20,11 +20,10 @@ describe("DropdownMenu", function () {
     await userEvent.setup().click(screen.getByRole("button", { name: "Actions" }))
     const menu = screen.getByRole("menu", { name: "Actions" })
     const positionedContent = screen.getByTestId("menu-surface")
-    const materialHost = positionedContent.querySelector("[data-material-paint]")?.closest("div")
+    const materialHost = positionedContent.querySelector(".phreshos-surface")
     expect(menu.parentElement).toBe(materialHost)
     expect(materialHost).not.toBe(positionedContent)
-    expect(positionedContent.style.position).not.toBe("relative")
-    expect(materialHost?.style.position).toBe("relative")
+    expect(positionedContent.classList.contains("phreshos-surface")).toBe(false)
 
     await userEvent.setup().click(screen.getByRole("menuitem", { name: "Rename" }))
     expect(action).toHaveBeenCalledOnce()
@@ -47,10 +46,9 @@ describe("Popover", function () {
     await userEvent.setup().click(screen.getByRole("button", { name: "Details" }))
     expect(screen.getByRole("dialog", { name: "Details" })).toBeTruthy()
     const positionedContent = screen.getByTestId("popover-surface")
-    const materialHost = positionedContent.querySelector("[data-material-paint]")?.closest("div")
-    expect(materialHost).not.toBe(positionedContent)
-    expect(positionedContent.style.position).not.toBe("relative")
-    expect(materialHost?.style.position).toBe("relative")
+    const materialHost = positionedContent.querySelector<HTMLElement>(".phreshos-surface")
+    expect(materialHost).not.toBeNull()
+    expect(positionedContent.classList.contains("phreshos-surface")).toBe(false)
     expect(materialHost?.style.fontSize).toBe("")
     const title = screen.getByRole("heading", { name: "Properties" })
     expect(title.style.margin).toBe("0px")

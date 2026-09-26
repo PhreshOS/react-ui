@@ -2,19 +2,14 @@ import { forwardRef } from "react"
 import type { Time } from "@internationalized/date"
 import { TimeField as AriaTimeField } from "react-aria-components"
 import type { TimeFieldProps as AriaTimeFieldProps } from "react-aria-components"
-import { AriaDirectionBoundary } from "./aria-direction.js"
-import {
-  FieldFeedback,
-  FieldLabel,
-  fieldStyle,
-  useControlTheme
-} from "./control.js"
-import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
+import { AriaDirectionBoundary } from "./foundation/aria-direction.js"
+import { useControlMetrics, type ControlOverrides, type ControlProps, type FieldProps } from "./control/control.js"
+import { FieldFeedback, FieldLabel, fieldStyle } from "./control/field.js"
 import { DateControl } from "./date-control.js"
-import { resolveDirection, useDirection } from "./direction.js"
-import type { MaterialOverrides } from "./material-options.js"
-import type { RadiusProps } from "./radius.js"
-import type { ShadowOverrides } from "./shadow-options.js"
+import { resolveDirection, useDirection } from "./foundation/direction.js"
+import type { MaterialOverrides } from "./surface/material-options.js"
+import type { RadiusProps } from "./foundation/radius.js"
+import { dimmedClass } from "./surface/surface.js"
 
 type TimeFieldOverrides = ControlOverrides
   | "isReadOnly"
@@ -34,8 +29,7 @@ export interface TimeFieldProps
     ControlProps,
     FieldProps,
     RadiusProps,
-    MaterialOverrides,
-    ShadowOverrides {
+    MaterialOverrides {
   readonly value?: Time | null
   readonly defaultValue?: Time | null
   readonly onChange?: (value: Time | null) => void
@@ -44,7 +38,8 @@ export interface TimeFieldProps
   readonly placeholderValue?: Time
   readonly granularity?: "hour" | "minute" | "second"
   readonly hourCycle?: 12 | 24
-  readonly shouldForceLeadingZeros?: boolean
+  /** Whether hours, days, and months always show two digits. */
+  readonly leadingZeros?: boolean
   readonly readOnly?: boolean
 }
 
@@ -61,24 +56,25 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
   color,
   radius,
   material,
-  shadow,
   style,
   className,
+  leadingZeros,
   ...properties
 }, ref) {
-  const theme = useControlTheme({ size, color, radius })
+  const metrics = useControlMetrics(size, radius)
   const direction = resolveDirection(properties.dir, useDirection())
 
   return <AriaDirectionBoundary direction={direction}><AriaTimeField
     {...properties}
     ref={ref}
     dir={direction}
-    className={className}
+    className={dimmedClass(disabled ?? false, className)}
     isDisabled={disabled}
     isReadOnly={readOnly}
+    shouldForceLeadingZeros={leadingZeros}
     isRequired={required}
     isInvalid={invalid}
-    style={fieldStyle(theme, disabled, style)}
+    style={fieldStyle(metrics, style)}
   >
     {state => <>
       <FieldLabel label={label} />
@@ -86,10 +82,10 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
         disabled={state.isDisabled}
         invalid={state.isInvalid}
         material={material}
-        shadow={shadow}
-        theme={theme}
+        color={color ?? "background"}
+        metrics={metrics}
       />
-      <FieldFeedback theme={theme} description={description} errorMessage={errorMessage} />
+      <FieldFeedback metrics={metrics} description={description} errorMessage={errorMessage} />
     </>}
   </AriaTimeField></AriaDirectionBoundary>
 })

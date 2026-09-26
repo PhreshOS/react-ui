@@ -2,6 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { ContextMenu, Menu } from "../source/main.js"
+import { surfaceFill } from "./support/paint.js"
 
 afterEach(cleanup)
 
@@ -13,14 +14,31 @@ function Example({ onAction, onOpenChange }: Readonly<{
     <ContextMenu.Trigger><button>Workspace tile</button></ContextMenu.Trigger>
     <ContextMenu.Content>
       <Menu aria-label="Workspace actions">
-        <Menu.Item onAction={onAction}>Open</Menu.Item>
-        <Menu.Item disabled onAction={onAction}>Delete</Menu.Item>
+        <Menu.Item id="open" onAction={onAction}>Open</Menu.Item>
+        <Menu.Item id="delete" disabled onAction={onAction}>Delete</Menu.Item>
       </Menu>
     </ContextMenu.Content>
   </ContextMenu>
 }
 
 describe("ContextMenu", function () {
+  it("positions content inside an explicitly owned coordinate container", function () {
+    const container = document.createElement("div")
+    document.body.append(container)
+
+    render(<ContextMenu>
+      <ContextMenu.Trigger><button>Scaled tile</button></ContextMenu.Trigger>
+      <ContextMenu.Content portalContainer={container}>
+        <Menu aria-label="Scaled actions"><Menu.Item id="open">Open</Menu.Item></Menu>
+      </ContextMenu.Content>
+    </ContextMenu>)
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Scaled tile" }))
+    expect(container.contains(screen.getByRole("menu", { name: "Scaled tile" }))).toBe(true)
+    cleanup()
+    container.remove()
+  })
+
   it("opens on a context request without activating the trigger", function () {
     const action = vi.fn()
     render(<Example onAction={action} />)
@@ -64,10 +82,10 @@ describe("ContextMenu", function () {
     item.focus()
 
     await user.hover(item)
-    expect(item.style.background).not.toBe("transparent")
+    expect(surfaceFill(item)).not.toBe("transparent")
 
     await user.unhover(item)
-    expect(item.style.background).toBe("transparent")
+    expect(surfaceFill(item)).toBe("transparent")
   })
 
   it("closes with Escape and restores focus", async function () {
@@ -101,7 +119,7 @@ describe("ContextMenu", function () {
       <ContextMenu>
         <ContextMenu.Trigger><button>Second tile</button></ContextMenu.Trigger>
         <ContextMenu.Content>
-          <Menu aria-label="Second actions"><Menu.Item>Inspect</Menu.Item></Menu>
+          <Menu aria-label="Second actions"><Menu.Item id="inspect">Inspect</Menu.Item></Menu>
         </ContextMenu.Content>
       </ContextMenu>
     </>)

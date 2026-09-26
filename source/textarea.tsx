@@ -1,36 +1,31 @@
 import { forwardRef } from "react"
-import { TextArea as AriaTextarea, TextField } from "react-aria-components"
-import { controlPaint, controlStyle, FieldFeedback, FieldLabel, fieldStyle, useControlTheme } from "./control.js"
-import { SurfaceField } from "./control-surface.js"
-import FieldStyle, { textControlClass } from "./field-style.js"
-import type { TextControlProps } from "./text-control.js"
+import { TextArea as AriaTextArea, TextField } from "react-aria-components"
+import { useControlMetrics } from "./control/control.js"
+import { FieldFeedback, FieldLabel, fieldStyle } from "./control/field.js"
+import { nativeTextStyle, TextWell, type TextControlProps } from "./control/text-control.js"
+import MotionStyle, { textControlClass } from "./foundation/motion-style.js"
+import { dimmedClass } from "./surface/surface.js"
 
 export interface TextareaProps extends Omit<TextControlProps, "type" | "pattern"> {
-    readonly rows?: number
+  readonly rows?: number
 }
 
-/** A labeled multiline text control, vertically resizable without escaping its width. */
+/** A labeled multiline text field, vertically resizable without escaping its width. */
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea({
-    label, description, errorMessage, disabled, readOnly, required, invalid,
-    size, color, radius, style, className, placeholder, rows = 4, material, shadow, ...properties
+  label, description, errorMessage, disabled, readOnly, required, invalid,
+  size, color = "background", radius, style, className, placeholder, rows = 4, material, ...properties
 }, ref) {
+  const metrics = useControlMetrics(size, radius)
 
-    const theme = useControlTheme({ size, color, radius })
-    return <TextField {...properties} className={className} isDisabled={disabled} isReadOnly={readOnly}
-        isRequired={required} isInvalid={invalid} style={fieldStyle(theme, disabled, style)}>
-        <FieldStyle />
-        <FieldLabel label={label} />
-        <AriaTextarea ref={ref} placeholder={placeholder} rows={rows} className={textControlClass}
-            render={(native, state) => <SurfaceField material={material} shadow={shadow} radius={theme.radius} paint={controlPaint(theme, state.isFocused, state.isInvalid, state.isHovered)}>
-                <textarea {...native} style={{ ...native.style, borderRadius: "inherit", background: "transparent" }} />
-            </SurfaceField>}
-            style={state => ({
-            ...controlStyle(theme, state.isFocused, state.isInvalid, state.isHovered, state.isFocusVisible),
-            height: "auto",
-            minHeight: theme.height,
-            paddingBlock: Math.max(6, theme.spacing / 2),
-            resize: "vertical"
-        })} />
-        <FieldFeedback theme={theme} description={description} errorMessage={errorMessage} />
-    </TextField>
+  return <TextField {...properties} className={dimmedClass(disabled ?? false, className)} isDisabled={disabled} isReadOnly={readOnly}
+    isRequired={required} isInvalid={invalid} style={fieldStyle(metrics, style)}>
+    <MotionStyle />
+    <FieldLabel label={label} />
+    <AriaTextArea ref={ref} placeholder={placeholder} rows={rows} className={textControlClass}
+      render={(native, state) => <TextWell color={color} material={material} metrics={metrics} state={state}>
+        <textarea {...native} />
+      </TextWell>}
+      style={nativeTextStyle(metrics, true)} />
+    <FieldFeedback metrics={metrics} description={description} errorMessage={errorMessage} />
+  </TextField>
 })

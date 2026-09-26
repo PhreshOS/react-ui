@@ -98,10 +98,9 @@ it("keeps selection and disabled identities distinct", async function () {
     selectionMode="multiple"
     value={["readme"]}
     onChange={onChange}
-    disabledValues={["archive"]}
   >
     <Tree.Item id="readme" textValue="README"><Tree.Content>README</Tree.Content></Tree.Item>
-    <Tree.Item id="archive" textValue="Archive"><Tree.Content>Archive</Tree.Content></Tree.Item>
+    <Tree.Item id="archive" textValue="Archive" disabled><Tree.Content>Archive</Tree.Content></Tree.Item>
   </Tree>)
 
   const readme = screen.getByRole("row", { name: "README" })
@@ -117,14 +116,14 @@ it("keeps selection and disabled identities distinct", async function () {
 })
 
 it("reports item actions with string identities", async function () {
-  const onItemAction = vi.fn()
+  const onAction = vi.fn()
 
-  renderTree(<Tree aria-label="Files" onItemAction={onItemAction}>
+  renderTree(<Tree aria-label="Files" onAction={onAction}>
     <Tree.Item id="readme" textValue="README"><Tree.Content>README</Tree.Content></Tree.Item>
   </Tree>)
 
   await userEvent.setup().click(screen.getByRole("row", { name: "README" }))
-  expect(onItemAction).toHaveBeenLastCalledWith("readme")
+  expect(onAction).toHaveBeenLastCalledWith("readme")
 })
 
 it("supports recursive dynamic collections without exposing collection keys", function () {

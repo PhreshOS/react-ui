@@ -5,19 +5,33 @@ import type {
   TooltipProps as AriaTooltipProps,
   TooltipTriggerComponentProps as AriaTooltipTriggerProps
 } from "react-aria-components"
-import { useResolvedAppearance } from "./appearance-context.js"
 import { Button, type ButtonProps } from "./button.js"
-import { controlFontSizes } from "./control.js"
-import MotionStyle, { overlayMotionClass, overlayTransition } from "./motion-style.js"
-import { scale } from "./scale.js"
-import { Surface, type SurfaceOwnProps } from "./surface.js"
-import { resolveDirection, useDirection } from "./direction.js"
-import { resolveDirectionalPlacement } from "./overlay-placement.js"
+import { controlFontSizes } from "./control/control.js"
+import { ariaOpenState, type AriaOverlayInternals, type OverlayRootProps } from "./control/open-state.js"
+import { resolveDirection, useDirection, type Direction } from "./foundation/direction.js"
+import MotionStyle, { overlayMotionClass, overlayTransition } from "./foundation/motion-style.js"
+import { resolveDirectionalPlacement } from "./foundation/overlay-placement.js"
+import { scale } from "./foundation/scale.js"
+import { useVisual } from "./foundation/visual.js"
+import { floatingShadow } from "./surface/shadow-options.js"
+import { Surface, type SurfaceOwnProps } from "./surface/surface.js"
 
-export type TooltipRootProps = AriaTooltipTriggerProps
+export type TooltipRootProps = OverlayRootProps & Readonly<Pick<AriaTooltipTriggerProps, "delay" | "closeDelay" | "trigger">> & Readonly<{
+  /** Whether the Tooltip is prevented from opening. */
+  disabled?: boolean
+  /** Whether pressing the trigger closes the Tooltip. Defaults to `true`. */
+  closeOnPress?: boolean
+}>
 
-export function TooltipRoot(properties: TooltipRootProps) {
-  return <AriaTooltipTrigger {...properties} />
+export function TooltipRoot({ children, delay, closeDelay, trigger, disabled, closeOnPress, ...state }: TooltipRootProps) {
+  return <AriaTooltipTrigger
+    {...ariaOpenState(state)}
+    delay={delay}
+    closeDelay={closeDelay}
+    trigger={trigger}
+    isDisabled={disabled}
+    shouldCloseOnPress={closeOnPress}
+  >{children}</AriaTooltipTrigger>
 }
 
 export type TooltipTriggerProps = ButtonProps
@@ -26,11 +40,13 @@ export const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>
   return <Button {...properties} ref={ref} />
 })
 
+/** The floating Surface of a Tooltip: its placement, its own Surface, and element attributes. */
 export interface TooltipContentProps extends
-  Omit<AriaTooltipProps, "children" | "className" | "color" | "style">,
+  Omit<AriaTooltipProps, AriaOverlayInternals | "children" | "className" | "color" | "style" | "dir">,
   SurfaceOwnProps {
   readonly children?: ReactNode
   readonly className?: string
+  readonly dir?: Direction
   readonly style?: CSSProperties
 }
 
@@ -44,15 +60,16 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
   style,
   offset,
   placement = "top",
-  ...properties
+  dir,
+  ...attributes
 }, ref) {
-  const resolved = useResolvedAppearance()
-  const inset = scale(resolved.appearance.spacing, "small")
-  const transition = overlayTransition(resolved.transaction, resolved.preferences.animations)
-  const direction = resolveDirection(properties.dir, useDirection())
+  const visual = useVisual()
+  const inset = scale(visual.spacing, "small")
+  const transition = overlayTransition(visual)
+  const direction = resolveDirection(dir, useDirection())
 
   return <><MotionStyle /><AriaTooltip
-    {...properties}
+    {...attributes}
     ref={ref}
     dir={direction}
     offset={offset ?? inset}
@@ -63,10 +80,10 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
     <Surface
       dir={direction}
       className={className}
-      color={color}
+      color={color ?? "foreground"}
       material={material}
       radius={radius}
-      shadow={shadow}
+      shadow={shadow ?? floatingShadow(visual.shadow)}
       style={{
         boxSizing: "border-box",
         maxWidth: "28em",

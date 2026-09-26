@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { createRef } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { UIProvider, ScrollArea } from "../source/main.js"
+import { UIProvider, ScrollArea, defaultAppearance } from "../source/main.js"
 
 afterEach(cleanup)
 
@@ -46,25 +46,30 @@ describe("ScrollArea", function () {
       <ScrollArea><div>Content</div></ScrollArea>
     </UIProvider>)
     const thumb = view.container.querySelector<HTMLElement>("[data-phreshos-scroll-area-thumb]")!
-    expect(thumb.style.backgroundColor).toContain("rgb(24, 52, 71)")
+    expect(thumb.style.backgroundColor).toContain(rgb(defaultAppearance.colors.light.foreground))
 
     view.rerender(<UIProvider preferences={{ theme: "dark", animations: true }}>
       <ScrollArea><div>Content</div></ScrollArea>
     </UIProvider>)
-    expect(view.container.querySelector<HTMLElement>("[data-phreshos-scroll-area-thumb]")!.style.backgroundColor).toContain("rgb(237, 248, 252)")
+    expect(view.container.querySelector<HTMLElement>("[data-phreshos-scroll-area-thumb]")!.style.backgroundColor).toContain(rgb(defaultAppearance.colors.dark.foreground))
   })
 
   it("derives scrollbar interaction paint from its color", function () {
     const view = render(<UIProvider preferences={{ theme: "light", animations: true }}>
-      <ScrollArea color="primary:base"><div>Content</div></ScrollArea>
+      <ScrollArea color="primary"><div>Content</div></ScrollArea>
     </UIProvider>)
     const thumb = view.container.querySelector<HTMLElement>("[data-phreshos-scroll-area-thumb]")!
     const primary = thumb.style.backgroundColor
 
     view.rerender(<UIProvider preferences={{ theme: "light", animations: true }}>
-      <ScrollArea color="danger:base"><div>Content</div></ScrollArea>
+      <ScrollArea color="danger"><div>Content</div></ScrollArea>
     </UIProvider>)
 
     expect(thumb.style.backgroundColor).not.toBe(primary)
   })
 })
+
+function rgb(hex: string) {
+  const [r, g, b] = [1, 3, 5].map(index => Number.parseInt(hex.slice(index, index + 2), 16))
+  return `rgb(${r}, ${g}, ${b})`
+}

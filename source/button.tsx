@@ -1,141 +1,95 @@
 import { forwardRef } from "react"
 import type { CSSProperties, ReactNode } from "react"
-import { Button as AriaButton } from "react-aria-components"
-import type { ButtonProps as AriaButtonProps } from "react-aria-components"
-import type { ScaleLevel } from "./scale.js"
-import type { RadiusProps } from "./radius.js"
-import { controlOpacity, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
-import { SurfaceButton } from "./control-surface.js"
-import type { MaterialOverrides } from "./material-options.js"
-import type { ShadowOverrides } from "./shadow-options.js"
+import { Button as AriaButton, type ButtonProps as AriaButtonProps, type ButtonRenderProps } from "react-aria-components"
+import { controlOpacity, transition, useControlMetrics, type ControlProps } from "./control/control.js"
+import { surfaceRender } from "./control/surface-render.js"
+import type { Color } from "./foundation/color.js"
+import type { RadiusProps } from "./foundation/radius.js"
+import type { MaterialOverrides } from "./surface/material-options.js"
+import type { ShadowOverrides } from "./surface/shadow-options.js"
 
-type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "style">
+type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "render" | "style">
 
-/** A semantic color from Appearance; omission uses `default:base`. */
-export type ButtonColor = ControlColor
+/** A color from Appearance or CSS; omission keeps the Button neutral. */
+export type ButtonColor = Color
 
-/** Properties accepted by the shared interactive button. */
-export interface ButtonProps extends NativeButtonProps, RadiusProps, MaterialOverrides, ShadowOverrides {
-  /** Visible Button content. */
+export interface ButtonProps extends NativeButtonProps, ControlProps, RadiusProps, MaterialOverrides, ShadowOverrides {
   readonly children?: ReactNode
-
-  /** Base color for the material. Omission keeps the Button neutral. */
-  readonly color?: ButtonColor
-
-  /** Native class name applied without replacing the component contract. */
-  readonly className?: string
-
-  /** Prevents focus and activation. */
-  readonly disabled?: boolean
-
   /** Prevents activation while keeping the Button focusable. */
   readonly pending?: boolean
-
   /** Runs once for a normalized pointer, Enter, or Space activation. */
   readonly onPress?: () => void
-
-  /** Derives the Button's spacing from Appearance's concrete default. */
-  readonly size?: ScaleLevel
-
-  /** Native styles applied after Button defaults. */
-  readonly style?: CSSProperties
-
 }
 
-/** An Appearance-aware action with normalized pointer and keyboard behavior. */
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
-  {
-    children,
-    color,
-    disabled = false,
-    pending = false,
-    onPress,
-    radius = "medium",
-    size = "medium",
-    style,
-    material,
-    shadow,
-    type = "button",
-    ...properties
-  },
-  ref
-) {
-  const theme = useControlTheme({ color, radius, size })
+/** A raised Surface you act on. */
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({
+  children,
+  color = "default",
+  disabled,
+  pending = false,
+  radius,
+  size,
+  style,
+  className,
+  material,
+  shadow,
+  type = "button",
+  ...properties
+}, ref) {
+  const metrics = useControlMetrics(size, radius)
+
+  // Disabled state is read from React Aria, so a Button placed in a slot, such
+  // as a calendar's month buttons, follows the owner that disables it.
   return <AriaButton
     {...properties}
     ref={ref}
     type={type}
+    className={className}
     isDisabled={disabled}
     isPending={pending}
-    onPress={onPress}
-    render={(native, state) => <SurfaceButton native={native} material={material} shadow={shadow} paint={buttonPaint(theme, !disabled && !pending, state.isHovered, state.isPressed)} />}
-    style={({ isFocusVisible, isHovered, isPressed }) => buttonStyle({
-      theme,
-      disabled,
-      isFocusVisible,
-      isHovered,
-      isPressed,
-      pending,
-      style
-    })}
+    render={surfaceRender<ButtonRenderProps>("button", state => ({
+      color,
+      material,
+      shadow,
+      radius: metrics.radius,
+      interaction: {
+        hovered: !state.isDisabled && !pending && state.isHovered,
+        pressed: !state.isDisabled && !pending && state.isPressed,
+        focusVisible: state.isFocusVisible,
+        disabled: state.isDisabled
+      }
+    }))}
+    style={state => buttonStyle(metrics, !state.isDisabled && !pending && state.isPressed, state.isDisabled, pending, style)}
   >{children}</AriaButton>
 })
 
-function buttonStyle({
-  theme,
-  disabled,
-  isFocusVisible,
-  isHovered,
-  isPressed,
-  pending,
-  style
-}: Readonly<{
-  theme: ControlTheme
-  disabled: boolean
-  isFocusVisible: boolean
-  isHovered: boolean
-  isPressed: boolean
-  pending: boolean
-  style: CSSProperties | undefined
-}>): CSSProperties {
-  const { spacing, focusColor } = theme
-  const interactive = !disabled && !pending
-  const paint = buttonPaint(theme, interactive, isHovered, isPressed)
-
+function buttonStyle(metrics: ReturnType<typeof useControlMetrics>, pressed: boolean, disabled: boolean, pending: boolean, style: CSSProperties | undefined): CSSProperties {
   return {
-    ...theme.transition,
+    ...transition(metrics.visual, "box-shadow, color, outline-color, opacity, scale"),
     appearance: "none",
     boxSizing: "border-box",
-    display: "inline-grid",
-    gridAutoFlow: "column",
-    gridAutoColumns: "max-content",
-    placeItems: "center",
+    display: "inline-flex",
+    alignItems: "center",
     justifyContent: "center",
+    gap: metrics.gap,
     flexShrink: 0,
     minWidth: 0,
-    height: theme.height,
+    height: metrics.height,
     paddingBlock: 0,
-    paddingInline: Math.max(8, spacing),
-    gap: theme.gap,
-    border: "none",
-    borderRadius: theme.radius,
-    outline: isFocusVisible ? `1px solid ${focusColor}` : "none",
-    outlineOffset: 1,
-    ...paint,
-    opacity: disabled ? controlOpacity.disabled : pending ? controlOpacity.pending : 1,
-    cursor: disabled ? "not-allowed" : pending ? "progress" : "pointer",
+    paddingInline: metrics.inset,
+    border: 0,
+    background: "none",
     font: "inherit",
-    fontSize: theme.fontSize,
+    fontSize: metrics.fontSize,
+    fontWeight: 500,
     lineHeight: 1,
-    textAlign: "center",
+    whiteSpace: "nowrap",
     textDecoration: "none",
     userSelect: "none",
     WebkitTapHighlightColor: "transparent",
+    cursor: disabled ? "not-allowed" : pending ? "progress" : "pointer",
+    scale: pressed ? "0.97" : "1",
+    ...(pending ? { opacity: controlOpacity.pending } : {}),
     ...style
   }
-}
-
-function buttonPaint(theme: ControlTheme, interactive: boolean, hovered: boolean, pressed: boolean) {
-  const paints = theme.paints.palette
-  return interactive && pressed ? paints.pressed : interactive && hovered ? paints.hover : paints.rest
 }

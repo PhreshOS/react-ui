@@ -1,13 +1,16 @@
 import { createContext, forwardRef, useContext } from "react"
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react"
 import type { BeginWindowMoveGesture } from "@phreshos/core"
-import { useResolvedAppearance } from "./appearance-context.js"
 import { Button, type ButtonProps } from "./button.js"
-import { resolveColor, type Color } from "./color.js"
-import { transitionTiming } from "./motion-style.js"
-import { scale } from "./scale.js"
-import { Surface, type SurfaceProps } from "./surface.js"
+import { transition } from "./control/control.js"
+import { resolveColor, type Color } from "./foundation/color.js"
+import { headerHeight } from "./foundation/layout.js"
+import { scale } from "./foundation/scale.js"
+import { useVisual } from "./foundation/visual.js"
+import { Surface, type SurfaceProps } from "./surface/surface.js"
 import useWindowMoveHandle from "./use-window-move-handle.js"
+import { ArrowDownLeft, Maximize2, Minimize2, X } from "lucide-react"
+import { iconProps } from "./control/icon.js"
 
 interface HeaderState {
   readonly active: boolean
@@ -105,17 +108,17 @@ const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function Header
   style,
   ...properties
 }, ref) {
-  const resolved = useResolvedAppearance()
-  const spacing = resolved.appearance.spacing
-  const foreground = style?.color ?? resolveColor(color ?? "foreground:base", resolved.colors)
+  const visual = useVisual()
+  const spacing = visual.spacing
+  const foreground = style?.color ?? resolveColor(color ?? "foreground", visual.colors)
   const state: HeaderState = {
     active,
     foreground,
-    iconRadius: scale(resolved.appearance.radius, "xsmall"),
+    iconRadius: scale(visual.radius, "xsmall"),
     maximized,
     onMaximize,
     spacing,
-    transition: transitionTiming(resolved.transaction, resolved.preferences.animations)
+    transition: transition(visual, "opacity")
   }
   const move = useWindowMoveHandle(beginMoveGesture, onMoveError)
 
@@ -141,7 +144,7 @@ const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function Header
         alignItems: "center",
         gap: spacing,
         minWidth: 0,
-        height: 16 + spacing * 2,
+        height: headerHeight(spacing),
         paddingInline: spacing,
         flexShrink: 0,
         userSelect: "none",
@@ -153,6 +156,7 @@ const HeaderRoot = forwardRef<HTMLDivElement, WindowHeaderProps>(function Header
     >{children}</div>
   </HeaderContext.Provider>
 })
+
 
 export interface WindowIdentityProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"> {
   readonly icon?: string
@@ -258,7 +262,7 @@ const WindowMinimize = forwardRef<HTMLButtonElement, WindowControlProps>(functio
   ...properties
 }, ref) {
   return <WindowAction {...properties} ref={ref} aria-label={label} preventFocusOnPress={preventFocusOnPress}>
-    <ControlIcon><path d="M1.5 7.5h7" /></ControlIcon>
+    <ArrowDownLeft {...iconProps(14)} />
   </WindowAction>
 })
 
@@ -275,10 +279,7 @@ const WindowMaximize = forwardRef<HTMLButtonElement, WindowMaximizeProps>(functi
   const header = useHeader()
   const selected = maximized ?? header.maximized
   return <WindowAction {...properties} ref={ref} onPress={onPress ?? header.onMaximize} aria-label={label ?? (selected ? "Restore" : "Maximize")}>
-    <ControlIcon>{selected
-      ? <path d="M1 4h5v5H1zM4 1h5v5H6.5" strokeWidth="1.3" strokeLinejoin="round" />
-      : <path d="M1.5 1.5h7v7h-7z" strokeWidth="1.3" strokeLinejoin="round" />}
-    </ControlIcon>
+    {selected ? <Minimize2 {...iconProps(14)} /> : <Maximize2 {...iconProps(14)} />}
   </WindowAction>
 })
 
@@ -286,20 +287,14 @@ export type WindowCloseProps = WindowControlProps
 
 const WindowClose = forwardRef<HTMLButtonElement, WindowCloseProps>(function WindowClose({
   "aria-label": label = "Close",
-  color = "danger:base",
+  color = "danger",
   preventFocusOnPress = true,
   ...properties
 }, ref) {
   return <WindowAction {...properties} ref={ref} aria-label={label} color={color} preventFocusOnPress={preventFocusOnPress}>
-    <ControlIcon><path d="M1.5 1.5 8.5 8.5M8.5 1.5 1.5 8.5" /></ControlIcon>
+    <X {...iconProps(14)} />
   </WindowAction>
 })
-
-function ControlIcon({ children }: Readonly<{ children: ReactNode }>) {
-  return <svg aria-hidden="true" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-    {children}
-  </svg>
-}
 
 const Header = Object.assign(HeaderRoot, {
   Identity: WindowIdentity,

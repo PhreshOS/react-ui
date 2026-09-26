@@ -5,23 +5,27 @@ import {
   OverlayTriggerStateContext,
   Pressable as AriaPressable
 } from "react-aria-components"
-import type { MenuTriggerProps as AriaMenuTriggerProps } from "react-aria-components"
+import { ariaOpenState, type OverlayRootProps } from "./control/open-state.js"
 import { Menu } from "./menu.js"
-import { PopoverContent, type PopoverContentProps } from "./popover.js"
+import { MenuContent, type PopoverContentProps } from "./popover.js"
 
-export type ContextMenuRootProps = Omit<AriaMenuTriggerProps, "trigger">
+export type ContextMenuRootProps = OverlayRootProps
 
-export function ContextMenuRoot(properties: ContextMenuRootProps) {
-  return <AriaMenuTrigger {...properties} trigger="contextMenu" />
+export function ContextMenuRoot({ children, ...state }: ContextMenuRootProps) {
+  return <AriaMenuTrigger {...ariaOpenState(state)} trigger="contextMenu">{children}</AriaMenuTrigger>
 }
 
-export type ContextMenuTriggerProps = ComponentProps<typeof AriaPressable>
+/** The element that opens the menu when it is right-clicked or long-pressed. */
+export interface ContextMenuTriggerProps {
+  readonly children: ComponentProps<typeof AriaPressable>["children"]
+  readonly disabled?: boolean
+}
 
-export const ContextMenuTrigger = forwardRef<ComponentRef<typeof AriaPressable>, ContextMenuTriggerProps>(function ContextMenuTrigger(properties, ref) {
-  return <AriaPressable {...properties} ref={ref} />
+export const ContextMenuTrigger = forwardRef<ComponentRef<typeof AriaPressable>, ContextMenuTriggerProps>(function ContextMenuTrigger({ children, disabled }, ref) {
+  return <AriaPressable ref={ref} isDisabled={disabled}>{children}</AriaPressable>
 })
 
-export type ContextMenuContentProps = Omit<PopoverContentProps, "isNonModal">
+export type ContextMenuContentProps = PopoverContentProps
 
 function setRef<Value>(ref: ForwardedRef<Value>, value: Value | null) {
   if (typeof ref === "function") ref(value)
@@ -49,7 +53,7 @@ export const ContextMenuContent = forwardRef<HTMLElement, ContextMenuContentProp
     return () => document.removeEventListener("pointerdown", dismiss, true)
   }, [state])
 
-  return <PopoverContent {...properties} ref={ref} isNonModal />
+  return <MenuContent {...properties} ref={ref} nonModal />
 })
 
 /** A context-requested overlay sharing the same Menu contract as DropdownMenu. */

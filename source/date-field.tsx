@@ -2,19 +2,14 @@ import { forwardRef } from "react"
 import type { CalendarDate } from "@internationalized/date"
 import { DateField as AriaDateField } from "react-aria-components"
 import type { DateFieldProps as AriaDateFieldProps } from "react-aria-components"
-import { AriaDirectionBoundary } from "./aria-direction.js"
-import {
-  FieldFeedback,
-  FieldLabel,
-  fieldStyle,
-  useControlTheme
-} from "./control.js"
-import type { ControlOverrides, ControlProps, FieldProps } from "./control.js"
-import type { MaterialOverrides } from "./material-options.js"
-import type { RadiusProps } from "./radius.js"
-import type { ShadowOverrides } from "./shadow-options.js"
+import { AriaDirectionBoundary } from "./foundation/aria-direction.js"
+import { useControlMetrics, type ControlOverrides, type ControlProps, type FieldProps } from "./control/control.js"
+import { FieldFeedback, FieldLabel, fieldStyle } from "./control/field.js"
+import type { MaterialOverrides } from "./surface/material-options.js"
+import type { RadiusProps } from "./foundation/radius.js"
 import { DateControl } from "./date-control.js"
-import { resolveDirection, useDirection } from "./direction.js"
+import { resolveDirection, useDirection } from "./foundation/direction.js"
+import { dimmedClass } from "./surface/surface.js"
 
 type DateFieldOverrides = ControlOverrides
   | "isReadOnly"
@@ -27,20 +22,22 @@ type DateFieldOverrides = ControlOverrides
   | "granularity"
   | "hourCycle"
   | "hideTimeZone"
+  | "shouldForceLeadingZeros"
 
 export interface DateFieldProps
   extends Omit<AriaDateFieldProps<CalendarDate>, DateFieldOverrides>,
     ControlProps,
     FieldProps,
     RadiusProps,
-    MaterialOverrides,
-    ShadowOverrides {
+    MaterialOverrides {
   readonly value?: CalendarDate | null
   readonly defaultValue?: CalendarDate | null
   readonly onChange?: (value: CalendarDate | null) => void
   readonly minValue?: CalendarDate | null
   readonly maxValue?: CalendarDate | null
   readonly isDateUnavailable?: (date: CalendarDate) => boolean
+  /** Whether hours, days, and months always show two digits. */
+  readonly leadingZeros?: boolean
   readonly readOnly?: boolean
 }
 
@@ -57,26 +54,27 @@ export const DateField = forwardRef<HTMLDivElement, DateFieldProps>(function Dat
   color,
   radius,
   material,
-  shadow,
   style,
   className,
   isDateUnavailable,
+  leadingZeros,
   ...properties
 }, ref) {
-  const theme = useControlTheme({ size, color, radius })
+  const metrics = useControlMetrics(size, radius)
   const direction = resolveDirection(properties.dir, useDirection())
 
   return <AriaDirectionBoundary direction={direction}><AriaDateField
     {...properties}
     ref={ref}
     dir={direction}
-    className={className}
+    className={dimmedClass(disabled ?? false, className)}
     isDisabled={disabled}
     isReadOnly={readOnly}
+    shouldForceLeadingZeros={leadingZeros}
     isRequired={required}
     isInvalid={invalid}
     isDateUnavailable={isDateUnavailable == null ? undefined : date => isDateUnavailable(date as CalendarDate)}
-    style={fieldStyle(theme, disabled, style)}
+    style={fieldStyle(metrics, style)}
   >
     {state => <>
       <FieldLabel label={label} />
@@ -84,10 +82,10 @@ export const DateField = forwardRef<HTMLDivElement, DateFieldProps>(function Dat
         disabled={state.isDisabled}
         invalid={state.isInvalid}
         material={material}
-        shadow={shadow}
-        theme={theme}
+        color={color ?? "background"}
+        metrics={metrics}
       />
-      <FieldFeedback theme={theme} description={description} errorMessage={errorMessage} />
+      <FieldFeedback metrics={metrics} description={description} errorMessage={errorMessage} />
     </>}
   </AriaDateField></AriaDirectionBoundary>
 })

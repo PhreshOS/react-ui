@@ -1,8 +1,9 @@
 import { forwardRef } from "react"
 import type { ComponentPropsWithoutRef, CSSProperties } from "react"
-import { alignment, justification, resolveGap, tracks } from "./layout.js"
-import type { LayoutAlignment, LayoutGap, LayoutJustification } from "./layout.js"
-import { useAppearance } from "./ui-provider.js"
+import { alignment, justification, tracks } from "./foundation/layout.js"
+import type { LayoutAlignment, LayoutGap, LayoutJustification } from "./foundation/layout.js"
+import { resolveSpacing } from "./foundation/spacing.js"
+import { useVisual } from "./foundation/visual.js"
 
 /** Properties accepted by the Grid layout primitive. */
 export interface GridProps extends ComponentPropsWithoutRef<"div"> {
@@ -33,7 +34,7 @@ export const Grid = forwardRef<HTMLDivElement, GridProps>(function Grid(
   { align, columns, flow, gap, inline = false, justify, rows, style, ...properties },
   ref
 ) {
-  const appearance = useAppearance()
+  const { spacing } = useVisual()
   return <div
     {...properties}
     ref={ref}
@@ -41,7 +42,7 @@ export const Grid = forwardRef<HTMLDivElement, GridProps>(function Grid(
       ...style,
       display: inline ? "inline-grid" : "grid",
       alignItems: alignment(align) ?? style?.alignItems,
-      gap: gap === undefined ? style?.gap : resolveGap(gap, appearance),
+      gap: gap === undefined ? style?.gap : resolveSpacing(gap, spacing),
       gridAutoFlow: flow ?? style?.gridAutoFlow,
       gridTemplateColumns: tracks(columns, "columns") ?? style?.gridTemplateColumns,
       gridTemplateRows: tracks(rows, "rows") ?? style?.gridTemplateRows,

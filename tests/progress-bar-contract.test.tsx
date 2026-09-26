@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, expect, expectTypeOf, it } from "vitest"
 import { ProgressBar, UIProvider, defaultAppearance, type ProgressBarProps } from "../source/main.js"
-import { resolveColorLevel } from "../source/color.js"
+
 
 afterEach(cleanup)
 
@@ -37,7 +37,7 @@ it("represents indeterminate activity without asserting a value", function () {
 })
 
 it("uses the shared size and color contracts", function () {
-  renderProgress(<ProgressBar aria-label="Deploy" value={50} size="large" color="danger:base" />)
+  renderProgress(<ProgressBar aria-label="Deploy" value={50} size="large" color="danger" />)
 
   const progress = screen.getByRole("progressbar", { name: "Deploy" })
   const track = progress.querySelector<HTMLElement>("[data-progress-track]")
@@ -48,13 +48,13 @@ it("uses the shared size and color contracts", function () {
   expect(fill?.style.background).not.toBe("")
 })
 
-it("uses the neutral default because progress has no inherent semantic color", function () {
+it("fills with the identity color because the neutral default belongs to the canvas", function () {
   renderProgress(<ProgressBar aria-label="Deploy" value={50} />)
 
   const fill = screen.getByRole("progressbar", { name: "Deploy" })
     .querySelector<HTMLElement>("[data-progress-fill]")
 
-  expect(fill?.style.background).toBe(css(resolveColorLevel(defaultAppearance.colors.light.default, "base")))
+  expect(fill?.style.background).toBe(css(defaultAppearance.colors.light.primary))
 })
 
 it("keeps the public operation values statically typed", function () {

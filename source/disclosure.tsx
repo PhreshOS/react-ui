@@ -8,23 +8,22 @@ import {
 } from "react-aria-components"
 import type {
   ButtonProps as AriaButtonProps,
+  ButtonRenderProps,
   DisclosurePanelProps as AriaDisclosurePanelProps,
   DisclosureProps as AriaDisclosureProps
 } from "react-aria-components"
-import { useResolvedAppearance } from "./appearance-context.js"
-import { controlOpacity, useControlTheme } from "./control.js"
-import type { ControlColor, ControlTheme } from "./control.js"
-import { transitionTiming } from "./motion-style.js"
-import type { RadiusProps } from "./radius.js"
-import type { ScaleLevel } from "./scale.js"
-import { resolveSpacing, type Spacing } from "./spacing.js"
+import { transition, useControlMetrics, type ControlMetrics } from "./control/control.js"
+import { surfaceRender } from "./control/surface-render.js"
+import type { Color } from "./foundation/color.js"
+import type { RadiusProps } from "./foundation/radius.js"
+import type { ScaleLevel } from "./foundation/scale.js"
+import { resolveSpacing, type Spacing } from "./foundation/spacing.js"
+import { ChevronDown } from "lucide-react"
+import { iconProps } from "./control/icon.js"
 
-type DisclosureTheme = Readonly<{
-  motion: CSSProperties
-  theme: ControlTheme
-}>
+type DisclosureContext = Readonly<{ color: Color, metrics: ControlMetrics }>
 
-const DisclosureThemeContext = createContext<DisclosureTheme | null>(null)
+const DisclosureStyleContext = createContext<DisclosureContext | null>(null)
 
 export interface DisclosureRootProps extends Omit<
   AriaDisclosureProps,
@@ -32,40 +31,24 @@ export interface DisclosureRootProps extends Omit<
 >, RadiusProps {
   readonly children?: ReactNode
   readonly className?: string
-  readonly color?: ControlColor
+  /** Paint of the trigger. Transparent by default, so it only veils on interaction. */
+  readonly color?: Color
   readonly defaultExpanded?: boolean
   readonly disabled?: boolean
   readonly expanded?: boolean
-  readonly onChange?: (expanded: boolean) => void
+  readonly onExpandedChange?: (expanded: boolean) => void
   readonly size?: ScaleLevel
   readonly style?: CSSProperties
 }
 
 /** One independently expandable region. */
-export const DisclosureRoot = forwardRef<HTMLDivElement, DisclosureRootProps>(function DisclosureRoot(
-  {
-    children,
-    className,
-    color,
-    defaultExpanded,
-    disabled = false,
-    expanded,
-    onChange,
-    radius = "medium",
-    size = "medium",
-    style,
-    ...properties
-  },
-  ref
-) {
-  const theme = useControlTheme({ color, radius, size })
-  const resolved = useResolvedAppearance()
-  const context = useMemo<DisclosureTheme>(() => ({
-    motion: transitionTiming(resolved.transaction, resolved.preferences.animations),
-    theme
-  }), [resolved.preferences.animations, resolved.transaction, theme])
+export const DisclosureRoot = forwardRef<HTMLDivElement, DisclosureRootProps>(function Disclosure({
+  children, className, color = "transparent", defaultExpanded, disabled = false, expanded, onExpandedChange, radius, size, style, ...properties
+}, ref) {
+  const metrics = useControlMetrics(size, radius)
+  const context = useMemo(() => ({ color, metrics }), [color, metrics])
 
-  return <DisclosureThemeContext.Provider value={context}>
+  return <DisclosureStyleContext.Provider value={context}>
     <AriaDisclosure
       {...properties}
       {...(expanded === undefined ? {} : { isExpanded: expanded })}
@@ -73,22 +56,13 @@ export const DisclosureRoot = forwardRef<HTMLDivElement, DisclosureRootProps>(fu
       ref={ref}
       className={className}
       isDisabled={disabled}
-      onExpandedChange={onChange}
-      style={{
-        display: "grid",
-        minWidth: 0,
-        fontFamily: "inherit",
-        fontSize: theme.fontSize,
-        ...style
-      }}
+      onExpandedChange={onExpandedChange}
+      style={{ display: "grid", minWidth: 0, fontFamily: "inherit", fontSize: metrics.fontSize, ...style }}
     >{children}</AriaDisclosure>
-  </DisclosureThemeContext.Provider>
+  </DisclosureStyleContext.Provider>
 })
 
-export interface DisclosureTriggerProps extends Omit<
-  AriaButtonProps,
-  "children" | "className" | "isDisabled" | "onPress" | "style"
-> {
+export interface DisclosureTriggerProps extends Omit<AriaButtonProps, "children" | "className" | "isDisabled" | "isPending" | "onPress" | "render" | "style"> {
   readonly children?: ReactNode
   readonly className?: string
   readonly style?: CSSProperties
@@ -99,7 +73,7 @@ export const DisclosureTrigger = forwardRef<HTMLButtonElement, DisclosureTrigger
   { children, className, style, ...properties },
   ref
 ) {
-  const { motion, theme } = useDisclosureTheme()
+  const { color, metrics } = useDisclosureStyle()
   const disclosure = useDisclosureState()
 
   return <AriaButton
@@ -107,57 +81,44 @@ export const DisclosureTrigger = forwardRef<HTMLButtonElement, DisclosureTrigger
     ref={ref}
     slot="trigger"
     className={className}
-    style={state => ({
-      ...theme.transition,
+    render={surfaceRender<ButtonRenderProps>("button", state => ({
+      color,
+      radius: metrics.radius,
+      shadow: false,
+      interaction: { hovered: state.isHovered, pressed: state.isPressed, focusVisible: state.isFocusVisible, disabled: state.isDisabled }
+    }))}
+    style={{
       appearance: "none",
       display: "grid",
       gridTemplateColumns: "minmax(0, 1fr) auto",
       alignItems: "center",
-      gap: theme.gap,
+      gap: metrics.gap,
       width: "100%",
       minWidth: 0,
-      minHeight: theme.height,
-      paddingBlock: theme.gap,
-      paddingInline: Math.max(8, theme.spacing),
+      minHeight: metrics.height,
+      paddingBlock: metrics.gap / 2,
+      paddingInline: metrics.inset,
       boxSizing: "border-box",
       border: 0,
-      borderRadius: theme.radius,
-      outline: state.isFocusVisible ? `1px solid ${theme.focusColor}` : "none",
-      outlineOffset: 1,
-      cursor: state.isDisabled ? "not-allowed" : "pointer",
-      opacity: state.isDisabled ? controlOpacity.disabled : 1,
+      background: "none",
+      cursor: "pointer",
       font: "inherit",
-      lineHeight: 1.5,
+      fontWeight: 500,
+      lineHeight: 1.45,
       textAlign: "start",
       userSelect: "none",
       WebkitTapHighlightColor: "transparent",
-      ...(disclosure.isExpanded
-        ? state.isPressed ? theme.paints.palette.pressed : state.isHovered ? theme.paints.palette.hover : theme.paints.palette.rest
-        : state.isPressed ? theme.paints.subtle.pressed : state.isHovered ? theme.paints.subtle.hover : { background: "transparent", color: "inherit" }),
       ...style
-    })}
+    }}
   >
     <span style={{ minWidth: 0 }}>{children}</span>
-    <span
-      aria-hidden="true"
-      style={{
-        ...motion,
-        transitionProperty: "transform",
-        width: "0.5em",
-        height: "0.5em",
-        marginInline: "0.25em",
-        borderInlineEnd: "1px solid currentColor",
-        borderBlockEnd: "1px solid currentColor",
-        transform: disclosure.isExpanded ? "rotate(225deg)" : "rotate(45deg)"
-      }}
-    />
+    <ChevronDown {...iconProps(14)} style={{ ...transition(metrics.visual, "rotate"), rotate: disclosure.isExpanded ? "180deg" : "0deg" }} />
   </AriaButton>
 })
 
 export interface DisclosureContentProps extends Omit<AriaDisclosurePanelProps, "className" | "style"> {
   /** Space around the revealed content. */
   readonly padding?: Spacing
-
   readonly className?: string
   readonly style?: CSSProperties
 }
@@ -167,17 +128,15 @@ export const DisclosureContent = forwardRef<HTMLDivElement, DisclosureContentPro
   { children, className, padding = "small", style, ...properties },
   ref
 ) {
-  const { motion } = useDisclosureTheme()
+  const { metrics } = useDisclosureStyle()
   const disclosure = useDisclosureState()
-  const { appearance } = useResolvedAppearance()
 
   return <AriaDisclosurePanel
     {...properties}
     ref={ref}
     className={className}
     style={{
-      ...motion,
-      transitionProperty: "height, opacity",
+      ...transition(metrics.visual, "height, opacity"),
       height: "var(--disclosure-panel-height)",
       overflow: "clip",
       opacity: disclosure.isExpanded ? 1 : 0,
@@ -185,7 +144,7 @@ export const DisclosureContent = forwardRef<HTMLDivElement, DisclosureContentPro
     }}
   >
     <div style={{ minHeight: 0, overflow: "hidden" }}>
-      <div style={{ padding: resolveSpacing(padding, appearance) }}>{children}</div>
+      <div style={{ padding: resolveSpacing(padding, metrics.visual.spacing) }}>{children}</div>
     </div>
   </AriaDisclosurePanel>
 })
@@ -196,8 +155,8 @@ function useDisclosureState() {
   return state
 }
 
-function useDisclosureTheme() {
-  const context = useContext(DisclosureThemeContext)
+function useDisclosureStyle() {
+  const context = useContext(DisclosureStyleContext)
   if (context == null) throw new Error("Disclosure parts must be used inside Disclosure")
   return context
 }

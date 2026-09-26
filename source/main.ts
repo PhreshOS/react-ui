@@ -5,29 +5,28 @@
  * behavior contract has been established by the package's tests.
  */
 export {
+  appearanceLimits,
   defaultAppearance,
   type Appearance,
-  type AppearanceUpdate,
   type AppearanceColor,
   type AppearanceColors,
   type AppearanceMaterial,
+  type AppearanceRange,
   type AppearanceShadow,
   type AppearanceTransaction,
+  type AppearanceUpdate,
   type Easing,
   type ThemedValue
-} from "./appearance.js"
+} from "./foundation/appearance.js"
+export { UIProvider, type UIProviderProps } from "./foundation/provider.js"
 export {
-  UIProvider,
   useAppearance,
   useBrowserPreferences,
-  useDirection,
-  useDocumentDirection,
   usePreferences,
-  useThemedValue,
-  type UIProviderProps
-} from "./ui-provider.js"
-export type { Preferences, PreferencesUpdate, Theme } from "./preferences.js"
-export type { Direction } from "./direction.js"
+  useThemedValue
+} from "./foundation/visual.js"
+export { useDirection, useDocumentDirection, type Direction } from "./foundation/direction.js"
+export type { Preferences, PreferencesUpdate, Theme } from "./foundation/preferences.js"
 export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
 export {
@@ -36,12 +35,13 @@ export {
   type MaterialOptions,
   type ShadowOptions,
   type SurfaceComponent,
+  type SurfaceDepth,
   type SurfaceHost,
   type SurfaceHostProps,
   type SurfaceOwnProps,
   type SurfaceProps
-} from "./surface.js"
-export { defaultColor, type Color, type ColorLevel, type ColorScale } from "./color.js"
+} from "./surface/surface.js"
+export { resolveColor, useColor, useContrastingColor, type Color, type ColorLevel, type ColorScale } from "./foundation/color.js"
 // Context-dependent parts are public only through their owning component family.
 export {
   Panel,
@@ -77,8 +77,8 @@ export type { DateRange } from "./date-range.js"
 export { Checkbox, type CheckboxProps } from "./checkbox.js"
 export { RadioGroup, type RadioGroupProps, type RadioGroupItemProps } from "./radio.js"
 export { Switch, type SwitchProps } from "./switch.js"
-export { Select, type SelectProps, type SelectOption } from "./select.js"
-export { ComboBox, type ComboBoxProps, type ComboBoxOption } from "./combo-box.js"
+export { Select, type SelectProps } from "./select.js"
+export { ComboBox, type ComboBoxProps } from "./combo-box.js"
 export {
   ListBox,
   type ListBoxProps,
@@ -126,15 +126,19 @@ export {
 export { Slider, type SliderProps } from "./slider.js"
 export { ProgressBar, type ProgressBarProps } from "./progress-bar.js"
 export { Spinner, type SpinnerProps } from "./spinner.js"
-export {
-  Readiness,
-  useReadiness,
-  useRequirement,
-  type ReadinessFallback,
-  type ReadinessProps,
-  type ReadinessRequirement,
-  type ReadinessRequirementProps
-} from "./readiness.js"
+export { NumberField, type NumberFieldProps } from "./number-field.js"
+export { SegmentedControl, type SegmentedControlProps, type SegmentedControlItemProps } from "./segmented-control.js"
+export { Alert, type AlertProps } from "./alert.js"
+export { FileTrigger, type FileTriggerProps } from "./file-trigger.js"
+export { DropZone, type DropZoneProps } from "./drop-zone.js"
+export { Fieldset, type FieldsetProps } from "./fieldset.js"
+export { AppLayout, type AppLayoutProps, type AppLayoutRegionProps } from "./app-layout.js"
+export { ColorSwatch, type ColorSwatchProps } from "./color-swatch.js"
+export { ColorSwatchPicker, type ColorSwatchPickerProps, type ColorSwatchPickerItemProps } from "./color-swatch-picker.js"
+export { ColorSlider, type ColorSliderProps } from "./color-slider.js"
+export { ColorArea, type ColorAreaProps } from "./color-area.js"
+export { ColorField, type ColorFieldProps } from "./color-field.js"
+export { ColorPicker, type ColorPickerRootProps, type ColorPickerTriggerProps, type ColorPickerContentProps } from "./color-picker.js"
 export { ScrollArea, type ScrollAreaAxis, type ScrollAreaProps } from "./scroll-area.js"
 export {
   Toolbar,
@@ -192,6 +196,7 @@ export {
   type DialogProps,
   type DialogTriggerProps,
   type DialogBackdropProps,
+  type DialogBackdropVariant,
   type DialogContentProps,
   type DialogHeaderProps,
   type DialogTitleProps,
@@ -212,9 +217,7 @@ export {
   type TooltipTriggerProps,
   type TooltipContentProps
 } from "./tooltip.js"
-export type { ControlColor } from "./control.js"
-export type { LayoutAlignment, LayoutGap, LayoutJustification } from "./layout.js"
-export { resolveRadius, type Radius, type RadiusProps } from "./radius.js"
-export { resolveSpacing, type Spacing } from "./spacing.js"
-export { useColor, useContrastingColor } from "./color.js"
-export { useScale, type NumericScale, type ScaleLevel } from "./scale.js"
+export type { LayoutAlignment, LayoutGap, LayoutJustification } from "./foundation/layout.js"
+export { resolveRadius, type Radius, type RadiusProps } from "./foundation/radius.js"
+export { resolveSpacing, type Spacing } from "./foundation/spacing.js"
+export { useScale, type NumericScale, type ScaleLevel } from "./foundation/scale.js"

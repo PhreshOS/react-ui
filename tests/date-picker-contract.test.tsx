@@ -8,6 +8,7 @@ import {
   defaultAppearance,
   type DatePickerProps
 } from "../source/main.js"
+import { cssColor as normalized, hairline, paintDeclarations } from "./support/paint.js"
 
 afterEach(cleanup)
 
@@ -40,38 +41,38 @@ it("does not reactivate the field when pointer dismissal restores trigger focus"
   const field = screen.getByRole("group", { name: "Date" })
 
   await user.click(screen.getByRole("button", { name: /calendar/i }))
-  const fill = field.querySelector<HTMLElement>("[data-material-base]")
-  const openPaint = fill?.style.background
+  expect(normalized(hairline(paintDeclarations(field)["box-shadow"]))).toBe(normalized(defaultAppearance.colors.light.primary))
 
   await user.click(screen.getByTestId("underlay"))
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull())
   await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
 
   expect(container.contains(field)).toBe(true)
-  expect(fill?.style.background).not.toBe(openPaint)
+  expect(normalized(hairline(paintDeclarations(field)["box-shadow"]))).not.toBe(normalized(defaultAppearance.colors.light.primary))
 })
 
 it("uses the same visible Surface and segmented value contract as DateField", function () {
-  const { container } = renderPicker(<DatePicker aria-label="Date" color="secondary:base" material="basic" />)
+  const { container } = renderPicker(<DatePicker aria-label="Date" color="secondary" material="basic" />)
 
-  expect(container.querySelectorAll("[data-material-base]")).toHaveLength(1)
+  expect(container.querySelectorAll(".phreshos-surface:not(button)")).toHaveLength(1)
   expect(screen.getAllByRole("spinbutton")).toHaveLength(3)
 })
 
-it("keeps the calendar trigger inset from the field edges", function () {
+it("sizes the calendar trigger inside the field height", function () {
   renderPicker(<DatePicker label="Date" />)
 
   const trigger = screen.getByRole("button", { name: /calendar/i })
-  expect(trigger.style.alignSelf).toBe("stretch")
-  expect(trigger.style.height).toBe("auto")
-  expect(trigger.style.marginBlock).toBe("6px")
+  const field = screen.getByRole("group", { name: "Date" })
+  expect(Number.parseFloat(trigger.style.height)).toBeLessThan(Number.parseFloat(field.style.height))
+  expect(trigger.style.width).toBe(trigger.style.height)
 })
 
 it("keeps the public contract date-only while retaining controlled open state", function () {
   expectTypeOf<DatePickerProps["value"]>().toEqualTypeOf<CalendarDate | null | undefined>()
   expectTypeOf<DatePickerProps["onChange"]>().toEqualTypeOf<((value: CalendarDate | null) => void) | undefined>()
-  expectTypeOf<DatePickerProps["isOpen"]>().toEqualTypeOf<boolean | undefined>()
-  expectTypeOf<DatePickerProps["onOpenChange"]>().toEqualTypeOf<((isOpen: boolean) => void) | undefined>()
+  expectTypeOf<DatePickerProps["open"]>().toEqualTypeOf<boolean | undefined>()
+  expectTypeOf<DatePickerProps["onOpenChange"]>().toEqualTypeOf<((open: boolean) => void) | undefined>()
+  expectTypeOf<"isOpen">().not.toExtend<keyof DatePickerProps>()
   expectTypeOf<"granularity">().not.toExtend<keyof DatePickerProps>()
 })
 

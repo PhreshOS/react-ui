@@ -1,7 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, expect, expectTypeOf, it } from "vitest"
 import { Spinner, UIProvider, defaultAppearance, type SpinnerProps } from "../source/main.js"
-import { resolveColorLevel } from "../source/color.js"
 
 afterEach(cleanup)
 
@@ -26,7 +25,7 @@ it("uses the shared size and color contracts", function () {
   renderSpinner(<>
     <Spinner label="Small" size="small" />
     <Spinner label="Medium" size="medium" />
-    <Spinner label="Large" size="large" color="danger:base" />
+    <Spinner label="Large" size="large" color="danger" />
   </>)
 
   const small = screen.getByRole("progressbar", { name: "Small" })
@@ -40,7 +39,7 @@ it("uses the shared size and color contracts", function () {
   expect(mediumDiameter).toBe(defaultAppearance.spacing * 2)
   expect(mediumDiameter - smallDiameter).toBe(largeDiameter - mediumDiameter)
   expect(large.style.width).toBe(large.style.height)
-  expect(fill?.getAttribute("stroke")).toBe(resolveColorLevel(defaultAppearance.colors.light.danger, "base"))
+  expect(fill?.getAttribute("stroke")).toBe(defaultAppearance.colors.light.danger)
 })
 
 it("derives a contextual track from the surrounding current color", function () {
@@ -48,14 +47,15 @@ it("derives a contextual track from the surrounding current color", function () 
 
   expect(container.querySelector("[data-spinner-fill]")?.getAttribute("stroke")).toBe("currentColor")
   expect(container.querySelector("[data-spinner-track]")?.getAttribute("stroke"))
-    .toBe("color-mix(in srgb, currentColor 25%, transparent)")
+    .toBe("color-mix(in srgb, currentColor 20%, transparent)")
 })
 
-it("does not render the final keyframe before starting its rotation", function () {
-  const { container } = renderSpinner(<Spinner label="Loading" />, true)
-  const indicator = container.querySelector<SVGElement>("[data-spinner-indicator]")
-
-  expect(indicator?.style.transform).toBe("none")
+it("rotates continuously only while animations are enabled", function () {
+  const view = renderSpinner(<Spinner label="Loading" />, true)
+  expect(view.container.querySelector<SVGElement>("[data-spinner-indicator]")?.style.animation).toContain("phreshos-ui-spin")
+  view.unmount()
+  const still = renderSpinner(<Spinner label="Loading" />, false)
+  expect(still.container.querySelector<SVGElement>("[data-spinner-indicator]")?.style.animation).toBe("")
 })
 
 it("requires an accessible label unless the indicator is decorative", function () {

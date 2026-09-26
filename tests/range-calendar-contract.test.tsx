@@ -9,7 +9,7 @@ import {
   type DateRange,
   type RangeCalendarProps
 } from "../source/main.js"
-import { colorLightness } from "../source/color.js"
+import { luminance } from "../source/foundation/color.js"
 
 afterEach(cleanup)
 
@@ -44,7 +44,33 @@ it("uses a lighter derived color between the two selected endpoints", function (
   const end = screen.getByText("24")
 
   expect(start.style.background).toBe(end.style.background)
-  expect(colorLightness(interior.style.background)).toBeGreaterThan(colorLightness(start.style.background))
+  expect(luminance(interior.style.background)!).toBeGreaterThan(luminance(start.style.background)!)
+})
+
+it("keeps showing its range and disables its month buttons while disabled", function () {
+  const range = { start: new CalendarDate(2026, 9, 21), end: new CalendarDate(2026, 9, 24) }
+  renderRange(<RangeCalendar aria-label="Trip dates" disabled defaultValue={range} />)
+  const enabled = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: false }}>
+    <RangeCalendar aria-label="Enabled dates" defaultValue={range} />
+  </UIProvider>)
+
+  const [start, enabledStart] = screen.getAllByText("21")
+  const [interior, enabledInterior] = screen.getAllByText("22")
+  expect(start!.style.background).toBe(enabledStart!.style.background)
+  expect(interior!.style.background).toBe(enabledInterior!.style.background)
+  expect(screen.getAllByRole("button", { name: "Next month" })[0]).toHaveProperty("disabled", true)
+  enabled.unmount()
+})
+
+it("fades only the disabled calendar, not its days again", function () {
+  renderRange(<RangeCalendar aria-label="Trip dates" disabled defaultFocusedValue={new CalendarDate(2026, 9, 21)} />)
+
+  const root = screen.getByText("21").closest(".phreshos-dimmed")!.parentElement!.closest(".phreshos-dimmed")
+  const day = screen.getByText("21")
+  expect(root?.contains(day)).toBe(true)
+  expect(day.style.opacity).toBe("")
+  const rule = [...document.querySelectorAll("style")].map(style => style.textContent).join("")
+  expect(rule).toContain(":where(.phreshos-dimmed:not(.phreshos-dimmed .phreshos-dimmed))")
 })
 
 function renderRange(component: React.ReactNode) {

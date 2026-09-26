@@ -10,265 +10,187 @@ import {
 import type {
   HeaderProps as AriaHeaderProps,
   MenuItemProps as AriaMenuItemProps,
+  MenuItemRenderProps,
   MenuProps as AriaMenuProps,
   MenuSectionProps as AriaMenuSectionProps,
-  SeparatorProps as AriaSeparatorProps,
-  Selection
+  SeparatorProps as AriaSeparatorProps
 } from "react-aria-components"
-import { colorOpacity } from "./color.js"
-import { controlFontWeight, controlOpacity, useControlTheme, type ControlColor, type ControlTheme } from "./control.js"
-import type { ScaleLevel } from "./scale.js"
+import { useControlMetrics, type ControlMetrics } from "./control/control.js"
+import { separatorColor } from "./control/field.js"
+import { itemStyle, itemSurface, SelectionMark } from "./control/item.js"
 import {
-  multipleSelection,
-  singleSelection,
+  ariaSelection,
   stringKey,
-  toAriaSelection,
+  type MultipleSelectionProps,
   type MultipleStringSelection,
-  type MultipleStringSelectionProps,
-  type SingleStringSelectionProps
-} from "./selection.js"
+  type NoSelectionProps,
+  type SingleSelectionProps
+} from "./control/selection.js"
+import { surfaceRender } from "./control/surface-render.js"
+import type { Color } from "./foundation/color.js"
+import type { RadiusProps } from "./foundation/radius.js"
+import type { ScaleLevel } from "./foundation/scale.js"
+import { collectionHeaderStyle } from "./list-box.js"
 
-type MenuTheme = Readonly<{
-  color?: ControlColor
-  size: ScaleLevel
-  theme: ControlTheme
-}>
+type MenuContext = Readonly<{ color: Color, metrics: ControlMetrics, itemRadius: CSSProperties["borderRadius"], selecting: boolean }>
 
-const MenuThemeContext = createContext<MenuTheme | null>(null)
+const MenuStyleContext = createContext<MenuContext | null>(null)
 
 type MenuRootBaseProps<T extends object> = Omit<
   AriaMenuProps<T>,
-  | "className"
-  | "defaultSelectedKeys"
-  | "disabledKeys"
-  | "onAction"
-  | "onSelectionChange"
-  | "selectedKeys"
-  | "selectionMode"
-  | "style"
-> & Readonly<{
-  readonly className?: string
-  readonly color?: ControlColor
-  readonly disabledValues?: readonly string[]
-  readonly onItemAction?: (value: string) => void
-  readonly size?: ScaleLevel
-  readonly style?: CSSProperties
+  | "className" | "defaultSelectedKeys" | "disabledKeys" | "onAction" | "onSelectionChange" | "selectedKeys" | "selectionMode" | "style"
+  | "shouldFocusWrap" | "shouldCloseOnSelect"
+> & RadiusProps & Readonly<{
+  className?: string
+  /** Whether activating an Item closes the menu. Defaults to `true`. */
+  closeOnSelect?: boolean
+  /** Color laid beneath selected Items. */
+  color?: Color
+  /** Whether arrow keys wrap from the last Item to the first. */
+  focusWrap?: boolean
+  /** Runs with the value of the Item that was activated. */
+  onAction?: (value: string) => void
+  size?: ScaleLevel
+  style?: CSSProperties
 }>
 
-export type MenuNoSelectionProps = Readonly<{
-  selectionMode?: "none"
-  value?: never
-  defaultValue?: never
-  onChange?: never
-}>
-
-export type MenuSingleSelectionProps = SingleStringSelectionProps & Readonly<{
-  selectionMode: "single"
-}>
-
+export type MenuNoSelectionProps = NoSelectionProps
+export type MenuSingleSelectionProps = SingleSelectionProps
 export type MenuMultipleValue = MultipleStringSelection
-
-export type MenuMultipleSelectionProps = MultipleStringSelectionProps & Readonly<{
-  selectionMode: "multiple"
-}>
+export type MenuMultipleSelectionProps = MultipleSelectionProps
 
 export type MenuRootProps<T extends object = object> = MenuRootBaseProps<T>
   & (MenuNoSelectionProps | MenuSingleSelectionProps | MenuMultipleSelectionProps)
 
-const MenuRootImplementation = forwardRef(function MenuRoot<T extends object = object>(
+const MenuRootImplementation = forwardRef(function Menu<T extends object = object>(
   properties: MenuRootProps<T>,
   ref: ForwardedRef<HTMLDivElement>
 ) {
   const {
-    className,
-    color,
-    defaultValue,
-    disabledValues,
-    onChange,
-    onItemAction,
-    selectionMode = "none",
-    size = "medium",
-    style,
-    value,
-    ...native
+    className, closeOnSelect, color = "primary", defaultValue: _defaultValue, focusWrap, onAction, onChange: _onChange,
+    radius, selectionMode = "none", size, style, value: _value, ...native
   } = properties
-  const theme = useControlTheme({ color, size })
-  const context = useMemo(() => ({ color, size, theme }), [color, size, theme])
-  return <MenuThemeContext.Provider value={context}>
+  const metrics = useControlMetrics(size, radius)
+  // Items are controls: they take the control radius at their size.
+  const itemRadius = metrics.radius
+  const context = useMemo(
+    () => ({ color, metrics, itemRadius, selecting: selectionMode !== "none" }),
+    [color, metrics, itemRadius, selectionMode]
+  )
+  const selection = ariaSelection(properties, "none")
+
+  return <MenuStyleContext.Provider value={context}>
     <AriaMenu
       {...native}
-      {...selectionProperties(properties)}
+      {...selection}
+      selectionMode={selection.selectionMode === "none" ? undefined : selection.selectionMode}
+      shouldCloseOnSelect={closeOnSelect}
+      shouldFocusWrap={focusWrap}
       ref={ref}
       className={className}
-      disabledKeys={disabledValues}
-      selectionMode={selectionMode === "none" ? undefined : selectionMode}
-      onAction={onItemAction == null ? undefined : key => onItemAction(stringKey(key))}
+      onAction={onAction == null ? undefined : key => onAction(stringKey(key))}
       style={{
         display: "grid",
-        gap: theme.gap,
-        minWidth: theme.height * 4,
-        padding: theme.gap,
+        gap: 2,
+        minWidth: metrics.height * 5,
+        padding: metrics.listInset,
         boxSizing: "border-box",
         outline: "none",
         fontFamily: "inherit",
-        fontSize: theme.fontSize,
+        fontSize: metrics.fontSize,
         ...style
       }}
     />
-  </MenuThemeContext.Provider>
+  </MenuStyleContext.Provider>
 })
-
-function selectionProperties<T extends object>(properties: MenuRootProps<T>) {
-  const selectedKeys = toAriaSelection(properties.value)
-  const defaultSelectedKeys = toAriaSelection(properties.defaultValue)
-  const onSelectionChange = properties.onChange == null
-    ? undefined
-    : (selection: Selection) => {
-        if (properties.selectionMode === "multiple") {
-          properties.onChange?.(multipleSelection(selection))
-          return
-        }
-
-        if (properties.selectionMode === "single") properties.onChange?.(singleSelection(selection))
-      }
-
-  return {
-    ...(selectedKeys !== undefined ? { selectedKeys } : {}),
-    ...(defaultSelectedKeys !== undefined ? { defaultSelectedKeys } : {}),
-    ...(onSelectionChange !== undefined ? { onSelectionChange } : {})
-  }
-}
 
 export type MenuRootComponent = <T extends object = object>(
   properties: MenuRootProps<T> & RefAttributes<HTMLDivElement>
 ) => ReactElement | null
 
-export const MenuRoot = MenuRootImplementation as MenuRootComponent
-
-export interface MenuItemProps<T = object> extends Omit<AriaMenuItemProps<T>, "className" | "id" | "isDisabled" | "style"> {
+export interface MenuItemProps<T = object> extends Omit<AriaMenuItemProps<T>, "className" | "id" | "isDisabled" | "render" | "style" | "shouldCloseOnSelect"> {
+  /** Identity of this Item within its Menu. */
+  readonly id: string
   readonly className?: string
-  readonly color?: ControlColor
+  /** Whether activating this Item closes the menu, overriding the Menu. */
+  readonly closeOnSelect?: boolean
+  /** Color laid beneath this Item when it is selected. */
+  readonly color?: Color
   readonly disabled?: boolean
-  readonly id?: string
   readonly style?: CSSProperties
 }
 
 const MenuItemImplementation = forwardRef(function MenuItem<T = object>(
-  { className, color, disabled = false, style, ...properties }: MenuItemProps<T>,
+  { children, className, closeOnSelect, color, disabled = false, style, textValue, ...properties }: MenuItemProps<T>,
   ref: ForwardedRef<HTMLDivElement>
 ) {
-  const inherited = useContext(MenuThemeContext)
-  const item = { className, disabled, properties, ref, style }
-  return inherited != null && color === undefined
-    ? <MenuItemView {...item} theme={inherited.theme} />
-    : <ResolvedMenuItem {...item} color={color ?? inherited?.color} size={inherited?.size} />
-})
+  const { color: inherited, metrics, itemRadius, selecting } = useMenuStyle()
+  const itemColor = color ?? inherited
 
-function ResolvedMenuItem<T>({ color, size, ...properties }: Readonly<{
-  color?: ControlColor
-  size?: ScaleLevel
-}> & MenuItemViewProps<T>) {
-  return <MenuItemView {...properties} theme={useControlTheme({ color, size })} />
-}
-
-type MenuItemViewProps<T> = Readonly<{
-  className?: string
-  disabled: boolean
-  properties: Omit<MenuItemProps<T>, "className" | "color" | "disabled" | "style">
-  ref: ForwardedRef<HTMLDivElement>
-  style?: CSSProperties
-}>
-
-function MenuItemView<T>({ className, disabled, properties, ref, style, theme }: MenuItemViewProps<T> & Readonly<{ theme: ControlTheme }>) {
   return <AriaMenuItem
     {...properties}
+    shouldCloseOnSelect={closeOnSelect}
     ref={ref}
+    textValue={textValue ?? (typeof children === "string" ? children : undefined)}
     className={className}
     isDisabled={disabled}
-    style={state => {
-      const paint = state.isPressed
-        ? theme.paints.palette.pressed
-        : state.isHovered || state.isSelected
-          ? theme.paints.palette.hover
-          : { background: "transparent", color: "inherit" }
-
-      return {
-        ...theme.transition,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: theme.gap,
-        minWidth: 0,
-        minHeight: theme.height,
-        paddingInline: Math.max(8, theme.spacing),
-        boxSizing: "border-box",
-        borderRadius: theme.radius,
-        outline: state.isFocusVisible ? `1px solid ${theme.focusColor}` : "none",
-        outlineOffset: 1,
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? controlOpacity.disabled : 1,
-        userSelect: "none",
-        ...paint,
-        ...style
-      }
-    }}
-  />
-}
+    render={surfaceRender<MenuItemRenderProps>("div", state => itemSurface(metrics.visual, itemColor, {
+      selected: state.isSelected,
+      // Keyboard focus moves the highlight through a menu the way the pointer does;
+      // pointer-restored focus alone must not keep an item highlighted.
+      hovered: state.isHovered || state.isFocusVisible,
+      pressed: state.isPressed,
+      focusVisible: false,
+      disabled: state.isDisabled
+    }, itemRadius))}
+    style={{ ...itemStyle(metrics, disabled), ...style }}
+  >{state => <>
+    {typeof children === "function" ? children(state) : children}
+    {selecting && <SelectionMark visible={state.isSelected} />}
+  </>}</AriaMenuItem>
+})
 
 export type MenuItemComponent = <T = object>(
   properties: MenuItemProps<T> & RefAttributes<HTMLDivElement>
 ) => ReactElement | null
 
-export const MenuItem = MenuItemImplementation as MenuItemComponent
-
-export type MenuSectionProps<T extends object = object> = AriaMenuSectionProps<T>
-
-export const MenuSection = AriaMenuSection
+// Selection belongs to the Menu, like every collection; a section only groups.
+export type MenuSectionProps<T extends object = object> = Omit<
+  AriaMenuSectionProps<T>,
+  "defaultSelectedKeys" | "selectedKeys" | "onSelectionChange" | "selectionMode" | "disallowEmptySelection" | "shouldCloseOnSelect"
+>
 
 export type MenuHeaderProps = AriaHeaderProps
 
-export const MenuHeader = forwardRef<HTMLElement, MenuHeaderProps>(function MenuHeader({ style, ...properties }, ref) {
-  const theme = useMenuTheme()
-  return <AriaHeader
-    {...properties}
-    ref={ref}
-    style={{
-      paddingInline: Math.max(8, theme.spacing),
-      paddingBlock: theme.gap,
-      fontWeight: controlFontWeight,
-      opacity: controlOpacity.secondary,
-      ...style
-    }}
-  />
+const MenuHeader = forwardRef<HTMLElement, MenuHeaderProps>(function MenuHeader({ style, ...properties }, ref) {
+  const { metrics } = useMenuStyle()
+  return <AriaHeader {...properties} ref={ref} style={collectionHeaderStyle(metrics, style)} />
 })
 
 export type MenuSeparatorProps = AriaSeparatorProps
 
-export const MenuSeparator = forwardRef<HTMLElement, MenuSeparatorProps>(function MenuSeparator({ style, ...properties }, ref) {
-  const theme = useMenuTheme()
-  return <AriaSeparator
-    {...properties}
-    ref={ref}
-    style={{
-      height: 1,
-      marginBlock: theme.gap,
-      border: 0,
-      background: colorOpacity(theme.tint, controlOpacity.separator),
-      ...style
-    }}
-  />
+const MenuSeparator = forwardRef<HTMLElement, MenuSeparatorProps>(function MenuSeparator({ style, ...properties }, ref) {
+  const { metrics } = useMenuStyle()
+  return <AriaSeparator {...properties} ref={ref} style={{
+    height: 1,
+    marginBlock: 4,
+    marginInline: metrics.inset,
+    border: 0,
+    background: separatorColor(metrics),
+    ...style
+  }} />
 })
 
-function useMenuTheme() {
-  const inherited = useContext(MenuThemeContext)
-  if (inherited == null) throw new Error("Menu parts must be used inside Menu")
-  return inherited.theme
+function useMenuStyle() {
+  const context = useContext(MenuStyleContext)
+  if (context == null) throw new Error("Menu parts must be used inside Menu")
+  return context
 }
 
 /** A keyboard-navigable collection of commands or selectable options. */
-export const Menu = Object.assign(MenuRoot, {
-  Item: MenuItem,
-  Section: MenuSection,
+export const Menu = Object.assign(MenuRootImplementation as MenuRootComponent, {
+  Item: MenuItemImplementation as MenuItemComponent,
+  Section: AriaMenuSection as <T extends object = object>(properties: MenuSectionProps<T>) => ReactElement | null,
   Header: MenuHeader,
   Separator: MenuSeparator
 })

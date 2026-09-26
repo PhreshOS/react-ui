@@ -9,11 +9,12 @@ import type {
   GroupProps as AriaGroupProps,
   SeparatorProps as AriaSeparatorProps
 } from "react-aria-components"
-import { useResolvedAppearance } from "./appearance-context.js"
-import { colorOpacity, resolveColor } from "./color.js"
-import { controlOpacity, type ControlColor } from "./control.js"
-import { resolveDirection, useDirection } from "./direction.js"
-import { resolveGap, type LayoutGap } from "./layout.js"
+import { separatorOpacity } from "./control/field.js"
+import { colorOpacity, resolveColor, type Color } from "./foundation/color.js"
+import { resolveDirection, useDirection } from "./foundation/direction.js"
+import type { LayoutGap } from "./foundation/layout.js"
+import { resolveSpacing } from "./foundation/spacing.js"
+import { useVisual } from "./foundation/visual.js"
 
 type ToolbarOrientation = "horizontal" | "vertical"
 
@@ -28,7 +29,7 @@ const ToolbarThemeContext = createContext<ToolbarTheme | null>(null)
 
 export interface ToolbarRootProps extends Omit<ComponentPropsWithoutRef<"div">, "className" | "color" | "role" | "style"> {
   /** Base color inherited by toolbar-owned text and separators. */
-  readonly color?: ControlColor
+  readonly color?: Color
 
   /** Space between the Toolbar's direct children. */
   readonly gap?: LayoutGap
@@ -64,7 +65,7 @@ const ToolbarLayout = forwardRef<HTMLDivElement, ToolbarRootProps>(function Tool
   },
   ref
 ) {
-  const { appearance, colors } = useResolvedAppearance()
+  const { spacing, colors } = useVisual()
   const fallbackDirection = useDirection()
   const direction = resolveDirection(properties.dir, fallbackDirection)
   const localRef = useRef<HTMLDivElement>(null)
@@ -75,13 +76,14 @@ const ToolbarLayout = forwardRef<HTMLDivElement, ToolbarRootProps>(function Tool
     orientation
   }, localRef)
   const { onKeyDownCapture: _localeKeyDown, ...behaviorProperties } = toolbarProps
-  const foreground = resolveColor(color ?? "foreground:base", colors)
+  const foreground = resolveColor(color ?? "foreground", colors)
   const theme = useMemo<ToolbarTheme>(() => ({
-    gap: resolveGap(gap, appearance),
-    groupGap: resolveGap("small", appearance),
+    gap: resolveSpacing(gap, spacing),
+    groupGap: resolveSpacing("small", spacing),
     orientation,
-    separator: colorOpacity(foreground, controlOpacity.separator)
-  }), [appearance, foreground, gap, orientation])
+    // A Toolbar may carry its own text color; its separator shows it like every separator.
+    separator: colorOpacity(foreground, separatorOpacity)
+  }), [spacing, foreground, gap, orientation])
 
   return <ToolbarThemeContext.Provider value={theme}>
     <div
@@ -136,7 +138,10 @@ function toolbarKeyDown(
   }
 }
 
-export interface ToolbarGroupProps extends Omit<AriaGroupProps, "className" | "style"> {
+export interface ToolbarGroupProps extends Omit<AriaGroupProps, "className" | "style" | "isDisabled" | "isInvalid" | "isReadOnly"> {
+  /** Whether every control in this group is disabled. */
+  readonly disabled?: boolean
+
   /** Space between the controls in this group. */
   readonly gap?: LayoutGap
 
@@ -149,21 +154,22 @@ export interface ToolbarGroupProps extends Omit<AriaGroupProps, "className" | "s
 
 /** A semantic group of related controls within a Toolbar. */
 export const ToolbarGroup = forwardRef<HTMLDivElement, ToolbarGroupProps>(function ToolbarGroup(
-  { className, gap, style, ...properties },
+  { className, disabled, gap, style, ...properties },
   ref
 ) {
   const inherited = useToolbarTheme()
-  const { appearance } = useResolvedAppearance()
+  const { spacing } = useVisual()
 
   return <AriaGroup
     {...properties}
+    isDisabled={disabled}
     ref={ref}
     className={className}
     style={{
       display: "flex",
       flexDirection: inherited.orientation === "horizontal" ? "row" : "column",
       alignItems: inherited.orientation === "horizontal" ? "center" : "flex-start",
-      gap: gap === undefined ? inherited.groupGap : resolveGap(gap, appearance),
+      gap: gap === undefined ? inherited.groupGap : resolveSpacing(gap, spacing),
       minWidth: 0,
       ...style
     }}

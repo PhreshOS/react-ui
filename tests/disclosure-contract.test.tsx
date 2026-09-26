@@ -13,13 +13,13 @@ afterEach(cleanup)
 
 it("uses one boolean expansion state", function () {
   expectTypeOf<DisclosureProps["expanded"]>().toEqualTypeOf<boolean | undefined>()
-  expectTypeOf<DisclosureProps["onChange"]>().toEqualTypeOf<((expanded: boolean) => void) | undefined>()
+  expectTypeOf<DisclosureProps["onExpandedChange"]>().toEqualTypeOf<((expanded: boolean) => void) | undefined>()
 })
 
 it("connects the trigger and content and reports expansion changes", async function () {
   const onChange = vi.fn()
 
-  renderDisclosure(<Disclosure onChange={onChange}>
+  renderDisclosure(<Disclosure onExpandedChange={onChange}>
     <Disclosure.Trigger>Advanced options</Disclosure.Trigger>
     <Disclosure.Content>Configuration</Disclosure.Content>
   </Disclosure>)
@@ -39,7 +39,7 @@ it("connects the trigger and content and reports expansion changes", async funct
 it("does not change a disabled Disclosure", async function () {
   const onChange = vi.fn()
 
-  renderDisclosure(<Disclosure disabled onChange={onChange}>
+  renderDisclosure(<Disclosure disabled onExpandedChange={onChange}>
     <Disclosure.Trigger>Advanced options</Disclosure.Trigger>
     <Disclosure.Content>Configuration</Disclosure.Content>
   </Disclosure>)

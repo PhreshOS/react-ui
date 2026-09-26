@@ -32,7 +32,7 @@ it("renders semantic rows and reports single selection", async function () {
     onChange={onChange}
   >
     <Table.Header>
-      <Table.Column id="name" isRowHeader>Name</Table.Column>
+      <Table.Column id="name" rowHeader>Name</Table.Column>
       <Table.Column id="state">State</Table.Column>
     </Table.Header>
     <Table.Body>
@@ -65,7 +65,7 @@ it("uses the React UI direction for cell navigation", async function () {
   render(<UIProvider appearance={defaultAppearance} direction="rtl" preferences={{ theme: "light", animations: true }}>
     <Table aria-label="Processes">
       <Table.Header>
-        <Table.Column id="name" isRowHeader>Name</Table.Column>
+        <Table.Column id="name" rowHeader>Name</Table.Column>
         <Table.Column id="state">State</Table.Column>
       </Table.Header>
       <Table.Body>
@@ -83,7 +83,7 @@ it("uses the React UI direction for cell navigation", async function () {
 it("clips row and header paints to its resolved radius", function () {
   renderTable(<Table aria-label="Processes" radius="large">
     <Table.Header>
-      <Table.Column id="name" isRowHeader>Name</Table.Column>
+      <Table.Column id="name" rowHeader>Name</Table.Column>
     </Table.Header>
     <Table.Body>
       <Table.Row id="editor"><Table.Cell>Editor</Table.Cell></Table.Row>
@@ -98,7 +98,7 @@ it("clips row and header paints to its resolved radius", function () {
 it("draws internal row separators without a bottom border on the final row", function () {
   renderTable(<Table aria-label="Processes">
     <Table.Header>
-      <Table.Column id="name" isRowHeader>Name</Table.Column>
+      <Table.Column id="name" rowHeader>Name</Table.Column>
     </Table.Header>
     <Table.Body>
       <Table.Row id="editor"><Table.Cell>Editor</Table.Cell></Table.Row>
@@ -113,62 +113,35 @@ it("draws internal row separators without a bottom border on the final row", fun
 
 it("derives selected dynamic-row paint from the configured color", function () {
   const processes = [{ id: "editor", name: "Editor" }]
-  const table = (color: "primary:base" | "danger:base") => <Table
+  const table = (color: "primary" | "danger") => <Table
     aria-label="Processes"
     color={color}
     selectionMode="multiple"
     value={["editor"]}
   >
     <Table.Header>
-      <Table.Column id="name" isRowHeader>Name</Table.Column>
+      <Table.Column id="name" rowHeader>Name</Table.Column>
     </Table.Header>
     <Table.Body items={processes}>
       {process => <Table.Row id={process.id}><Table.Cell>{process.name}</Table.Cell></Table.Row>}
     </Table.Body>
   </Table>
 
-  const view = renderTable(table("primary:base"))
+  const view = renderTable(table("primary"))
   const row = screen.getByRole("row", { name: "Editor" })
   const primary = row.style.background
 
-  view.rerender(provider(table("danger:base")))
+  view.rerender(provider(table("danger")))
 
   expect(row.style.background).not.toBe(primary)
 })
 
-it("lets the header own a color override without changing the row color", function () {
-  const table = (headerColor: "primary:base" | "danger:base") => <Table
-    aria-label="Processes"
-    color="secondary:base"
-    selectionMode="single"
-    value="editor"
-  >
-    <Table.Header color={headerColor}>
-      <Table.Column id="name" isRowHeader>Name</Table.Column>
-    </Table.Header>
-    <Table.Body>
-      <Table.Row id="editor"><Table.Cell>Editor</Table.Cell></Table.Row>
-    </Table.Body>
-  </Table>
-
-  const view = renderTable(table("primary:base"))
-  const header = screen.getByRole("columnheader", { name: "Name" })
-  const row = screen.getByRole("row", { name: "Editor" })
-  const headerPaint = header.style.background
-  const rowPaint = row.style.background
-
-  view.rerender(provider(table("danger:base")))
-
-  expect(header.style.background).not.toBe(headerPaint)
-  expect(row.style.background).toBe(rowPaint)
-})
-
 it("reports row actions with string identities", async function () {
-  const onRowAction = vi.fn()
+  const onAction = vi.fn()
 
-  renderTable(<Table aria-label="Processes" onRowAction={onRowAction}>
+  renderTable(<Table aria-label="Processes" onAction={onAction}>
     <Table.Header>
-      <Table.Column id="name" isRowHeader>Name</Table.Column>
+      <Table.Column id="name" rowHeader>Name</Table.Column>
     </Table.Header>
     <Table.Body>
       <Table.Row id="editor"><Table.Cell>Editor</Table.Cell></Table.Row>
@@ -176,7 +149,7 @@ it("reports row actions with string identities", async function () {
   </Table>)
 
   await userEvent.setup().click(screen.getByRole("row", { name: "Editor" }))
-  expect(onRowAction).toHaveBeenLastCalledWith("editor")
+  expect(onAction).toHaveBeenLastCalledWith("editor")
 })
 
 it("reports sorting intent without reordering consumer-owned rows", async function () {
@@ -189,7 +162,7 @@ it("reports sorting intent without reordering consumer-owned rows", async functi
     onSortChange={onSortChange}
   >
     <Table.Header>
-      <Table.Column id="name" isRowHeader allowsSorting>Name</Table.Column>
+      <Table.Column id="name" rowHeader sortable>Name</Table.Column>
       <Table.Column id="state">State</Table.Column>
     </Table.Header>
     <Table.Body>
@@ -217,7 +190,7 @@ it("supports dynamic rows, columns, and an empty state", function () {
 
   const { rerender } = renderTable(<Table aria-label="Processes">
     <Table.Header columns={columns}>
-      {column => <Table.Column id={column.id} isRowHeader={column.rowHeader}>{column.label}</Table.Column>}
+      {column => <Table.Column id={column.id} rowHeader={column.rowHeader}>{column.label}</Table.Column>}
     </Table.Header>
     <Table.Body items={processes} renderEmptyState={() => "No processes"}>
       {process => <Table.Row id={process.id} columns={columns}>
@@ -230,7 +203,7 @@ it("supports dynamic rows, columns, and an empty state", function () {
 
   rerender(provider(<Table aria-label="Processes">
     <Table.Header columns={columns}>
-      {column => <Table.Column id={column.id} isRowHeader={column.rowHeader}>{column.label}</Table.Column>}
+      {column => <Table.Column id={column.id} rowHeader={column.rowHeader}>{column.label}</Table.Column>}
     </Table.Header>
     <Table.Body items={[]} renderEmptyState={() => "No processes"}>
       {process => <Table.Row id={(process as { id: string }).id} columns={columns}>

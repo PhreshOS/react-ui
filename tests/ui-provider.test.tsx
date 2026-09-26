@@ -1,10 +1,23 @@
 import { act, cleanup, render } from "@testing-library/react"
+import { appearanceLimits as coreAppearanceLimits, defaultAppearance as systemDefaultAppearance } from "@phreshos/core"
 import { afterEach, describe, expect, expectTypeOf, it } from "vitest"
-import { UIProvider, defaultAppearance, useAppearance, useBrowserPreferences, usePreferences, useThemedValue, type Appearance, type Preferences } from "../source/main.js"
+import { UIProvider, appearanceLimits, defaultAppearance, useAppearance, useBrowserPreferences, usePreferences, useThemedValue, type Appearance, type Preferences } from "../source/main.js"
 
 afterEach(cleanup)
 
 describe("UIProvider", function () {
+  it("uses the System's visual defaults and limits without exposing System-only fields", function () {
+    expect(defaultAppearance.colors).toBe(systemDefaultAppearance.colors)
+    expect(defaultAppearance.shadow).toBe(systemDefaultAppearance.shadow)
+    expect(defaultAppearance.material).toBe(systemDefaultAppearance.material)
+    expect(defaultAppearance.transaction).toBe(systemDefaultAppearance.transaction)
+    expect(defaultAppearance.spacing).toBe(systemDefaultAppearance.spacing)
+    expect(defaultAppearance.radius).toBe(systemDefaultAppearance.radius)
+    expect("taskbar" in defaultAppearance).toBe(false)
+    expect(appearanceLimits.spacing).toBe(coreAppearanceLimits.spacing)
+    expect(appearanceLimits.material).toBe(coreAppearanceLimits.material)
+  })
+
   it("limits its Appearance contract to fields React UI consumes", function () {
     expectTypeOf<"taskbar" extends keyof Appearance ? true : false>().toEqualTypeOf<false>()
   })

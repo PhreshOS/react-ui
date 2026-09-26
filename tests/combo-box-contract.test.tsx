@@ -8,12 +8,13 @@ import {
   defaultAppearance,
   type ComboBoxProps
 } from "../source/main.js"
+import { lifted, paintDeclarations } from "./support/paint.js"
 
-const regions = [
-  { value: "us", label: "United States" },
-  { value: "eu", label: "Europe" },
-  { value: "preview", label: "Preview", disabled: true }
-] as const
+const regions = <>
+  <ComboBox.Item id="us">United States</ComboBox.Item>
+  <ComboBox.Item id="eu">Europe</ComboBox.Item>
+  <ComboBox.Item id="preview" disabled>Preview</ComboBox.Item>
+</>
 
 afterEach(cleanup)
 
@@ -35,10 +36,9 @@ it("filters options and reports the selected string identity", async function ()
 
   renderComboBox(<ComboBox
     label="Region"
-    options={regions}
     onChange={onChange}
     onInputChange={onInputChange}
-  />)
+  >{regions}</ComboBox>)
 
   const input = screen.getByRole("combobox", { name: "Region" })
   await user.click(input)
@@ -53,12 +53,13 @@ it("filters options and reports the selected string identity", async function ()
   expect((input as HTMLInputElement).value).toBe("Europe")
 })
 
-it("uses one Surface field and keeps disabled options unavailable", async function () {
+it("holds its query in one recessed Surface and keeps disabled options unavailable", async function () {
   const user = userEvent.setup()
-  renderComboBox(<ComboBox label="Region" options={regions} defaultValue="us" />)
+  renderComboBox(<ComboBox label="Region" defaultValue="us">{regions}</ComboBox>)
 
   const input = screen.getByRole("combobox", { name: "Region" })
-  expect(input.parentElement?.querySelector("[data-material]")).not.toBeNull()
+  expect(input.parentElement?.classList.contains("phreshos-surface")).toBe(true)
+  expect(lifted(paintDeclarations(input.parentElement!)["box-shadow"])).toBe(false)
   expect((input as HTMLInputElement).value).toBe("United States")
 
   await user.click(screen.getByRole("button", { name: /Show options/ }))
