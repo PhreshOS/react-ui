@@ -12,7 +12,7 @@ import type {
   DisclosurePanelProps as AriaDisclosurePanelProps,
   DisclosureProps as AriaDisclosureProps
 } from "react-aria-components"
-import { transition, useControlMetrics, type ControlMetrics } from "./control/control.js"
+import { transition, useControlMetrics, type ControlMetrics, controlLineHeight } from "./control/control.js"
 import { surfaceRender } from "./control/surface-render.js"
 import type { Color } from "./foundation/color.js"
 import type { RadiusProps } from "./foundation/radius.js"
@@ -104,7 +104,7 @@ export const DisclosureTrigger = forwardRef<HTMLButtonElement, DisclosureTrigger
       cursor: "pointer",
       font: "inherit",
       fontWeight: 500,
-      lineHeight: 1.45,
+      lineHeight: controlLineHeight,
       textAlign: "start",
       userSelect: "none",
       WebkitTapHighlightColor: "transparent",

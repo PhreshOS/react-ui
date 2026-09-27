@@ -2,8 +2,8 @@ import { createContext, forwardRef, useContext, useId, useMemo } from "react"
 import type { CSSProperties, ReactNode } from "react"
 import { ToggleButton as AriaToggleButton, ToggleButtonGroup as AriaToggleButtonGroup } from "react-aria-components"
 import type { ToggleButtonGroupProps as AriaToggleButtonGroupProps, ToggleButtonProps as AriaToggleButtonProps } from "react-aria-components"
-import { controlFontWeight, controlOpacity, useControlMetrics, type ControlMetrics, type ControlProps, type FieldProps } from "./control/control.js"
-import { fieldStyle } from "./control/field.js"
+import { controlFontWeight, useControlMetrics, type ControlMetrics, type ControlProps, type FieldProps } from "./control/control.js"
+import { fieldStyle, descriptionStyle } from "./control/field.js"
 import { SelectionItemLabel, selectionItemStyle, selectionListStyle, SelectionTrack } from "./control/selection-track.js"
 import { stringKey } from "./control/selection.js"
 import { AriaDirectionBoundary } from "./foundation/aria-direction.js"
@@ -71,7 +71,7 @@ const SegmentedControlRoot = forwardRef<HTMLDivElement, SegmentedControlProps>(f
         >{children}</AriaToggleButtonGroup>
       </SelectionTrack>
     </SegmentedStyleContext.Provider>
-    {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</span>}
+    {description != null && <span id={descriptionId} style={descriptionStyle}>{description}</span>}
   </div></AriaDirectionBoundary>
 })
 

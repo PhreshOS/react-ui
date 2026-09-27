@@ -44,6 +44,12 @@ export function relativeFontSize(level: ScaleLevel, within: ScaleLevel): string 
   return `${Number.parseFloat(controlFontSizes[level]) / Number.parseFloat(controlFontSizes[within])}em`
 }
 
+/** Secondary text, such as a description or a section header, reads a step smaller than its control. */
+export const secondaryFontSize = "0.92em"
+
+/** The line height of text in controls and the Surfaces around them. */
+export const controlLineHeight = 1.45
+
 export const controlFontWeight = 600
 
 /** Attenuation shared by every control family. */

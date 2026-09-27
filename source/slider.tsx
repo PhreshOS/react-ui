@@ -5,7 +5,7 @@ import { DirectionProvider as BaseDirectionProvider } from "@base-ui/react/direc
 import { forwardRef, useEffect, useId, useRef, useState } from "react"
 import type { HTMLAttributes, Ref } from "react"
 import { controlFontWeight, controlOpacity, transition, useControlMetrics, type ControlProps, type FieldProps } from "./control/control.js"
-import { fieldStyle } from "./control/field.js"
+import { fieldStyle, descriptionStyle } from "./control/field.js"
 import { lightColor } from "./foundation/color.js"
 import { resolveDirection, useDirection } from "./foundation/direction.js"
 import type { MaterialOverrides } from "./surface/material-options.js"
@@ -150,6 +150,6 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
         </BaseSlider.Track>
       </BaseSlider.Control>
     </SurfaceView>
-    {description != null && <span id={descriptionId} style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</span>}
+    {description != null && <span id={descriptionId} style={descriptionStyle}>{description}</span>}
   </BaseSlider.Root></BaseDirectionProvider>
 })

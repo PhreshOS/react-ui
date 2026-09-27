@@ -2,8 +2,8 @@ import { createContext, forwardRef, useContext, useMemo } from "react"
 import type { CSSProperties, ReactNode } from "react"
 import { Label, RadioButton, RadioField, RadioGroup as AriaRadioGroup, Text } from "react-aria-components"
 import type { RadioFieldProps, RadioGroupProps as AriaRadioGroupProps } from "react-aria-components"
-import { controlFontWeight, controlOpacity, useControlMetrics, type ControlMetrics, type ControlOverrides, type ControlProps, type FieldProps } from "./control/control.js"
-import { FieldFeedback, fieldStyle } from "./control/field.js"
+import { controlFontWeight, useControlMetrics, type ControlMetrics, type ControlOverrides, type ControlProps, type FieldProps } from "./control/control.js"
+import { FieldFeedback, fieldStyle, descriptionStyle } from "./control/field.js"
 import { ToggleIndicator, toggleRowStyle } from "./control/toggle.js"
 import { AriaDirectionBoundary } from "./foundation/aria-direction.js"
 import type { Color } from "./foundation/color.js"
@@ -100,7 +100,7 @@ const RadioGroupItem = forwardRef<HTMLDivElement, RadioGroupItemProps>(function 
         {label}
       </>}
     </RadioButton>
-    {description != null && <Text slot="description" style={{ fontSize: "0.92em", opacity: controlOpacity.secondary, paddingInlineStart: metrics.indicator + metrics.gap }}>{description}</Text>}
+    {description != null && <Text slot="description" style={{ ...descriptionStyle, paddingInlineStart: metrics.indicator + metrics.gap }}>{description}</Text>}
   </RadioField>
 })
 

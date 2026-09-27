@@ -5,7 +5,7 @@ import type { ColorSliderProps as AriaColorSliderProps } from "react-aria-compon
 import { colorEdge, ColorThumb } from "./control/color-thumb.js"
 import { colorValue } from "./control/color-value.js"
 import { controlFontWeight, controlOpacity, useControlMetrics, type FieldProps } from "./control/control.js"
-import { fieldStyle } from "./control/field.js"
+import { fieldStyle, descriptionStyle } from "./control/field.js"
 import { AriaDirectionBoundary } from "./foundation/aria-direction.js"
 import { resolveDirection, useDirection } from "./foundation/direction.js"
 import type { ScaleLevel } from "./foundation/scale.js"
@@ -64,6 +64,6 @@ export const ColorSlider = forwardRef<HTMLDivElement, ColorSliderProps>(function
     })}>
       <ColorThumb metrics={metrics} center={vertical ? "left" : "top"} />
     </SliderTrack>
-    {description != null && <span style={{ fontSize: "0.92em", opacity: controlOpacity.secondary }}>{description}</span>}
+    {description != null && <span style={descriptionStyle}>{description}</span>}
   </AriaColorSlider></AriaDirectionBoundary>
 })

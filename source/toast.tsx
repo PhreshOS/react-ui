@@ -1,7 +1,7 @@
 import type { CSSProperties, ReactNode } from "react"
 import { Text, UNSTABLE_Toast as AriaToast, UNSTABLE_ToastContent as AriaToastContent, UNSTABLE_ToastQueue as AriaToastQueue, UNSTABLE_ToastRegion as AriaToastRegion } from "react-aria-components"
 import { X } from "lucide-react"
-import { controlFontSizes, controlFontWeight, controlOpacity, useControlMetrics } from "./control/control.js"
+import { controlFontSizes, controlFontWeight, controlOpacity, useControlMetrics, controlLineHeight } from "./control/control.js"
 import { FieldButton } from "./control/field-button.js"
 import { iconProps } from "./control/icon.js"
 import { meaningIcon } from "./control/meaning.js"
@@ -83,16 +83,16 @@ export function ToastRegion({ className, style }: ToastRegionProps) {
         // The close button carries its own padding, so the end keeps less.
         paddingInlineEnd: metrics.spacing / 2,
         fontSize: controlFontSizes.medium,
-        lineHeight: 1.45
+        lineHeight: controlLineHeight
       }}>
-        <span style={{ display: "grid", height: "1.45em", alignItems: "center", color: colorLevel(resolveColor(color, visual.colors), "strong", visual.colors) }}>
-          <Icon {...iconProps(Math.round(metrics.height / 2))} />
+        <span style={{ display: "grid", height: `${controlLineHeight}em`, alignItems: "center", color: colorLevel(resolveColor(color, visual.colors), "strong", visual.colors) }}>
+          <Icon {...iconProps(16)} />
         </span>
         <AriaToastContent style={{ display: "grid", gap: 2, minWidth: 0 }}>
           <Text slot="title" style={{ fontWeight: controlFontWeight }}>{item.content.title}</Text>
           {item.content.description != null && <Text slot="description" style={{ opacity: controlOpacity.secondary }}>{item.content.description}</Text>}
         </AriaToastContent>
-        <FieldButton slot="close" metrics={metrics} aria-label="Close"><X {...iconProps(Math.round(metrics.height / 2))} /></FieldButton>
+        <FieldButton slot="close" metrics={metrics} aria-label="Close"><X {...iconProps(14)} /></FieldButton>
       </Surface>
     </AriaToast>
   }}</AriaToastRegion></>

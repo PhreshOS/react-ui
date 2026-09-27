@@ -12,7 +12,7 @@ import {
 } from "react-aria-components"
 import type { CalendarCellRenderProps, CalendarState, RangeCalendarState } from "react-aria-components"
 import { Button } from "./button.js"
-import { controlFontWeight, controlOpacity, transition, type ControlMetrics } from "./control/control.js"
+import { controlFontWeight, controlOpacity, transition, type ControlMetrics, controlLineHeight } from "./control/control.js"
 import { selectionColor } from "./control/item.js"
 import { colorOpacity, readableColor, resolveColor, type Color } from "./foundation/color.js"
 import { useDirection } from "./foundation/direction.js"
@@ -66,7 +66,7 @@ export function calendarRootStyle(metrics: ControlMetrics, style?: CSSProperties
     padding: metrics.spacing,
     fontFamily: "inherit",
     fontSize: metrics.fontSize,
-    lineHeight: 1.45
+    lineHeight: controlLineHeight
   }
 }
 

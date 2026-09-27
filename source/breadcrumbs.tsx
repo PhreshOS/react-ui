@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from "react"
 import { Breadcrumb as AriaBreadcrumb, Breadcrumbs as AriaBreadcrumbs, Link as AriaLink } from "react-aria-components"
 import type { BreadcrumbsProps as AriaBreadcrumbsProps } from "react-aria-components"
 import { ChevronRight } from "lucide-react"
-import { controlFontWeight, controlOpacity, transition, useControlMetrics, type ControlMetrics } from "./control/control.js"
+import { controlFontWeight, controlOpacity, transition, useControlMetrics, type ControlMetrics, controlLineHeight } from "./control/control.js"
 import { iconProps } from "./control/icon.js"
 import type { ScaleLevel } from "./foundation/scale.js"
 import { surfacePaint } from "./surface/surface.js"
@@ -30,7 +30,7 @@ const BreadcrumbsRoot = forwardRef<HTMLOListElement, BreadcrumbsProps>(function 
       padding: 0,
       listStyle: "none",
       fontSize: metrics.fontSize,
-      lineHeight: 1.45,
+      lineHeight: controlLineHeight,
       ...style
     }}>{children}</AriaBreadcrumbs>
   </BreadcrumbsContext.Provider>

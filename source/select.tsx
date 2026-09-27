@@ -2,7 +2,7 @@ import { forwardRef } from "react"
 import type { ReactNode } from "react"
 import { Button as AriaButton, Select as AriaSelect, SelectValue } from "react-aria-components"
 import type { ButtonRenderProps, SelectProps as AriaSelectProps } from "react-aria-components"
-import { controlOpacity, transition, useControlMetrics, type ControlMetrics, type ControlOverrides, type ControlProps, type FieldProps } from "./control/control.js"
+import { controlOpacity, transition, useControlMetrics, type ControlMetrics, type ControlOverrides, type ControlProps, type FieldProps, controlLineHeight } from "./control/control.js"
 import { FieldFeedback, FieldLabel, fieldStyle } from "./control/field.js"
 import { surfaceRender } from "./control/surface-render.js"
 import { resolveDirection, useDirection } from "./foundation/direction.js"
@@ -103,7 +103,7 @@ export function fieldTriggerStyle(metrics: ControlMetrics, disabled?: boolean) {
     border: 0,
     background: "none",
     font: "inherit",
-    lineHeight: 1.45,
+    lineHeight: controlLineHeight,
     textAlign: "start",
     cursor: disabled ? "not-allowed" : "pointer"
   } as const

@@ -17,7 +17,7 @@ import type {
   TableHeaderProps as AriaTableHeaderProps,
   TableProps as AriaTableProps
 } from "react-aria-components"
-import { controlFontWeight, controlOpacity, transition, useControlMetrics, type ControlMetrics } from "./control/control.js"
+import { controlFontWeight, controlOpacity, transition, useControlMetrics, type ControlMetrics, secondaryFontSize } from "./control/control.js"
 import { separatorColor } from "./control/field.js"
 import { itemPaint } from "./control/item.js"
 import {
@@ -176,7 +176,7 @@ const TableColumn = forwardRef<HTMLTableCellElement | HTMLDivElement, TableColum
       outline: `3px solid ${state.isFocusVisible ? colorOpacity(colors.primary, 0.34) : "transparent"}`,
       outlineOffset: -3,
       cursor: sortable ? "pointer" : "default",
-      fontSize: "0.92em",
+      fontSize: secondaryFontSize,
       fontWeight: controlFontWeight,
       textAlign: "start",
       userSelect: "none",

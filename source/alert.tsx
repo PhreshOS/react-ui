@@ -1,6 +1,6 @@
 import { forwardRef } from "react"
 import type { ReactNode } from "react"
-import { controlFontSizes, controlFontWeight, useControlMetrics } from "./control/control.js"
+import { controlFontSizes, controlFontWeight, useControlMetrics, controlLineHeight } from "./control/control.js"
 import { iconProps } from "./control/icon.js"
 import { meaningIcon, urgentMeaning } from "./control/meaning.js"
 import { colorLevel, resolveColor, type Color } from "./foundation/color.js"
@@ -44,11 +44,11 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert({
       gap: metrics.gap * 2,
       padding: containerPadding(metrics.visual.spacing),
       fontSize: controlFontSizes.medium,
-      lineHeight: 1.45,
+      lineHeight: controlLineHeight,
       ...style
     }}
   >
-    {icon !== false && <span style={{ display: "grid", height: "1.45em", alignItems: "center" }}>{icon ?? <MeaningIcon {...iconProps(16)} />}</span>}
+    {icon !== false && <span style={{ display: "grid", height: `${controlLineHeight}em`, alignItems: "center" }}>{icon ?? <MeaningIcon {...iconProps(16)} />}</span>}
     <div style={{ display: "grid", gap: 2, minWidth: 0 }}>
       {title != null && <strong style={{ fontWeight: controlFontWeight }}>{title}</strong>}
       {children != null && <div>{children}</div>}

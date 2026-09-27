@@ -1,7 +1,7 @@
 import { forwardRef } from "react"
 import type { CSSProperties, ReactNode } from "react"
 import { Heading as AriaHeading, Keyboard as AriaKeyboard, Text as AriaText } from "react-aria-components"
-import { controlFontSizes, controlFontWeight, controlOpacity, useControlMetrics } from "./control/control.js"
+import { controlFontSizes, controlFontWeight, controlLineHeight, controlOpacity, useControlMetrics } from "./control/control.js"
 import { scale, scaleMultiplier, type ScaleLevel } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
 import { Surface } from "./surface/surface.js"
@@ -59,7 +59,7 @@ export interface TextProps {
 export const Text = forwardRef<HTMLElement, TextProps>(function Text({ tone = "default", size, style, ...properties }, ref) {
   return <AriaText {...properties} ref={ref} style={{
     fontSize: size === undefined ? undefined : controlFontSizes[size],
-    lineHeight: textLineHeight,
+    lineHeight: controlLineHeight,
     opacity: tone === "secondary" ? controlOpacity.secondary : undefined,
     ...style
   }} />
@@ -72,7 +72,6 @@ export interface KbdProps {
 }
 
 /** Running text sets its lines at this height, relative to its size. */
-const textLineHeight = 1.45
 
 /**
  * A key to press, drawn as a small raised keycap. Its label takes the control
@@ -82,7 +81,7 @@ const textLineHeight = 1.45
 export const Kbd = forwardRef<HTMLElement, KbdProps>(function Kbd({ children, className, style }, ref) {
   const metrics = useControlMetrics("xsmall")
   const label = Number.parseFloat(controlFontSizes.medium)
-  const cap = `${textLineHeight / label}em`
+  const cap = `${controlLineHeight / label}em`
   return <AriaKeyboard ref={ref} className={className} style={{ display: "inline-block", verticalAlign: "middle", lineHeight: 1 }}>
     <Surface as="span" radius={metrics.radius} shadow={false} style={{
       display: "inline-flex",

@@ -5,6 +5,7 @@ import type { MaterialOverrides } from "../surface/material-options.js"
 import { SurfaceView } from "../surface/surface.js"
 import type { Color } from "../foundation/color.js"
 import type { ControlMetrics, ControlOverrides, ControlProps, FieldProps } from "./control.js"
+import { controlLineHeight } from "./control.js"
 
 /** Shared contract for native text-entry fields. */
 export interface TextControlProps extends Omit<TextFieldProps, ControlOverrides>, ControlProps, FieldProps, RadiusProps, MaterialOverrides {
@@ -55,7 +56,7 @@ export function nativeTextStyle(metrics: ControlMetrics, multiline: boolean): CS
     color: "inherit",
     caretColor: "currentColor",
     font: "inherit",
-    lineHeight: 1.45,
+    lineHeight: controlLineHeight,
     resize: multiline ? "vertical" : undefined
   }
 }

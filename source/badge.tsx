@@ -1,6 +1,6 @@
 import { forwardRef } from "react"
 import type { CSSProperties, ReactNode } from "react"
-import { controlFontSizes, controlFontWeight, useControlMetrics } from "./control/control.js"
+import { controlFontSizes, controlFontWeight, useControlMetrics, controlLineHeight } from "./control/control.js"
 import { colorLevel, resolveColor, type Color } from "./foundation/color.js"
 import type { ScaleLevel } from "./foundation/scale.js"
 import { Surface } from "./surface/surface.js"
@@ -39,7 +39,7 @@ export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge({ ch
     color: colorLevel(base, "strong", colors),
     fontSize: controlFontSizes[smaller[size ?? "medium"]],
     fontWeight: controlFontWeight,
-    lineHeight: 1.45,
+    lineHeight: controlLineHeight,
     whiteSpace: "nowrap",
     verticalAlign: "middle",
     ...style

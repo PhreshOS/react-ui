@@ -13,7 +13,7 @@ import type {
   ListBoxProps as AriaListBoxProps,
   ListBoxSectionProps as AriaListBoxSectionProps
 } from "react-aria-components"
-import { controlFontWeight, controlOpacity, useControlMetrics, type ControlMetrics } from "./control/control.js"
+import { controlFontWeight, controlOpacity, useControlMetrics, type ControlMetrics, secondaryFontSize } from "./control/control.js"
 import { itemStyle, itemSurface, SelectionMark } from "./control/item.js"
 import {
   ariaSelection,
@@ -174,7 +174,7 @@ export function collectionHeaderStyle(metrics: ControlMetrics, style?: CSSProper
   return {
     paddingInline: metrics.inset,
     paddingBlock: metrics.gap,
-    fontSize: "0.92em",
+    fontSize: secondaryFontSize,
     fontWeight: controlFontWeight,
     opacity: controlOpacity.secondary,
     ...style
