@@ -4,12 +4,14 @@ import type { ReactNode } from "react"
 import { afterEach, expect, expectTypeOf, it, vi } from "vitest"
 import {
   GridList,
+  Surface,
   UIProvider,
   defaultAppearance,
   type GridListItemProps,
   type GridListMultipleSelectionProps,
   type GridListSingleSelectionProps
 } from "../source/main.js"
+import { paintDeclarations, surfaceFill } from "./support/paint.js"
 
 afterEach(cleanup)
 
@@ -80,28 +82,34 @@ it("moves focus between cards with the arrow keys", async function () {
   expect(document.activeElement).toBe(screen.getByRole("row", { name: "Terminal" }))
 })
 
-it("shows a card's edge at rest and hides it once the card is selected", async function () {
+it("draws each card as a whole flat Surface in the default color, in its selection color once selected", async function () {
   const user = userEvent.setup()
-  renderGrid(<GridList aria-label="Programs" selectionMode="multiple">
-    <GridList.Item id="notes">Notes</GridList.Item>
-  </GridList>)
+  renderGrid(<>
+    <GridList aria-label="Programs" selectionMode="multiple">
+      <GridList.Item id="notes">Notes</GridList.Item>
+    </GridList>
+    <Surface data-testid="reference" depth="flat" color="default" />
+  </>)
 
   const card = screen.getByRole("row", { name: "Notes" })
-  const edge = () => card.querySelector<HTMLElement>("span[aria-hidden]")!
-  expect(edge().style.border).toMatch(/^1px solid/)
-  expect(edge().style.opacity).toBe("1")
+  const reference = screen.getByTestId("reference")
+  expect(surfaceFill(card)).toBe(surfaceFill(reference))
+  expect(paintDeclarations(card)["--phreshos-surface-frost"]).toBe(paintDeclarations(reference)["--phreshos-surface-frost"])
   await user.click(card)
-  expect(edge().style.opacity).toBe("0")
+  expect(surfaceFill(card)).not.toBe(surfaceFill(reference))
 })
 
 it("only shows its cards when nothing is to be chosen", async function () {
   const user = userEvent.setup()
-  renderGrid(<GridList aria-label="Planting" selectionMode="none">
-    <GridList.Item id="notes">Notes</GridList.Item>
-  </GridList>)
+  renderGrid(<>
+    <GridList aria-label="Planting" selectionMode="none">
+      <GridList.Item id="notes">Notes</GridList.Item>
+    </GridList>
+    <Surface data-testid="reference" depth="flat" color="default" />
+  </>)
 
   const card = screen.getByRole("row", { name: "Notes" })
   await user.click(card)
   expect(card.getAttribute("aria-selected")).toBeNull()
-  expect(card.querySelector<HTMLElement>("span[aria-hidden]")!.style.opacity).toBe("1")
+  expect(surfaceFill(card)).toBe(surfaceFill(screen.getByTestId("reference")))
 })

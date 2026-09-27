@@ -14,7 +14,6 @@ import type {
   GridListSectionProps as AriaGridListSectionProps
 } from "react-aria-components"
 import { useControlMetrics, type ControlMetrics } from "./control/control.js"
-import { separatorColor } from "./control/field.js"
 import { itemSurface, SelectionMark } from "./control/item.js"
 import {
   ariaSelection,
@@ -114,7 +113,7 @@ export interface GridListItemProps<T = object> extends Omit<AriaGridListItemProp
   readonly style?: CSSProperties
 }
 
-/** One card. It holds whatever it is given, shows its edge at rest, and a check in its corner when selected. */
+/** One card. It holds whatever it is given, and shows a check in its corner when selected. */
 const GridListItemImplementation = forwardRef(function GridListItem<T = object>(
   { children, className, color, disabled = false, style, textValue, ...properties }: GridListItemProps<T>,
   ref: ForwardedRef<HTMLDivElement>
@@ -129,13 +128,19 @@ const GridListItemImplementation = forwardRef(function GridListItem<T = object>(
     textValue={textValue ?? (typeof children === "string" ? children : undefined)}
     className={className}
     isDisabled={disabled}
-    render={surfaceRender<GridListItemRenderProps>("div", state => itemSurface(metrics.visual, itemColor, {
-      selected: state.isSelected,
-      hovered: state.isHovered,
-      pressed: state.isPressed,
-      focusVisible: state.isFocusVisible,
-      disabled: state.isDisabled
-    }, metrics.radius))}
+    render={surfaceRender<GridListItemRenderProps>("div", state => ({
+      ...itemSurface(metrics.visual, itemColor, {
+        selected: state.isSelected,
+        hovered: state.isHovered,
+        pressed: state.isPressed,
+        focusVisible: state.isFocusVisible,
+        disabled: state.isDisabled
+      }, metrics.radius),
+      // Unlike a list row, a card is a whole Surface: flat, in the default color at rest, in its
+      // selection color once selected, with the default material in both.
+      ...(state.isSelected ? {} : { color: "default" }),
+      material: undefined
+    }))}
     style={{
       position: "relative",
       display: "grid",
@@ -150,16 +155,6 @@ const GridListItemImplementation = forwardRef(function GridListItem<T = object>(
       ...style
     }}
   >{state => <>
-    {/* Unlike a list row, a card shows its edge at rest; its selection color shows it once selected. */}
-    <span aria-hidden="true" style={{
-      position: "absolute",
-      inset: 0,
-      // The card's own radius: the edge sits inside the grid cell, not directly in the card.
-      borderRadius: metrics.radius,
-      border: `1px solid ${separatorColor(metrics)}`,
-      opacity: state.isSelected ? 0 : 1,
-      pointerEvents: "none"
-    }} />
     {typeof children === "function" ? children(state) : children}
     <span style={{ position: "absolute", insetBlockStart: metrics.inset, insetInlineEnd: metrics.inset, display: "flex" }}>
       <SelectionMark visible={state.isSelected} />
