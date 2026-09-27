@@ -122,3 +122,17 @@ function renderTabs(component: ReactNode) {
     {component}
   </UIProvider>)
 }
+
+it("sizes only its Tabs, leaving the content of its Panels at the size around them", function () {
+  renderTabs(<Tabs defaultValue="npm" size="small">
+    <Tabs.List aria-label="Package manager"><Tabs.Tab id="npm">npm</Tabs.Tab></Tabs.List>
+    <Tabs.Panel id="npm">Content</Tabs.Panel>
+  </Tabs>)
+
+  expect(screen.getByRole("tablist").parentElement!.style.fontSize).toBe("0.75em")
+  let element: HTMLElement | null = screen.getByRole("tabpanel")
+  while (element && element !== document.body) {
+    expect(element.style.fontSize).toBe("")
+    element = element.parentElement
+  }
+})

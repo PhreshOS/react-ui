@@ -78,7 +78,6 @@ const TabsRoot = forwardRef<HTMLDivElement, TabsRootProps>(function Tabs({
         gap: metrics.gap,
         minWidth: 0,
         fontFamily: "inherit",
-        fontSize: metrics.fontSize,
         ...style
       }}
     /></AriaDirectionBoundary>
@@ -98,7 +97,8 @@ const TabsListImplementation = forwardRef(function TabsList<T extends object = o
   const { color, material, metrics, orientation } = useTabsStyle()
   const selectedKey = useContext(TabListStateContext)?.selectedKey
 
-  return <SelectionTrack metrics={metrics} color={color} material={material} orientation={orientation} selectedKey={selectedKey} className={className} style={style}>
+  // Only the Tabs take the Tabs' size: the Panels hold consumer content, which keeps its own.
+  return <SelectionTrack metrics={metrics} color={color} material={material} orientation={orientation} selectedKey={selectedKey} className={className} style={{ fontSize: metrics.fontSize, ...style }}>
     <AriaTabList {...properties} ref={ref} data-selection-list="" style={selectionListStyle(orientation)} />
   </SelectionTrack>
 })

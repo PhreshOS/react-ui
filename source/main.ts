@@ -19,6 +19,7 @@ export {
   type ThemedValue
 } from "./foundation/appearance.js"
 export { UIProvider, type UIProviderProps } from "./foundation/provider.js"
+export { DocumentTheme } from "./document-theme.js"
 export {
   useAppearance,
   useBrowserPreferences,
