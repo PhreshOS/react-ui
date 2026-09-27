@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { defaultAppearance, Surface, UIProvider } from "../source/main.js"
 import { contrast, luminance, mixColor } from "../source/foundation/color.js"
 import { resolveVisual } from "../source/foundation/visual.js"
-import { surfacePaint } from "../source/surface/surface.js"
+import { spillDepth, surfacePaint } from "../source/surface/surface.js"
 import { shadowStyle } from "../source/surface/shadow-options.js"
 import { lifted } from "./support/paint.js"
 
@@ -32,9 +32,9 @@ describe("Surface depth", function () {
     expect(raised.shadow).toMatch(/^0 0 0 0\.5px /)
     // Light rises from the middle of the top and bottom edges and fades before the sides.
     expect(variable(raised, "rim")).toMatch(/^linear-gradient\(to right, transparent, .* 50%, .*, transparent\)$/)
-    // The spill is as deep as a large Surface allows, and proportionally shallower on a short one.
-    expect(variable(raised, "spill-top")).toMatch(/^radial-gradient\(50% min\(6px, 12%\) at 50% 0,/)
-    expect(variable(raised, "spill-bottom")).toMatch(/^radial-gradient\(50% min\(6px, 12%\) at 50% 100%,/)
+    // The spill fills its own layer; the stylesheet limits that layer's height.
+    expect(variable(raised, "spill-top")).toMatch(/^radial-gradient\(50% 100% at 50% 0,/)
+    expect(variable(raised, "spill-bottom")).toMatch(/^radial-gradient\(50% 100% at 50% 100%,/)
   })
 
   it("recesses with a slightly deeper paint, a dimmer rim, and no outer shadow", function () {
@@ -209,6 +209,18 @@ function ruleText(className: string) {
   }
   return ""
 }
+
+describe("Surface background layers", function () {
+  it("limits the spill by its layer height, so no layer can invalidate the grain", function () {
+    render(<UIProvider preferences={{ theme: "light", animations: false }}><Surface>Soil</Surface></UIProvider>)
+    const css = [...document.querySelectorAll("style")].map(style => style.textContent).join("\n")
+    // Browsers reject pixel and percentage math inside a radial-gradient() size,
+    // and one rejected layer drops every layer of the background, grain included.
+    expect(variable(paint("background", "raised"), "spill-top")).not.toMatch(/(min|max|clamp|calc)\(/)
+    expect(css).toContain(`background-size: 100% ${spillDepth}, 100% ${spillDepth}, 64px 64px;`)
+    expect(css).toContain("background-repeat: no-repeat, no-repeat, repeat;")
+  })
+})
 
 describe("Surface hydration", function () {
   it("replaces the server's inline paint with a paint class once hydrated", async function () {

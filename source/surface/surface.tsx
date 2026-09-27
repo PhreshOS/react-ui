@@ -199,11 +199,10 @@ export function surfacePaint(
   const rim = edged
     ? `linear-gradient(to right, transparent, ${colorOpacity(light, lit.side)} 18%, ${colorOpacity(light, lit.edge)} 50%, ${colorOpacity(light, lit.side)} 82%, transparent)`
     : "none"
-  // The spill reaches at most a fixed depth, and less on short Surfaces: at a
-  // fixed depth, a small button was lit through nearly half its height and
-  // read as swollen, while a large panel barely changes.
+  // The spill fills its own background layer, whose height the stylesheet
+  // limits (see spillDepth).
   const spill = (edge: "top" | "bottom") => edged && lit.spill > 0
-    ? `radial-gradient(50% ${spillDepth} at 50% ${edge === "top" ? "0" : "100%"}, ${colorOpacity(light, lit.spill)}, transparent)`
+    ? `radial-gradient(50% 100% at 50% ${edge === "top" ? "0" : "100%"}, ${colorOpacity(light, lit.spill)}, transparent)`
     : "none"
   // A recessed Surface holds a value, so focus and validity also claim its hairline.
   const claimed = interaction?.invalid || (depth === "recessed" && interaction?.focusVisible)
@@ -238,8 +237,17 @@ export function surfacePaint(
   }
 }
 
-/** How far the inward spill reaches: a fixed depth, or a share of a short Surface's height. */
-const spillDepth = "min(6px, 12%)"
+/**
+ * How far the inward spill reaches: at most a fixed depth, and less on short
+ * Surfaces. At a fixed depth a small button was lit through nearly half its
+ * height and read as swollen, while a large panel barely changes.
+ *
+ * The limit is the height of the spill's background layer, not the gradient's
+ * size: browsers reject a size that mixes pixels and percentages inside
+ * radial-gradient(), and one rejected layer drops the whole background,
+ * grain included.
+ */
+export const spillDepth = "min(6px, 12%)"
 
 /** How much light each part of the rim receives, interpolated along the canvas darkness. */
 function edgeLight(depth: SurfaceDepth, darkness: number) {
@@ -324,7 +332,9 @@ const stylesheet = `
   z-index: -1;
   background-color: var(--phreshos-surface-paint);
   background-image: var(--phreshos-surface-spill-top), var(--phreshos-surface-spill-bottom), var(--phreshos-surface-grain);
-  background-size: auto, auto, ${grainSize}px ${grainSize}px;
+  background-size: 100% ${spillDepth}, 100% ${spillDepth}, ${grainSize}px ${grainSize}px;
+  background-position: center top, center bottom, 0 0;
+  background-repeat: no-repeat, no-repeat, repeat;
   -webkit-backdrop-filter: var(--phreshos-surface-frost);
   backdrop-filter: var(--phreshos-surface-frost);
   transition: background-color var(--phreshos-surface-duration) var(--phreshos-surface-easing);
