@@ -5,7 +5,7 @@ import type { ProgressBarProps as AriaProgressBarProps } from "react-aria-compon
 import { controlFontWeight, controlOpacity, transition, useControlMetrics } from "./control/control.js"
 import { fieldStyle } from "./control/field.js"
 import { resolveColor, type Color } from "./foundation/color.js"
-import MotionStyle from "./foundation/motion-style.js"
+import MotionStyle, { loopDuration } from "./foundation/motion-style.js"
 import type { ScaleLevel } from "./foundation/scale.js"
 import type { MaterialOverrides } from "./surface/material-options.js"
 import { SurfaceView } from "./surface/surface.js"
@@ -24,6 +24,11 @@ export interface ProgressBarProps extends NativeProgressBarProps, MaterialOverri
   readonly style?: CSSProperties
 }
 
+/** The thickness of a recessed value rail, shared by ProgressBar and Meter. */
+export function railThickness(metrics: ReturnType<typeof useControlMetrics>): number {
+  return Math.max(4, Math.round(metrics.spacing / 2))
+}
+
 /** Progress over time: a recessed rail filled in the owner's color. */
 export const ProgressBar = forwardRef<HTMLDivElement, ProgressBarProps>(function ProgressBar({
   className,
@@ -39,7 +44,7 @@ export const ProgressBar = forwardRef<HTMLDivElement, ProgressBarProps>(function
   ...properties
 }, ref) {
   const metrics = useControlMetrics(size)
-  const thickness = Math.max(4, Math.round(metrics.spacing / 2))
+  const thickness = railThickness(metrics)
   const fill = resolveColor(color, metrics.visual.colors)
   const moving = indeterminate && metrics.visual.duration > 0
 
@@ -73,7 +78,7 @@ export const ProgressBar = forwardRef<HTMLDivElement, ProgressBarProps>(function
           width: state.isIndeterminate ? "40%" : `${state.percentage ?? 0}%`,
           borderRadius: "inherit",
           background: fill,
-          animation: moving ? `phreshos-ui-sweep ${Math.max(900, metrics.visual.appearance.transaction.duration * 8)}ms ${metrics.visual.easing} infinite` : undefined
+          animation: moving ? `phreshos-ui-sweep ${loopDuration(metrics.visual)}ms ${metrics.visual.easing} infinite` : undefined
         }} />
       </SurfaceView>
     </>

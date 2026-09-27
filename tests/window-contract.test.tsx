@@ -54,6 +54,12 @@ describe("Window", () => {
     expect(content.current?.style.overflow).toBe("")
   })
 
+  it("owns its shape, clipping its content without becoming a scroll container", () => {
+    render(provider(<Window data-testid="window"><Window.Content><div style={{ position: "absolute", inset: 0 }} /></Window.Content></Window>))
+
+    expect(screen.getByTestId("window").style.overflow).toBe("clip")
+  })
+
   it("allows the header to compose independently inside any Surface", () => {
     render(provider(<Surface data-testid="surface">
       <Window.Header data-testid="header">

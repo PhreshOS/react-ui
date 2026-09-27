@@ -30,7 +30,10 @@ function useHeader() {
   return value
 }
 
-/** The material shell that establishes the complete header-and-content layout. */
+/**
+ * The material shell that establishes the complete header-and-content layout.
+ * The Window owns its shape: nothing inside is drawn past its edges or corners.
+ */
 export type WindowProps = SurfaceProps
 
 const WindowRoot = forwardRef<HTMLDivElement, WindowProps>(function WindowRoot(
@@ -45,6 +48,8 @@ const WindowRoot = forwardRef<HTMLDivElement, WindowProps>(function WindowRoot(
       flexDirection: "column",
       minWidth: 0,
       minHeight: 0,
+      // Clips to the rounded shape without becoming a scroll container.
+      overflow: "clip",
       ...style
     }}
   >{children}</Surface>

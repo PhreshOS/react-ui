@@ -1,8 +1,8 @@
 import { forwardRef } from "react"
 import type { ReactNode } from "react"
-import { CircleAlert, CircleCheck, Info, TriangleAlert } from "lucide-react"
 import { controlFontSizes, controlFontWeight, useControlMetrics } from "./control/control.js"
 import { iconProps } from "./control/icon.js"
+import { meaningIcon, urgentMeaning } from "./control/meaning.js"
 import { colorLevel, resolveColor, type Color } from "./foundation/color.js"
 import { resolveRadius } from "./foundation/radius.js"
 import { Surface, type SurfaceProps } from "./surface/surface.js"
@@ -16,8 +16,6 @@ export interface AlertProps extends Omit<SurfaceProps, "color" | "title" | "chil
   readonly children?: ReactNode
 }
 
-const meaningIcons = { danger: CircleAlert, warning: TriangleAlert, success: CircleCheck } as const
-
 /**
  * A message that stays in place, such as a failed save. It is painted in the
  * subtle level of its color, like a selection, and leads with the icon of its
@@ -28,8 +26,8 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert({
 }, ref) {
   const metrics = useControlMetrics()
   const { colors } = metrics.visual
-  const urgent = color === "danger" || color === "warning"
-  const MeaningIcon = meaningIcons[color as keyof typeof meaningIcons] ?? Info
+  const urgent = urgentMeaning(color)
+  const MeaningIcon = meaningIcon(color)
 
   return <Surface
     {...properties}

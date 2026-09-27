@@ -19,7 +19,7 @@ import { controlFontSizes, controlFontWeight, controlOpacity } from "./control/c
 import { ariaOpenState, type AriaOverlayInternals, type OverlayRootProps } from "./control/open-state.js"
 import { colorOpacity, darkCanvas } from "./foundation/color.js"
 import { resolveDirection, useDirection, type Direction } from "./foundation/direction.js"
-import MotionStyle, { backdropMotionClass, overlayMotionClass, overlayTransition } from "./foundation/motion-style.js"
+import MotionStyle, { backdropMotionClass, overlayLayer, overlayMotionClass, overlayTransition } from "./foundation/motion-style.js"
 import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
 import { floatingShadow } from "./surface/shadow-options.js"
@@ -95,7 +95,7 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
       ...transition,
       position: "fixed",
       inset: 0,
-      zIndex: 1_000,
+      zIndex: overlayLayer,
       display: "grid",
       placeItems: "center",
       boxSizing: "border-box",

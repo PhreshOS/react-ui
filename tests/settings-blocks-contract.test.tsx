@@ -83,11 +83,30 @@ it("titles a group of fields as one fieldset", function () {
 
 it("frames a program in named regions with a header as tall as a Window header", function () {
   renderUI(<AppLayout>
+    <AppLayout.Title>Settings</AppLayout.Title>
     <AppLayout.Sidebar aria-label="Sections">Navigation</AppLayout.Sidebar>
     <AppLayout.Header>Appearance</AppLayout.Header>
     <AppLayout.Content>Page</AppLayout.Content>
+    <AppLayout.Footer>Actions</AppLayout.Footer>
   </AppLayout>)
+  expect(screen.getByRole("heading", { level: 1, name: "Settings" }).style.minHeight).toBe("40px")
   expect(screen.getByRole("complementary", { name: "Sections" })).toBeTruthy()
   expect(screen.getByRole("banner").style.minHeight).toBe("40px")
   expect(screen.getByRole("main").textContent).toBe("Page")
+})
+
+it("paints only the content, separating the other regions by spacing alone", function () {
+  renderUI(<AppLayout>
+    <AppLayout.Title>Settings</AppLayout.Title>
+    <AppLayout.Sidebar aria-label="Sections">Navigation</AppLayout.Sidebar>
+    <AppLayout.Header>Appearance</AppLayout.Header>
+    <AppLayout.Content>Page</AppLayout.Content>
+    <AppLayout.Footer>Actions</AppLayout.Footer>
+  </AppLayout>)
+  const surfaces = [...document.querySelectorAll(".phreshos-surface")]
+
+  expect(surfaces).toEqual([screen.getByRole("main")])
+  for (const region of [screen.getByRole("complementary"), screen.getByRole("banner"), screen.getByRole("contentinfo")]) {
+    expect(region.style.borderInlineEnd + region.style.borderBlockEnd + region.style.borderBlockStart).toBe("")
+  }
 })

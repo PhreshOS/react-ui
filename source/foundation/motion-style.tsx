@@ -9,6 +9,18 @@ export function overlayTransition(visual: Visual): CSSProperties {
   } as CSSProperties
 }
 
+/**
+ * How long one pass of a repeating motion takes, such as an indeterminate
+ * progress sweep or a skeleton pulse: eight Appearance transactions, and never
+ * quicker than a calm breath.
+ */
+export function loopDuration(visual: Visual): number {
+  return Math.max(900, visual.appearance.transaction.duration * 8)
+}
+
+/** The stacking layer of content above an interface: dialogs and notifications. */
+export const overlayLayer = 1_000
+
 export const overlayMotionClass = "phreshos-ui-overlay"
 export const backdropMotionClass = "phreshos-ui-backdrop"
 
@@ -41,6 +53,9 @@ const stylesheet = `
 }
 @keyframes phreshos-ui-spin {
   to { rotate: 360deg; }
+}
+@keyframes phreshos-ui-pulse {
+  50% { opacity: 0.55; }
 }
 @keyframes phreshos-ui-sweep {
   from { inset-inline-start: -40%; }

@@ -39,6 +39,11 @@ export const controlFontSizes: Readonly<Record<ScaleLevel, string>> = Object.fre
   xlarge: "0.9375em"
 })
 
+/** A control text size relative to an element that already applies another level. */
+export function relativeFontSize(level: ScaleLevel, within: ScaleLevel): string {
+  return `${Number.parseFloat(controlFontSizes[level]) / Number.parseFloat(controlFontSizes[within])}em`
+}
+
 export const controlFontWeight = 600
 
 /** Attenuation shared by every control family. */

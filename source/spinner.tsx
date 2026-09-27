@@ -35,14 +35,18 @@ type DecorativeSpinnerProps = Readonly<{
 
 export type SpinnerProps = SpinnerVisualProps & (NamedSpinnerProps | DecorativeSpinnerProps)
 
+/** A standalone status stays visibly distinct from the compact control indicator. */
+export function spinnerDiameter(spacing: number, size: ScaleLevel): number {
+  return spacing + scale(spacing, size)
+}
+
 /** Compact indeterminate progress, either named or explicitly decorative. */
 export const Spinner = forwardRef<HTMLDivElement, SpinnerProps>(function Spinner({
   className, color = "primary", decorative = false, label, size = "medium", style, ...properties
 }, ref) {
   const metrics = useControlMetrics(size)
   const { colors } = metrics.visual
-  // A standalone status stays visibly distinct from the compact control indicator.
-  const diameter = metrics.visual.spacing + scale(metrics.visual.spacing, size)
+  const diameter = spinnerDiameter(metrics.visual.spacing, size)
   const arc = color === "currentColor" ? "currentColor" : resolveColor(color, colors)
   const rootStyle: CSSProperties = {
     display: "inline-grid",
