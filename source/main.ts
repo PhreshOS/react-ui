@@ -90,6 +90,17 @@ export {
   type ListBoxHeaderProps
 } from "./list-box.js"
 export {
+  GridList,
+  type GridListProps,
+  type GridListNoSelectionProps,
+  type GridListSingleSelectionProps,
+  type GridListMultipleSelectionProps,
+  type GridListMultipleValue,
+  type GridListItemProps,
+  type GridListSectionProps,
+  type GridListHeaderProps
+} from "./grid-list.js"
+export {
   Tabs,
   type TabsProps,
   type TabsListProps,
@@ -138,6 +149,7 @@ export { Breadcrumbs, type BreadcrumbsProps, type BreadcrumbsItemProps } from ".
 export { Avatar, type AvatarProps } from "./avatar.js"
 export { TagGroup, type TagGroupProps, type TagGroupTagProps } from "./tag-group.js"
 export { Skeleton, type SkeletonProps } from "./skeleton.js"
+export { Snippet, copyText, type SnippetProps } from "./snippet.js"
 export { toast, ToastRegion, type ToastContent, type ToastOptions, type ToastRegionProps } from "./toast.js"
 export {
   Readiness,
