@@ -143,6 +143,53 @@ describe("Button", function () {
   })
 })
 
+describe("Button with href", function () {
+  it("renders one native link painted like any other Button", function () {
+    renderButton(<Button href="/blog">Blog</Button>)
+    const link = screen.getByRole("link", { name: "Blog" })
+    expect(link.tagName).toBe("A")
+    expect(link.getAttribute("href")).toBe("/blog")
+    expect(link.getAttribute("type")).toBeNull()
+    expect(paintDeclarations(link)["--phreshos-surface-paint"]).toBe(colors.default)
+  })
+
+  it("passes link attributes through", function () {
+    renderButton(<Button href="https://example.com" target="_blank" rel="noopener">Source</Button>)
+    const link = screen.getByRole("link", { name: "Source" })
+    expect(link.getAttribute("target")).toBe("_blank")
+    expect(link.getAttribute("rel")).toBe("noopener")
+  })
+
+  it("follows links inside the app with the provider's navigate", async function () {
+    const navigate = vi.fn()
+    const onPress = vi.fn()
+    render(<UIProvider navigate={navigate}><Button href="/blog" onPress={onPress}>Blog</Button></UIProvider>)
+    await userEvent.setup().click(screen.getByRole("link", { name: "Blog" }))
+    expect(navigate).toHaveBeenCalledWith("/blog", undefined)
+    expect(onPress).toHaveBeenCalledTimes(1)
+  })
+
+  it("leaves links with a target to the browser", async function () {
+    const navigate = vi.fn()
+    render(<UIProvider navigate={navigate}><Button href="/blog" target="_blank">Blog</Button></UIProvider>)
+    await userEvent.setup().click(screen.getByRole("link", { name: "Blog" }))
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
+  it("has no destination while disabled", function () {
+    renderButton(<Button href="/blog" disabled>Blog</Button>)
+    const link = screen.getByRole("link", { name: "Blog" })
+    expect(link.getAttribute("href")).toBeNull()
+    expect(link.getAttribute("aria-disabled")).toBe("true")
+  })
+
+  it("accepts link attributes only with an href, and never pending", function () {
+    expectTypeOf<{ href: string, target: "_blank" }>().toExtend<ButtonProps>()
+    expectTypeOf<{ href: string, pending: true }>().not.toExtend<ButtonProps>()
+    expectTypeOf<{ href: string, type: "submit" }>().not.toExtend<ButtonProps>()
+  })
+})
+
 function renderButton(button: ReactNode) {
   return render(<UIProvider preferences={{ theme: "light", animations: true }}>{button}</UIProvider>)
 }

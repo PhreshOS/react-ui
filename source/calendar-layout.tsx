@@ -13,8 +13,8 @@ import {
 import type { CalendarCellRenderProps, CalendarState, RangeCalendarState } from "react-aria-components"
 import { Button } from "./button.js"
 import { controlFontWeight, controlOpacity, transition, type ControlMetrics } from "./control/control.js"
-import { selectionLevel } from "./control/item.js"
-import { colorLevel, colorOpacity, readableColor, resolveColor, type Color } from "./foundation/color.js"
+import { selectionColor } from "./control/item.js"
+import { colorOpacity, readableColor, resolveColor, type Color } from "./foundation/color.js"
 import { useDirection } from "./foundation/direction.js"
 import type { ScaleLevel } from "./foundation/scale.js"
 import { dimmedClass, surfacePaint } from "./surface/surface.js"
@@ -92,7 +92,7 @@ function daySelection(state: CalendarCellRenderProps, calendar: CalendarState<"s
 
 /**
  * A chosen day is the calendar's one decision, so it takes the full color;
- * the days inside a range take the selection level; every other day only veils.
+ * the days inside a range take the selection color; every other day only veils.
  */
 function cellStyle(metrics: ControlMetrics, color: Color, state: CalendarCellRenderProps, selection: DaySelection, range: boolean): CSSProperties {
   const { visual } = metrics
@@ -102,7 +102,7 @@ function cellStyle(metrics: ControlMetrics, color: Color, state: CalendarCellRen
   const fill = endpoint
     ? base
     : selection.selected
-      ? colorLevel(base, selectionLevel, colors)
+      ? selectionColor(base, colors)
       : "transparent"
   const paint = surfacePaint(visual, fill, "flat", "none", false, {
     hovered: state.isHovered || state.isFocused,

@@ -10,7 +10,7 @@ import {
   type ListBoxMultipleSelectionProps,
   type ListBoxSingleSelectionProps
 } from "../source/main.js"
-import { colorLevel } from "../source/foundation/color.js"
+import { colorLevel, mixColor } from "../source/foundation/color.js"
 import { surfaceFill } from "./support/paint.js"
 
 afterEach(cleanup)
@@ -120,7 +120,7 @@ it("supports dynamic collections while keeping identities explicit", function ()
   expect(screen.getAllByRole("option").map(option => option.textContent?.replace("✓", ""))).toEqual(["One", "Two"])
 })
 
-it("lays the selection level of its color beneath selection and veils hover without keyboard focus", async function () {
+it("lays the selection color beneath selection and veils hover without keyboard focus", async function () {
   const user = userEvent.setup()
   renderListBox(<ListBox aria-label="Colors" color="secondary" defaultValue="one">
     <ListBox.Item id="one">One</ListBox.Item>
@@ -130,7 +130,8 @@ it("lays the selection level of its color beneath selection and veils hover with
   const colors = defaultAppearance.colors.light
   const selected = screen.getByRole("option", { name: "One" })
   const available = screen.getByRole("option", { name: "Two" })
-  expect(surfaceFill(selected)).toBe(colorLevel(colors.secondary, "subtle", colors))
+  // The subtle level of its color under the same veil as hover.
+  expect(surfaceFill(selected)).toBe(mixColor(colorLevel(colors.secondary, "subtle", colors), colors.foreground, 0.05 * 1.3))
   expect(surfaceFill(available)).toBe("transparent")
 
   await user.hover(available)

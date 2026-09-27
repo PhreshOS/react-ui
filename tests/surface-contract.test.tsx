@@ -32,8 +32,9 @@ describe("Surface depth", function () {
     expect(raised.shadow).toMatch(/^0 0 0 0\.5px /)
     // Light rises from the middle of the top and bottom edges and fades before the sides.
     expect(variable(raised, "rim")).toMatch(/^linear-gradient\(to right, transparent, .* 50%, .*, transparent\)$/)
-    expect(variable(raised, "spill-top")).toMatch(/^radial-gradient\(50% 6px at 50% 0,/)
-    expect(variable(raised, "spill-bottom")).toMatch(/^radial-gradient\(50% 6px at 50% 100%,/)
+    // The spill is as deep as a large Surface allows, and proportionally shallower on a short one.
+    expect(variable(raised, "spill-top")).toMatch(/^radial-gradient\(50% min\(6px, 12%\) at 50% 0,/)
+    expect(variable(raised, "spill-bottom")).toMatch(/^radial-gradient\(50% min\(6px, 12%\) at 50% 100%,/)
   })
 
   it("recesses with a slightly deeper paint, a dimmer rim, and no outer shadow", function () {
@@ -208,3 +209,24 @@ function ruleText(className: string) {
   }
   return ""
 }
+
+describe("Surface hydration", function () {
+  it("replaces the server's inline paint with a paint class once hydrated", async function () {
+    const { act } = await import("react")
+    const { renderToString } = await import("react-dom/server")
+    const { hydrateRoot } = await import("react-dom/client")
+    const tree = <UIProvider preferences={{ theme: "light", animations: false }}><Surface data-testid="surface">Soil</Surface></UIProvider>
+    const container = document.createElement("div")
+    container.innerHTML = renderToString(tree)
+    document.body.append(container)
+    const element = container.querySelector<HTMLElement>("[data-testid=surface]")!
+    expect(element.style.getPropertyValue("--phreshos-surface-paint")).not.toBe("")
+
+    const root = await act(async () => hydrateRoot(container, tree))
+
+    expect(element.className).toMatch(/phreshos-paint-/)
+    expect(element.style.getPropertyValue("--phreshos-surface-paint")).toBe("")
+    await act(async () => root.unmount())
+    container.remove()
+  })
+})

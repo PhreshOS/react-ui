@@ -1,5 +1,6 @@
 import { LucideProvider } from "lucide-react"
 import { useMemo } from "react"
+import { RouterProvider } from "react-aria-components"
 import type { CSSProperties, ReactNode } from "react"
 import { mergeAppearance, type AppearanceUpdate } from "./appearance.js"
 import { DirectionContext, fixedDirectionSource, type Direction } from "./direction.js"
@@ -13,11 +14,17 @@ export interface UIProviderProps {
   readonly children: ReactNode
   /** Establishes the concrete direction inherited by the provider subtree. */
   readonly direction?: Direction
+  /**
+   * Follows a link inside the app, such as a Button `href`, with the app's own
+   * router instead of a page load. Links to other sites, links with a `target`,
+   * and modified clicks are left to the browser.
+   */
+  readonly navigate?: (href: string) => void
   readonly preferences?: PreferencesUpdate
 }
 
 /** Establishes only the explicitly supplied UI values for a React subtree. */
-export function UIProvider({ appearance, children, direction, preferences }: UIProviderProps) {
+export function UIProvider({ appearance, children, direction, navigate, preferences }: UIProviderProps) {
   let subtree = children
   const directionSource = useMemo(
     () => direction === undefined ? undefined : fixedDirectionSource(direction),
@@ -33,6 +40,8 @@ export function UIProvider({ appearance, children, direction, preferences }: UIP
       <div dir={direction} style={directionBoundaryStyle}>{subtree}</div>
     </DirectionContext.Provider>
   }
+
+  if (navigate !== undefined) subtree = <RouterProvider navigate={navigate}>{subtree}</RouterProvider>
 
   // Icons are not a supplied value: every provider gives its subtree the same
   // icon treatment. An icon follows its text size and color, with a constant

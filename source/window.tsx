@@ -1,7 +1,7 @@
 import { createContext, forwardRef, useContext } from "react"
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react"
 import type { BeginWindowMoveGesture } from "@phreshos/core"
-import { Button, type ButtonProps } from "./button.js"
+import { Button, type ButtonActionProps } from "./button.js"
 import { transition } from "./control/control.js"
 import { resolveColor, type Color } from "./foundation/color.js"
 import { headerHeight } from "./foundation/layout.js"
@@ -244,7 +244,7 @@ const WindowActions = forwardRef<HTMLDivElement, WindowActionsProps>(function Wi
   />
 })
 
-export type WindowActionProps = Omit<ButtonProps, "size">
+export type WindowActionProps = Omit<ButtonActionProps, "size">
 
 /** A compact header action; extra actions use the same treatment as the standard controls. */
 const WindowAction = forwardRef<HTMLButtonElement, WindowActionProps>(function WindowAction({

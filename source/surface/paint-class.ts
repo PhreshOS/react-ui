@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from "react"
+
 /**
  * Every distinct Surface paint becomes one shared class. Surfaces repeat the
  * same few paints across a whole interface, so changing Theme or hovering a
@@ -34,3 +36,15 @@ export function flushPaintRules(): void {
 
 /** Whether generated rules can reach a document in this environment. */
 export const paintClassesAvailable = typeof document !== "undefined"
+
+const unchanging = () => () => undefined
+
+/**
+ * Whether this render may use paint classes. Server rendering sends paints
+ * inline, so hydration renders inline too and matches the server HTML; React
+ * then renders again with classes. Without this, the server's inline paint
+ * would stay on the element, because hydration does not patch attributes.
+ */
+export function usePaintClasses(): boolean {
+  return useSyncExternalStore(unchanging, () => paintClassesAvailable, () => false)
+}

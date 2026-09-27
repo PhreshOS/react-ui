@@ -1,7 +1,7 @@
 import { forwardRef } from "react"
 import type { ReactNode } from "react"
 import { ColorPicker as AriaColorPicker, DialogTrigger as AriaDialogTrigger } from "react-aria-components"
-import { Button, type ButtonProps } from "./button.js"
+import { Button, type ButtonActionProps } from "./button.js"
 import { ColorSwatch } from "./color-swatch.js"
 import { colorValue } from "./control/color-value.js"
 import { useControlMetrics } from "./control/control.js"
@@ -31,7 +31,7 @@ function ColorPickerRoot({ value, defaultValue, onChange, children, ...state }: 
   ><AriaDialogTrigger {...ariaOpenState(state)}>{children}</AriaDialogTrigger></AriaColorPicker>
 }
 
-export type ColorPickerTriggerProps = ButtonProps
+export type ColorPickerTriggerProps = ButtonActionProps
 
 /** A Button that shows the picker's color before its own label, if any. */
 const ColorPickerTrigger = forwardRef<HTMLButtonElement, ColorPickerTriggerProps>(function ColorPickerTrigger({ children, size, ...properties }, ref) {

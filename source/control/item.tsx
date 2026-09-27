@@ -1,17 +1,22 @@
 import type { CSSProperties } from "react"
-import { colorLevel, resolveColor, type Color, type ColorLevel } from "../foundation/color.js"
+import type { AppearanceColors } from "../foundation/appearance.js"
+import { colorLevel, mixColor, resolveColor, type Color } from "../foundation/color.js"
 import type { Visual } from "../foundation/visual.js"
-import { surfacePaint, type SurfaceInteraction } from "../surface/surface.js"
+import { clearVeil, interactionShift, surfacePaint, type SurfaceInteraction } from "../surface/surface.js"
 import { transition, type ControlMetrics } from "./control.js"
 import type { SurfaceRenderProps } from "./surface-render.js"
 import { Check } from "lucide-react"
 import { iconProps } from "./icon.js"
 
 /**
- * The level that marks what is selected, in every collection and inside a
- * calendar range.
+ * What marks a selection, in every collection and inside a calendar range:
+ * the subtle level of its color under the same veil as hover. The veil keeps
+ * a light color apart from its canvas, so a selection never shows less
+ * clearly than hovering does.
  */
-export const selectionLevel = "subtle" satisfies ColorLevel
+export function selectionColor(base: string, colors: AppearanceColors): string {
+  return mixColor(colorLevel(base, "subtle", colors), colors.foreground, interactionShift.hovered * clearVeil)
+}
 
 export type ItemState = Readonly<{
   selected: boolean
@@ -23,12 +28,12 @@ export type ItemState = Readonly<{
 
 /**
  * One entry of a collection. At rest it has no paint of its own; hover and
- * press veil it, and selection lays the selection level of the collection
+ * press veil it, and selection lays the selection color of the collection
  * color beneath it. Every collection uses this same treatment.
  */
 export function itemSurface(visual: Visual, color: Color, state: ItemState, radius: CSSProperties["borderRadius"]): SurfaceRenderProps {
   return {
-    color: state.selected ? colorLevel(resolveColor(color, visual.colors), selectionLevel, visual.colors) : "transparent",
+    color: state.selected ? selectionColor(resolveColor(color, visual.colors), visual.colors) : "transparent",
     depth: "flat",
     material: "none",
     radius,
@@ -38,7 +43,7 @@ export function itemSurface(visual: Visual, color: Color, state: ItemState, radi
 
 /** The same treatment as a plain paint, for elements that cannot host a Surface. */
 export function itemPaint(visual: Visual, color: Color, state: ItemState): Readonly<{ background: string, color: string }> {
-  const paint = surfacePaint(visual, state.selected ? colorLevel(resolveColor(color, visual.colors), selectionLevel, visual.colors) : "transparent", "flat", "none", false, itemInteraction(state))
+  const paint = surfacePaint(visual, state.selected ? selectionColor(resolveColor(color, visual.colors), visual.colors) : "transparent", "flat", "none", false, itemInteraction(state))
   return { background: paint.fill, color: paint.text }
 }
 

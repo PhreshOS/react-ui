@@ -5,7 +5,7 @@ import type {
   TooltipProps as AriaTooltipProps,
   TooltipTriggerComponentProps as AriaTooltipTriggerProps
 } from "react-aria-components"
-import { Button, type ButtonProps } from "./button.js"
+import { Button, type ButtonActionProps } from "./button.js"
 import { controlFontSizes } from "./control/control.js"
 import { ariaOpenState, type AriaOverlayInternals, type OverlayRootProps } from "./control/open-state.js"
 import { resolveDirection, useDirection, type Direction } from "./foundation/direction.js"
@@ -34,7 +34,7 @@ export function TooltipRoot({ children, delay, closeDelay, trigger, disabled, cl
   >{children}</AriaTooltipTrigger>
 }
 
-export type TooltipTriggerProps = ButtonProps
+export type TooltipTriggerProps = ButtonActionProps
 
 export const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>(function TooltipTrigger(properties, ref) {
   return <Button {...properties} ref={ref} />

@@ -5,7 +5,7 @@ import type { Direction } from "../foundation/direction.js"
 import { resolveRadius, type RadiusProps } from "../foundation/radius.js"
 import { useVisual, type Visual } from "../foundation/visual.js"
 import { grainImage, grainSeed, grainSize } from "./grain.js"
-import { flushPaintRules, paintClass, paintClassesAvailable } from "./paint-class.js"
+import { flushPaintRules, paintClass, usePaintClasses } from "./paint-class.js"
 import { resolveMaterialOptions, type MaterialMode, type MaterialOptions, type MaterialOverrides } from "./material-options.js"
 import { resolveShadowOptions, shadowStyle, type ShadowOverrides } from "./shadow-options.js"
 
@@ -98,7 +98,7 @@ export const SurfaceView = forwardRef<Element, SurfaceImplementationProps>(funct
     "outline-offset: 1px",
     `border-radius: ${typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius}`
   ].join("; ")
-  const painted = paintClassesAvailable ? paintClass(declarations) : undefined
+  const painted = usePaintClasses() ? paintClass(declarations) : undefined
 
   useInsertionEffect(flushPaintRules)
 
@@ -140,6 +140,12 @@ const surfaceClass = "phreshos-surface"
 
 const materialLevel = Object.freeze({ none: 0, basic: 1, extended: 2, full: 3 } satisfies Record<MaterialMode, number>)
 
+/** How far hover and press move a paint toward the text color. */
+export const interactionShift = Object.freeze({ hovered: 0.05, pressed: 0.1 })
+
+/** A clear Surface has no paint to move, so it shows the same shift as a slightly stronger veil. */
+export const clearVeil = 1.3
+
 /** Resolves every visual value of one Surface. Pure over its inputs. */
 export function surfacePaint(
   visual: Visual,
@@ -152,7 +158,7 @@ export function surfacePaint(
   const { colors } = visual
   const base = resolveColor(color, colors)
   const active = interaction !== undefined && !interaction.disabled
-  const shift = active ? interaction.pressed ? 0.1 : interaction.hovered ? 0.05 : 0 : 0
+  const shift = active ? interaction.pressed ? interactionShift.pressed : interaction.hovered ? interactionShift.hovered : 0 : 0
   // Recessed paint sinks slightly below its surroundings; interaction then
   // moves the same base toward the content color so every state stays related.
   const darkness = canvasDarkness(colors)
@@ -163,7 +169,7 @@ export function surfacePaint(
   // color of whatever it sits on and only reveals interaction as a veil.
   const clear = base === "transparent"
   const fill = clear
-    ? shift > 0 ? colorOpacity(colors.foreground, shift * 1.3) : "transparent"
+    ? shift > 0 ? colorOpacity(colors.foreground, shift * clearVeil) : "transparent"
     : mixColor(rest, colors.foreground, shift)
 
   const mode = clear ? "none" : typeof options === "object" ? "full" : options ?? "basic"
@@ -193,8 +199,11 @@ export function surfacePaint(
   const rim = edged
     ? `linear-gradient(to right, transparent, ${colorOpacity(light, lit.side)} 18%, ${colorOpacity(light, lit.edge)} 50%, ${colorOpacity(light, lit.side)} 82%, transparent)`
     : "none"
+  // The spill reaches at most a fixed depth, and less on short Surfaces: at a
+  // fixed depth, a small button was lit through nearly half its height and
+  // read as swollen, while a large panel barely changes.
   const spill = (edge: "top" | "bottom") => edged && lit.spill > 0
-    ? `radial-gradient(50% 6px at 50% ${edge === "top" ? "0" : "100%"}, ${colorOpacity(light, lit.spill)}, transparent)`
+    ? `radial-gradient(50% ${spillDepth} at 50% ${edge === "top" ? "0" : "100%"}, ${colorOpacity(light, lit.spill)}, transparent)`
     : "none"
   // A recessed Surface holds a value, so focus and validity also claim its hairline.
   const claimed = interaction?.invalid || (depth === "recessed" && interaction?.focusVisible)
@@ -228,6 +237,9 @@ export function surfacePaint(
     } as CSSProperties
   }
 }
+
+/** How far the inward spill reaches: a fixed depth, or a share of a short Surface's height. */
+const spillDepth = "min(6px, 12%)"
 
 /** How much light each part of the rim receives, interpolated along the canvas darkness. */
 function edgeLight(depth: SurfaceDepth, darkness: number) {

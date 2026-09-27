@@ -6,7 +6,7 @@ import { headerHeight } from "./foundation/layout.js"
 import { resolveRadius } from "./foundation/radius.js"
 import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
-import { paintClass, paintClassesAvailable } from "./surface/paint-class.js"
+import { paintClass, usePaintClasses } from "./surface/paint-class.js"
 import { Surface, type SurfaceProps } from "./surface/surface.js"
 
 const PanelContext = createContext<{ color: Color | undefined, hasHeader: boolean, radius: CSSProperties["borderRadius"] }>({ color: undefined, hasHeader: false, radius: undefined })
@@ -67,7 +67,7 @@ export const PanelContent = forwardRef<HTMLDivElement, PanelContentProps>(functi
   const { color, hasHeader, radius } = useContext(PanelContext)
   // A zero-specificity class keeps the padding a default: any consumer class
   // or style still sets its own.
-  const padded = paintClassesAvailable ? paintClass(`padding: ${padding}px`) : undefined
+  const padded = usePaintClasses() ? paintClass(`padding: ${padding}px`) : undefined
 
   return <Surface color={color} material="extended" radius={radius} {...properties} ref={ref}
     className={[padded, className].filter(Boolean).join(" ") || undefined}

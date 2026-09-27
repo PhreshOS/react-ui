@@ -11,7 +11,7 @@ import type {
   HeadingProps as AriaHeadingProps,
   PopoverProps as AriaPopoverProps
 } from "react-aria-components"
-import { Button, type ButtonProps } from "./button.js"
+import { Button, type ButtonActionProps } from "./button.js"
 import { controlFontSizes, controlFontWeight } from "./control/control.js"
 import { ariaOpenState, type AriaOverlayInternals, type OverlayRootProps } from "./control/open-state.js"
 import { resolveDirection, useDirection, type Direction } from "./foundation/direction.js"
@@ -28,7 +28,7 @@ export function PopoverRoot({ children, ...state }: PopoverRootProps) {
   return <AriaDialogTrigger {...ariaOpenState(state)}>{children}</AriaDialogTrigger>
 }
 
-export type PopoverTriggerProps = ButtonProps
+export type PopoverTriggerProps = ButtonActionProps
 
 export const PopoverTrigger = forwardRef<HTMLButtonElement, PopoverTriggerProps>(function PopoverTrigger(properties, ref) {
   return <Button {...properties} ref={ref} />
@@ -133,7 +133,7 @@ export const PopoverTitle = forwardRef<HTMLHeadingElement, PopoverTitleProps>(fu
   />
 })
 
-export type PopoverCloseProps = ButtonProps
+export type PopoverCloseProps = ButtonActionProps
 
 export const PopoverClose = forwardRef<HTMLButtonElement, PopoverCloseProps>(function PopoverClose(properties, ref) {
   return <Button {...properties} ref={ref} slot="close" />

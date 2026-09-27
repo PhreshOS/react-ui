@@ -64,7 +64,7 @@ export {
   type WindowMoveCaptureProps
 } from "./window.js"
 export { default as useWindowMoveHandle, type WindowMoveHandle } from "./use-window-move-handle.js"
-export { Button, type ButtonColor, type ButtonProps } from "./button.js"
+export { Button, type ButtonActionProps, type ButtonColor, type ButtonLinkProps, type ButtonProps } from "./button.js"
 export { Input, type InputProps } from "./input.js"
 export { Textarea, type TextareaProps } from "./textarea.js"
 export { DateField, type DateFieldProps } from "./date-field.js"

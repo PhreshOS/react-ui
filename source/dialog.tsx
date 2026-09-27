@@ -14,7 +14,7 @@ import type {
   ModalOverlayProps as AriaModalOverlayProps,
   TextProps as AriaTextProps
 } from "react-aria-components"
-import { Button, type ButtonProps } from "./button.js"
+import { Button, type ButtonActionProps } from "./button.js"
 import { controlFontSizes, controlFontWeight, controlOpacity } from "./control/control.js"
 import { ariaOpenState, type AriaOverlayInternals, type OverlayRootProps } from "./control/open-state.js"
 import { colorOpacity, darkCanvas } from "./foundation/color.js"
@@ -31,7 +31,7 @@ export function DialogRoot({ children, ...state }: DialogRootProps) {
   return <AriaDialogTrigger {...ariaOpenState(state)}>{children}</AriaDialogTrigger>
 }
 
-export type DialogTriggerProps = ButtonProps
+export type DialogTriggerProps = ButtonActionProps
 
 export const DialogTrigger = forwardRef<HTMLButtonElement, DialogTriggerProps>(function DialogTrigger(properties, ref) {
   return <Button {...properties} ref={ref} />
@@ -222,7 +222,7 @@ export const DialogFooter = forwardRef<HTMLDivElement, DialogFooterProps>(functi
   return <div {...properties} ref={ref} style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap, minWidth: 0, ...style }} />
 })
 
-export type DialogCloseProps = ButtonProps
+export type DialogCloseProps = ButtonActionProps
 
 export const DialogClose = forwardRef<HTMLButtonElement, DialogCloseProps>(function DialogClose(properties, ref) {
   return <Button {...properties} ref={ref} slot="close" />
