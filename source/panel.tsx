@@ -8,6 +8,7 @@ import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
 import { paintClass, usePaintClasses } from "./surface/paint-class.js"
 import { Surface, type SurfaceProps } from "./surface/surface.js"
+import { containerPadding } from "./foundation/spacing.js"
 
 const PanelContext = createContext<{ color: Color | undefined, hasHeader: boolean, radius: CSSProperties["borderRadius"] }>({ color: undefined, hasHeader: false, radius: undefined })
 
@@ -63,7 +64,7 @@ export type PanelContentProps = SurfaceProps
 export const PanelContent = forwardRef<HTMLDivElement, PanelContentProps>(function PanelContent({ className, style, ...properties }, ref) {
   const { spacing } = useVisual()
   const inset = scale(spacing, "small")
-  const padding = scale(spacing, "medium")
+  const padding = containerPadding(spacing)
   const { color, hasHeader, radius } = useContext(PanelContext)
   // A zero-specificity class keeps the padding a default: any consumer class
   // or style still sets its own.

@@ -14,3 +14,12 @@ export function resolveSpacing(value: Spacing | undefined, spacing: number): CSS
 export function resolveSpacing(value: Spacing | undefined, spacing: number): CSSProperties["gap"] {
   return isScaleLevel(value) ? scale(spacing, value) : value
 }
+
+/**
+ * The padding of a Surface that holds content, such as a dialog, a panel's
+ * content, or an alert: one level above the spacing a control pads with, so a
+ * container never wraps its content as tightly as a button wraps its label.
+ */
+export function containerPadding(spacing: number): number {
+  return scale(spacing, "large")
+}

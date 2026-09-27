@@ -21,6 +21,7 @@ import { colorOpacity, darkCanvas } from "./foundation/color.js"
 import { resolveDirection, useDirection, type Direction } from "./foundation/direction.js"
 import MotionStyle, { backdropMotionClass, overlayLayer, overlayMotionClass, overlayTransition } from "./foundation/motion-style.js"
 import { scale } from "./foundation/scale.js"
+import { containerPadding } from "./foundation/spacing.js"
 import { useVisual } from "./foundation/visual.js"
 import { floatingShadow } from "./surface/shadow-options.js"
 import { Surface, type SurfaceOwnProps } from "./surface/surface.js"
@@ -129,6 +130,7 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
 }, ref) {
   const visual = useVisual()
   const inset = scale(visual.spacing, "medium")
+  const padding = containerPadding(visual.spacing)
   const transition = overlayTransition(visual)
   const direction = resolveDirection(properties.dir, useDirection())
 
@@ -154,7 +156,7 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
         boxSizing: "border-box",
         width: "100%",
         maxHeight: "inherit",
-        padding: inset,
+        padding,
         overflow: "hidden",
         ...style
       }}
@@ -187,10 +189,11 @@ export type DialogTitleProps = AriaHeadingProps
 export const DialogTitle = forwardRef<HTMLHeadingElement, DialogTitleProps>(function DialogTitle({ style, ...properties }, ref) {
   // The modal is portalled: owned text parts set their relative scale directly,
   // while Dialog.Body remains untouched for consumer-owned content and controls.
+  // One level above the description and the content, so the title leads them.
   return <AriaHeading {...properties} ref={ref} slot="title" style={{
     margin: 0,
     fontFamily: "inherit",
-    fontSize: controlFontSizes.medium,
+    fontSize: controlFontSizes.large,
     fontWeight: controlFontWeight,
     lineHeight: 1.5,
     ...style

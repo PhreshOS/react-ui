@@ -63,7 +63,8 @@ describe("Dialog", function () {
     const title = screen.getByRole("heading", { name: "Workspace settings" })
     const description = screen.getByText("Change the active workspace.")
     expect(description.getAttribute("slot")).toBe("description")
-    expect(title.style.fontSize).toBe("0.8125em")
+    // The title leads its description by one level of the control text scale.
+    expect(title.style.fontSize).toBe("0.875em")
     expect(description.style.fontSize).toBe("0.8125em")
     const content = screen.getByRole("dialog", { name: "Workspace settings" }).parentElement
     expect(content?.style.fontSize).toBe("")

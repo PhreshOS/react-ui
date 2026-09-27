@@ -7,6 +7,7 @@ import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
 import { ScrollArea } from "./scroll-area.js"
 import { Surface } from "./surface/surface.js"
+import { containerPadding } from "./foundation/spacing.js"
 
 const AppLayoutContext = createContext(false)
 
@@ -106,7 +107,7 @@ const AppLayoutContent = forwardRef<HTMLElement, AppLayoutRegionProps>(function 
     overflow: "clip",
     ...style
   }}>
-    <ScrollArea style={{ height: "100%" }}><div style={{ padding: spacing }}>{children}</div></ScrollArea>
+    <ScrollArea style={{ height: "100%" }}><div style={{ padding: containerPadding(spacing) }}>{children}</div></ScrollArea>
   </Surface>
 })
 

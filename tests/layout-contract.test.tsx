@@ -86,3 +86,9 @@ describe("Grid", function () {
     expect(layout.style.gridTemplateRows).toBe("auto 1fr")
   })
 })
+
+it("pads a container one level above the spacing a control pads with", async function () {
+  const { containerPadding } = await import("../source/foundation/spacing.js")
+  expect(containerPadding(12)).toBe(18)
+  expect(containerPadding(8)).toBe(12)
+})

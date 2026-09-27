@@ -11,6 +11,7 @@ import { resolveRadius } from "./foundation/radius.js"
 import { scale } from "./foundation/scale.js"
 import { Surface } from "./surface/surface.js"
 import { floatingShadow } from "./surface/shadow-options.js"
+import { containerPadding } from "./foundation/spacing.js"
 
 export interface ToastContent {
   readonly title: ReactNode
@@ -78,7 +79,8 @@ export function ToastRegion({ className, style }: ToastRegionProps) {
         gridTemplateColumns: "auto minmax(0, 1fr) auto",
         alignItems: "start",
         gap: metrics.gap * 2,
-        padding: metrics.spacing,
+        padding: containerPadding(visual.spacing),
+        // The close button carries its own padding, so the end keeps less.
         paddingInlineEnd: metrics.spacing / 2,
         fontSize: controlFontSizes.medium,
         lineHeight: 1.45

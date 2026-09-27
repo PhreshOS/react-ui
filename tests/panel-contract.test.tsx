@@ -76,11 +76,11 @@ describe("Panel", () => {
     expect(screen.getByLabelText("Body").style.margin).toBe("9px")
   })
 
-  it("pads its content by the Appearance spacing as a default any class can replace", () => {
+  it("pads its content as a container, a level above controls, as a default any class can replace", () => {
     render(provider(<Panel><Panel.Content aria-label="Body">Content</Panel.Content></Panel>))
     const body = screen.getByLabelText("Body")
     const rule = [...document.styleSheets].flatMap(sheet => [...sheet.cssRules])
-      .find(rule => [...body.classList].some(name => rule.cssText.startsWith(`:where(.${name})`) && rule.cssText.includes("padding: 12px")))
+      .find(rule => [...body.classList].some(name => rule.cssText.startsWith(`:where(.${name})`) && rule.cssText.includes("padding: 18px")))
     expect(rule).toBeDefined()
     expect(body.style.padding).toBe("")
   })

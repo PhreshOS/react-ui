@@ -6,6 +6,7 @@ import { meaningIcon, urgentMeaning } from "./control/meaning.js"
 import { colorLevel, resolveColor, type Color } from "./foundation/color.js"
 import { resolveRadius } from "./foundation/radius.js"
 import { Surface, type SurfaceProps } from "./surface/surface.js"
+import { containerPadding } from "./foundation/spacing.js"
 
 export interface AlertProps extends Omit<SurfaceProps, "color" | "title" | "children"> {
   /** The meaning, as a color role: `info` by default; `warning` and `danger` also interrupt. */
@@ -41,7 +42,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert({
       gridTemplateColumns: icon === false ? "minmax(0, 1fr)" : "auto minmax(0, 1fr)",
       alignItems: "start",
       gap: metrics.gap * 2,
-      padding: metrics.spacing,
+      padding: containerPadding(metrics.visual.spacing),
       fontSize: controlFontSizes.medium,
       lineHeight: 1.45,
       ...style
