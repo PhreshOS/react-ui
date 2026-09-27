@@ -1,3 +1,4 @@
+import { renderToString } from "react-dom/server"
 import { cleanup, render, screen } from "@testing-library/react"
 import { createRef, forwardRef, type CSSProperties, type ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
@@ -115,12 +116,23 @@ describe("Surface material", function () {
 
     expect(variable(at("none"), "grain")).toBe("none")
     expect(variable(at("none"), "rim")).toBe("none")
-    expect(variable(at("basic"), "grain")).toContain("data:image/svg+xml")
+    // Grain travels as one shared rule per texture, not inline on every Surface.
+    expect(at("basic").grain?.rule).toContain("data:image/svg+xml")
+    expect(at("none").grain).toBeNull()
     expect(variable(at("basic"), "paint")).toBe(at("basic").fill)
     expect(variable(at("extended"), "paint")).toContain("color-mix(in srgb")
     expect(variable(at("extended"), "frost")).toBe("none")
     expect(variable(at("full"), "frost")).toBe("blur(8px) saturate(1.8)")
     expect(at("full").distortion).toBe(12)
+  })
+
+  it("writes each grain texture once in server HTML, however many Surfaces use it", function () {
+    const html = renderToString(<UIProvider appearance={defaultAppearance}>
+      {Array.from({ length: 12 }, (_, index) => <Surface key={index}>Surface</Surface>)}
+    </UIProvider>)
+
+    expect(html.match(/data:image\/svg\+xml/g)?.length).toBe(1)
+    expect(html).not.toMatch(/style="[^"]*--phreshos-surface-grain/)
   })
 
   it("omits backdrop work when the final paint is opaque", function () {

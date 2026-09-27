@@ -44,7 +44,9 @@ describe("Panel", () => {
     expect(paintDeclarations(panel)["--phreshos-surface-frost"]).toContain("blur")
     expect(paintDeclarations(body)["--phreshos-surface-frost"]).toBe("none")
     expect(paintDeclarations(body)["--phreshos-surface-rim"]).toContain("linear-gradient")
-    expect(paintDeclarations(body)["--phreshos-surface-grain"]).toBe(paintDeclarations(reference)["--phreshos-surface-grain"])
+    const grain = (element: Element) => [...element.classList].find(name => name.startsWith("phreshos-grain-"))
+    expect(grain(body)).toBeDefined()
+    expect(grain(body)).toBe(grain(reference))
   })
 
   it("forwards the outer ref and native properties without leaking slot properties", () => {

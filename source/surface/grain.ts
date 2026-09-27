@@ -22,6 +22,16 @@ export function grainImage(seed: number, amount: number, opacity: number): strin
 }
 
 /**
+ * One grain texture as a shared class. Its name comes from the texture's own
+ * parameters, so server and browser rendering agree on it, and the rule is
+ * written once however many Surfaces use it instead of inline on each.
+ */
+export function grainTexture(seed: number, amount: number, opacity: number): Readonly<{ name: string, rule: string }> {
+  const name = `phreshos-grain-${seed}-${amount}-${Math.round(opacity * 1_000)}`.replace(/[^a-z0-9-]/gi, "_")
+  return { name, rule: `:where(.${name}) { --phreshos-surface-grain: ${grainImage(seed, amount, opacity)} }` }
+}
+
+/**
  * One texture serves every Surface. Each Surface tiles it from its own origin,
  * so neighbours never align, and equal paints can share one generated class.
  */

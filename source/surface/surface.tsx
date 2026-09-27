@@ -4,7 +4,7 @@ import { canvasDarkness, colorOpacity, contrast, mixColor, readableColor, recess
 import type { Direction } from "../foundation/direction.js"
 import { resolveRadius, type RadiusProps } from "../foundation/radius.js"
 import { useVisual, type Visual } from "../foundation/visual.js"
-import { grainImage, grainSeed, grainSize } from "./grain.js"
+import { grainSeed, grainSize, grainTexture } from "./grain.js"
 import { flushPaintRules, paintClass, usePaintClasses } from "./paint-class.js"
 import { resolveMaterialOptions, type MaterialMode, type MaterialOptions, type MaterialOverrides } from "./material-options.js"
 import { resolveShadowOptions, shadowStyle, type ShadowOverrides } from "./shadow-options.js"
@@ -105,10 +105,10 @@ export const SurfaceView = forwardRef<Element, SurfaceImplementationProps>(funct
   return createElement(Element, {
     ...properties,
     ref,
-    className: [surfaceClass, painted, dimmedClass(interaction?.disabled ?? false), className].filter(Boolean).join(" "),
+    className: [surfaceClass, paint.grain?.name, painted, dimmedClass(interaction?.disabled ?? false), className].filter(Boolean).join(" "),
     // Without a document (server rendering), the same declarations travel inline.
     style: painted === undefined ? { ...inlineDeclarations(declarations), ...style } : style
-  }, <SurfaceStyle />, paint.distortion > 0 && <Refraction identity={identity} distortion={paint.distortion} />, children)
+  }, <SurfaceStyle />, paint.grain && <GrainStyle grain={paint.grain} />, paint.distortion > 0 && <Refraction identity={identity} distortion={paint.distortion} />, children)
 })
 
 function inlineDeclarations(declarations: string): CSSProperties {
@@ -181,8 +181,8 @@ export function surfacePaint(
     ? [material.backdrop > 0 ? `blur(${material.backdrop}px)` : "", material.saturation !== 1 ? `saturate(${material.saturation})` : ""].filter(Boolean).join(" ")
     : ""
   const grain = level >= materialLevel.basic && material.grain > 0 && material.grainAmount > 0
-    ? grainImage(grainSeed, material.grainAmount, level === materialLevel.basic ? material.grain * material.opacity : material.grain)
-    : "none"
+    ? grainTexture(grainSeed, material.grainAmount, level === materialLevel.basic ? material.grain * material.opacity : material.grain)
+    : null
 
   const ringBase = interaction?.invalid
     ? colors.danger
@@ -224,9 +224,11 @@ export function surfacePaint(
     ring: colorOpacity(ringBase, 0.34),
     shadow: [hairline, outer === "none" ? null : outer].filter(Boolean).join(", ") || "none",
     distortion: level >= materialLevel.full && translucent ? material.distortion : 0,
+    grain,
     variables: {
       "--phreshos-surface-paint": translucent ? colorOpacity(fill, opacity) : fill,
-      "--phreshos-surface-grain": grain,
+      // A grain texture arrives through its shared class; without one the layer is empty.
+      ...(grain === null ? { "--phreshos-surface-grain": "none" } : {}),
       "--phreshos-surface-frost": frost || "none",
       "--phreshos-surface-rim": rim,
       "--phreshos-surface-spill-top": spill("top"),
@@ -348,6 +350,11 @@ const stylesheet = `
   mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
 }
 `
+
+/** One rule per grain texture, hoisted and deduplicated by React like the stylesheet below. */
+function GrainStyle({ grain }: Readonly<{ grain: Readonly<{ name: string, rule: string }> }>) {
+  return <style href={grain.name} precedence="phreshos">{grain.rule}</style>
+}
 
 /** React hoists and deduplicates this stylesheet, including inside portals. */
 function SurfaceStyle() {
