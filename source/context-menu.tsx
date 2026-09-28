@@ -52,6 +52,8 @@ export const ContextMenuContent = forwardRef<HTMLElement, ContextMenuContentProp
     function dismiss(event: PointerEvent) {
       const target = event.target
       if (target instanceof Node && contentRef.current?.contains(target)) return
+      // A Submenu opens in its own overlay; a press inside it is still inside this menu.
+      if (target instanceof Element && target.closest('[data-trigger="SubmenuTrigger"]')) return
       state?.close()
     }
 

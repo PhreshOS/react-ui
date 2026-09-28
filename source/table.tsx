@@ -19,7 +19,7 @@ import type {
 } from "react-aria-components"
 import { controlFontWeight, controlOpacity, transition, useControlMetrics, type ControlMetrics, secondaryFontSize } from "./control/control.js"
 import { separatorColor } from "./control/field.js"
-import { itemPaint } from "./control/item.js"
+import { dropTargetOutline, itemPaint } from "./control/item.js"
 import {
   ariaSelection,
   stringKey,
@@ -101,7 +101,7 @@ const TableRoot = forwardRef<HTMLTableElement | HTMLDivElement, TableRootProps>(
       className={className}
       onRowAction={onAction == null ? undefined : key => onAction(stringKey(key))}
       onSortChange={onSortChange == null ? undefined : descriptor => onSortChange(tableSort(descriptor))}
-      style={{
+      style={state => ({
         width: "100%",
         minWidth: "max-content",
         borderCollapse: "separate",
@@ -112,8 +112,9 @@ const TableRoot = forwardRef<HTMLTableElement | HTMLDivElement, TableRootProps>(
         overflow: "hidden",
         fontFamily: "inherit",
         fontSize: metrics.fontSize,
+        ...dropTargetOutline(metrics, state.isDropTarget),
         ...style
-      }}
+      })}
     /></AriaDirectionBoundary>
   </TableStyleContext.Provider>
 })
@@ -231,7 +232,8 @@ const TableRowImplementation = forwardRef(function TableRow<T extends object = o
     style={state => ({
       ...transition(metrics.visual, "background-color, color, outline-color"),
       ...itemPaint(metrics.visual, color, {
-        selected: state.isSelected,
+        // What a drag would drop into shows as chosen.
+        selected: state.isSelected || state.isDropTarget === true,
         hovered: responds && state.isHovered,
         pressed: responds && state.isPressed,
         focusVisible: false,

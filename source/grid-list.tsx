@@ -14,7 +14,7 @@ import type {
   GridListSectionProps as AriaGridListSectionProps
 } from "react-aria-components"
 import { useControlMetrics, type ControlMetrics } from "./control/control.js"
-import { itemSurface, SelectionMark } from "./control/item.js"
+import { dropTargetOutline, itemSurface, SelectionMark } from "./control/item.js"
 import {
   ariaSelection,
   type MultipleSelectionProps,
@@ -83,7 +83,7 @@ const GridListRootImplementation = forwardRef(function GridList<T extends object
       dir={direction}
       layout="grid"
       className={className}
-      style={{
+      style={state => ({
         display: "grid",
         gridTemplateColumns: columns,
         gap: metrics.gap * 2,
@@ -93,8 +93,10 @@ const GridListRootImplementation = forwardRef(function GridList<T extends object
         outline: "none",
         fontFamily: "inherit",
         fontSize: metrics.fontSize,
+        borderRadius: metrics.radius,
+        ...dropTargetOutline(metrics, state.isDropTarget),
         ...style
-      }}
+      })}
     /></AriaDirectionBoundary>
   </GridListStyleContext.Provider>
 })
@@ -130,7 +132,8 @@ const GridListItemImplementation = forwardRef(function GridListItem<T = object>(
     isDisabled={disabled}
     render={surfaceRender<GridListItemRenderProps>("div", state => ({
       ...itemSurface(metrics.visual, itemColor, {
-        selected: state.isSelected,
+        // What a drag would drop into shows as chosen.
+        selected: state.isSelected || state.isDropTarget === true,
         hovered: state.isHovered,
         pressed: state.isPressed,
         focusVisible: state.isFocusVisible,
@@ -138,7 +141,7 @@ const GridListItemImplementation = forwardRef(function GridListItem<T = object>(
       }, metrics.radius),
       // Unlike a list row, a card is a whole Surface: flat, in the default color at rest, in its
       // selection color once selected, with the default material in both.
-      ...(state.isSelected ? {} : { color: "default" }),
+      ...(state.isSelected || state.isDropTarget === true ? {} : { color: "default" }),
       material: undefined
     }))}
     style={{

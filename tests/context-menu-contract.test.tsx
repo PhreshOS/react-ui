@@ -69,6 +69,30 @@ describe("ContextMenu", function () {
     expect(screen.getByRole("button", { name: "Second row" }).hasAttribute("data-pressed")).toBe(false)
   })
 
+  it("opens a Submenu from an Item of the context menu", async function () {
+    const onPlace = vi.fn()
+    render(<ContextMenu>
+      <ContextMenu.Trigger><button>Picture</button></ContextMenu.Trigger>
+      <ContextMenu.Content>
+        <Menu aria-label="Picture actions">
+          <Menu.Submenu>
+            <Menu.Item id="wallpaper">Set as wallpaper</Menu.Item>
+            <Menu.Submenu.Content>
+              <Menu aria-label="Where" onAction={onPlace}><Menu.Item id="desktop">Desktop</Menu.Item></Menu>
+            </Menu.Submenu.Content>
+          </Menu.Submenu>
+        </Menu>
+      </ContextMenu.Content>
+    </ContextMenu>)
+
+    const user = userEvent.setup()
+    fireEvent.contextMenu(screen.getByRole("button", { name: "Picture" }))
+    await user.click(screen.getByRole("menuitem", { name: "Set as wallpaper" }))
+    await user.click(await screen.findByRole("menuitem", { name: "Desktop" }))
+
+    expect(onPlace).toHaveBeenCalledWith("desktop")
+  })
+
   it("reports item activation and closes", async function () {
     const action = vi.fn()
     const onOpenChange = vi.fn()

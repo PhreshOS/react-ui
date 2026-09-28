@@ -9,7 +9,8 @@ import {
   type TableMultipleSelectionProps,
   type TableRowProps,
   type TableSingleSelectionProps,
-  type TableSort
+  type TableSort,
+  useDragAndDrop
 } from "../source/main.js"
 
 afterEach(cleanup)
@@ -224,3 +225,26 @@ function provider(component: ReactNode) {
     {component}
   </UIProvider>
 }
+
+it("drags its rows with the browser's own drag, when given drag and drop hooks", function () {
+  function Files() {
+    const { dragAndDropHooks } = useDragAndDrop({
+      getItems: keys => [...keys].map(key => ({ "text/plain": String(key) })),
+      acceptedDragTypes: ["text/plain"],
+      onItemDrop: () => undefined
+    })
+    return <Table aria-label="Files" selectionMode="multiple" dragAndDropHooks={dragAndDropHooks}>
+      <Table.Header>
+        <Table.Column id="name" rowHeader>Name</Table.Column>
+      </Table.Header>
+      <Table.Body>
+        <Table.Row id="notes"><Table.Cell>Notes</Table.Cell></Table.Row>
+        <Table.Row id="photos"><Table.Cell>Photos</Table.Cell></Table.Row>
+      </Table.Body>
+    </Table>
+  }
+
+  renderTable(<Files />)
+
+  for (const row of screen.getAllByRole("row").slice(1)) expect(row.getAttribute("draggable")).toBe("true")
+})

@@ -5,8 +5,10 @@ import {
   Menu as AriaMenu,
   MenuItem as AriaMenuItem,
   MenuSection as AriaMenuSection,
-  Separator as AriaSeparator
+  Separator as AriaSeparator,
+  SubmenuTrigger as AriaSubmenuTrigger
 } from "react-aria-components"
+import { ChevronRight } from "lucide-react"
 import type {
   HeaderProps as AriaHeaderProps,
   MenuItemProps as AriaMenuItemProps,
@@ -15,7 +17,7 @@ import type {
   MenuSectionProps as AriaMenuSectionProps,
   SeparatorProps as AriaSeparatorProps
 } from "react-aria-components"
-import { useControlMetrics, type ControlMetrics } from "./control/control.js"
+import { controlOpacity, useControlMetrics, type ControlMetrics } from "./control/control.js"
 import { separatorColor } from "./control/field.js"
 import { itemStyle, itemSurface, SelectionMark } from "./control/item.js"
 import {
@@ -31,6 +33,9 @@ import type { Color } from "./foundation/color.js"
 import type { RadiusProps } from "./foundation/radius.js"
 import type { ScaleLevel } from "./foundation/scale.js"
 import { collectionHeaderStyle } from "./list-box.js"
+import { resolveDirection, useDirection } from "./foundation/direction.js"
+import { iconProps } from "./control/icon.js"
+import { MenuContent, type PopoverContentProps } from "./popover.js"
 
 type MenuContext = Readonly<{ color: Color, metrics: ControlMetrics, itemRadius: CSSProperties["borderRadius"], selecting: boolean }>
 
@@ -126,6 +131,7 @@ const MenuItemImplementation = forwardRef(function MenuItem<T = object>(
 ) {
   const { color: inherited, metrics, itemRadius, selecting } = useMenuStyle()
   const itemColor = color ?? inherited
+  const direction = resolveDirection(properties.dir as "ltr" | "rtl" | undefined, useDirection())
 
   return <AriaMenuItem
     {...properties}
@@ -147,6 +153,8 @@ const MenuItemImplementation = forwardRef(function MenuItem<T = object>(
   >{state => <>
     {typeof children === "function" ? children(state) : children}
     {selecting && <SelectionMark visible={state.isSelected} />}
+    {/* An Item that opens a Submenu points toward where it opens. */}
+    {state.hasSubmenu && <ChevronRight {...iconProps(14)} style={{ marginInlineStart: "auto", opacity: controlOpacity.secondary, rotate: direction === "rtl" ? "180deg" : undefined }} />}
   </>}</AriaMenuItem>
 })
 
@@ -181,6 +189,25 @@ const MenuSeparator = forwardRef<HTMLElement, MenuSeparatorProps>(function MenuS
   }} />
 })
 
+export interface MenuSubmenuProps {
+  /** The Item that opens the Submenu, then its `Menu.Submenu.Content`. */
+  readonly children: [ReactElement, ReactElement]
+  /** Milliseconds the pointer rests on the Item before the Submenu opens. */
+  readonly delay?: number
+}
+
+/** An Item that opens another Menu beside it. */
+function MenuSubmenu({ children, delay }: MenuSubmenuProps) {
+  return <AriaSubmenuTrigger delay={delay}>{children}</AriaSubmenuTrigger>
+}
+
+export type MenuSubmenuContentProps = Omit<PopoverContentProps, "placement">
+
+/** The Submenu's own Menu, opening beside its Item toward the reading direction's end. */
+const MenuSubmenuContent = forwardRef<HTMLElement, MenuSubmenuContentProps>(function MenuSubmenuContent(properties, ref) {
+  return <MenuContent {...properties} ref={ref} placement="end top" />
+})
+
 function useMenuStyle() {
   const context = useContext(MenuStyleContext)
   if (context == null) throw new Error("Menu parts must be used inside Menu")
@@ -192,7 +219,8 @@ export const Menu = Object.assign(MenuRootImplementation as MenuRootComponent, {
   Item: MenuItemImplementation as MenuItemComponent,
   Section: AriaMenuSection as <T extends object = object>(properties: MenuSectionProps<T>) => ReactElement | null,
   Header: MenuHeader,
-  Separator: MenuSeparator
+  Separator: MenuSeparator,
+  Submenu: Object.assign(MenuSubmenu, { Content: MenuSubmenuContent })
 })
 
 export type MenuProps<T extends object = object> = MenuRootProps<T>

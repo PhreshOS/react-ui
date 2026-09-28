@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react"
 import type { AppearanceColors } from "../foundation/appearance.js"
-import { colorLevel, mixColor, resolveColor, type Color } from "../foundation/color.js"
+import { colorLevel, colorOpacity, mixColor, resolveColor, type Color } from "../foundation/color.js"
 import type { Visual } from "../foundation/visual.js"
 import { clearVeil, interactionShift, surfacePaint, type SurfaceInteraction } from "../surface/surface.js"
 import { transition, type ControlMetrics } from "./control.js"
@@ -71,4 +71,12 @@ export function itemStyle(metrics: ControlMetrics, disabled: boolean): CSSProper
 /** The selection mark drawn at the end of a selected entry. */
 export function SelectionMark({ visible }: Readonly<{ visible: boolean }>) {
   return <Check {...iconProps(14)} style={{ flexShrink: 0, marginInlineStart: "auto", opacity: visible ? 1 : 0 }} />
+}
+
+/**
+ * A collection that a drag would drop into as a whole, outlined as focus is, so it reads as the place
+ * that takes the drop.
+ */
+export function dropTargetOutline(metrics: ControlMetrics, dropTarget: boolean | undefined): CSSProperties {
+  return dropTarget ? { outline: `3px solid ${colorOpacity(metrics.visual.colors.primary, 0.34)}`, outlineOffset: -3 } : {}
 }

@@ -151,6 +151,7 @@ export { Avatar, type AvatarProps } from "./avatar.js"
 export { TagGroup, type TagGroupProps, type TagGroupTagProps } from "./tag-group.js"
 export { Skeleton, type SkeletonProps } from "./skeleton.js"
 export { Snippet, copyText, type SnippetProps } from "./snippet.js"
+export { useDragAndDrop, type DragAndDropHooks, type DragAndDropOptions, type DropItem, type DropOperation, type DirectoryDropItem, type FileDropItem, type TextDropItem } from "./drag-and-drop.js"
 export { toast, ToastRegion, type ToastContent, type ToastOptions, type ToastRegionProps } from "./toast.js"
 export {
   Readiness,
@@ -210,7 +211,9 @@ export {
   type MenuItemProps,
   type MenuSectionProps,
   type MenuHeaderProps,
-  type MenuSeparatorProps
+  type MenuSeparatorProps,
+  type MenuSubmenuProps,
+  type MenuSubmenuContentProps
 } from "./menu.js"
 export {
   DropdownMenu,
