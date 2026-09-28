@@ -133,13 +133,16 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
   const padding = containerPadding(visual.spacing)
   const transition = overlayTransition(visual)
   const direction = resolveDirection(properties.dir, useDirection())
+  // The width belongs to the centered modal, so a Dialog of any width stays centered; the Surface fills it.
+  const { width = "32rem", maxWidth, ...surfaceStyle } = style ?? {}
 
   return <><MotionStyle /><AriaModal
     dir={direction}
     className={overlayMotionClass}
     style={{
       ...transition,
-      width: `min(32rem, calc(100vw - ${inset * 2}px))`,
+      width,
+      maxWidth: maxWidth ?? `calc(100vw - ${inset * 2}px)`,
       maxHeight: `calc(100vh - ${inset * 2}px)`,
       outline: "none"
     }}
@@ -158,7 +161,7 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
         maxHeight: "inherit",
         padding,
         overflow: "hidden",
-        ...style
+        ...surfaceStyle
       }}
     >
       <AriaDialog

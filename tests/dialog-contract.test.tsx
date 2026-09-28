@@ -53,6 +53,33 @@ describe("Dialog", function () {
     expect(backdrop.style.background).not.toBe(dimmed)
   })
 
+  it("stays centered at any width: the width sizes the centered modal, which the Surface fills", async function () {
+    render(<Dialog defaultOpen>
+      <Dialog.Backdrop>
+        <Dialog.Content aria-label="Narrow" style={{ width: "20rem" }}><Dialog.Title>Narrow</Dialog.Title></Dialog.Content>
+      </Dialog.Backdrop>
+    </Dialog>)
+
+    const dialog = await screen.findByRole("dialog", { name: "Narrow" })
+    const surface = dialog.parentElement!
+    const modal = surface.parentElement!
+
+    expect(modal.style.width).toBe("20rem")
+    expect(surface.style.width).toBe("100%")
+  })
+
+  it("keeps its default width when none is given", async function () {
+    render(<Dialog defaultOpen>
+      <Dialog.Backdrop>
+        <Dialog.Content aria-label="Default"><Dialog.Title>Default</Dialog.Title></Dialog.Content>
+      </Dialog.Backdrop>
+    </Dialog>)
+
+    const dialog = await screen.findByRole("dialog", { name: "Default" })
+
+    expect(dialog.parentElement!.parentElement!.style.width).toBe("32rem")
+  })
+
   it("opens as an accessible modal dialog and focuses its content", async function () {
     render(<Example />)
 
