@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { createRef, useState, type ReactNode } from "react"
 import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { defaultAppearance } from "../source/main.js"
-import { luminance, mixColor } from "../source/foundation/color.js"
+import { luminance, recessColor } from "../source/foundation/color.js"
 import { resolveVisual } from "../source/foundation/visual.js"
 import { surfacePaint } from "../source/surface/surface.js"
 import {
@@ -25,7 +25,7 @@ it.each(["checkbox", "switch", "radio"] as const)("rises the %s indicator in its
     const input = screen.getByRole(kind, { name: "Choice" })
     const indicator = input.closest("label")!.querySelector<HTMLElement>(".phreshos-surface")!
     expect(lifted(paintDeclarations(indicator)["box-shadow"])).toBe(false)
-    expect(surfaceFill(indicator)).toBe(mixColor(colors.background, "#000000", 0.03))
+    expect(surfaceFill(indicator)).toBe(recessColor(colors.background))
 
     const user = userEvent.setup()
     await user.click(input)
@@ -109,7 +109,7 @@ describe.each([["Input", Input], ["Textarea", Textarea]] as const)("%s", (_, Con
         const field = screen.getByRole("textbox") as HTMLInputElement
         const well = field.parentElement!
         const height = field.style.height
-        expect(surfaceFill(well)).toBe(mixColor(colors.background, "#000000", 0.03))
+        expect(surfaceFill(well)).toBe(recessColor(colors.background))
         await user.click(field)
         expect(normalized(hairline(paintDeclarations(well)["box-shadow"]))).toBe(normalized(colors.primary))
         expect(paintDeclarations(well).outline).toContain(colors.primary)

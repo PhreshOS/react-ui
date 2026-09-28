@@ -2,7 +2,7 @@ import { createContext, forwardRef, useContext } from "react"
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react"
 import type { BeginWindowMoveGesture } from "@phreshos/core"
 import { Button, type ButtonActionProps } from "./button.js"
-import { transition } from "./control/control.js"
+import { controlFontSizes, transition } from "./control/control.js"
 import { resolveColor, type Color } from "./foundation/color.js"
 import { headerHeight } from "./foundation/layout.js"
 import { scale } from "./foundation/scale.js"
@@ -200,7 +200,7 @@ const WindowIdentity = forwardRef<HTMLDivElement, WindowIdentityProps>(function 
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap",
-      fontSize: "0.8125em",
+      fontSize: controlFontSizes.medium,
       fontWeight: 500
     }}>{title}</span>}
   </div>
@@ -266,7 +266,7 @@ const WindowMinimize = forwardRef<HTMLButtonElement, WindowControlProps>(functio
   preventFocusOnPress = true,
   ...properties
 }, ref) {
-  return <WindowAction {...properties} ref={ref} aria-label={label} preventFocusOnPress={preventFocusOnPress}>
+  return <WindowAction {...properties} ref={ref} iconOnly aria-label={label} preventFocusOnPress={preventFocusOnPress}>
     <ArrowDownLeft {...iconProps(14)} />
   </WindowAction>
 })
@@ -283,7 +283,7 @@ const WindowMaximize = forwardRef<HTMLButtonElement, WindowMaximizeProps>(functi
 }, ref) {
   const header = useHeader()
   const selected = maximized ?? header.maximized
-  return <WindowAction {...properties} ref={ref} onPress={onPress ?? header.onMaximize} aria-label={label ?? (selected ? "Restore" : "Maximize")}>
+  return <WindowAction {...properties} ref={ref} iconOnly onPress={onPress ?? header.onMaximize} aria-label={label ?? (selected ? "Restore" : "Maximize")}>
     {selected ? <Minimize2 {...iconProps(14)} /> : <Maximize2 {...iconProps(14)} />}
   </WindowAction>
 })
@@ -296,7 +296,7 @@ const WindowClose = forwardRef<HTMLButtonElement, WindowCloseProps>(function Win
   preventFocusOnPress = true,
   ...properties
 }, ref) {
-  return <WindowAction {...properties} ref={ref} aria-label={label} color={color} preventFocusOnPress={preventFocusOnPress}>
+  return <WindowAction {...properties} ref={ref} iconOnly aria-label={label} color={color} preventFocusOnPress={preventFocusOnPress}>
     <X {...iconProps(14)} />
   </WindowAction>
 })

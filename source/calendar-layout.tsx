@@ -35,11 +35,11 @@ export function CalendarLayout({ color, metrics, range = false, size }: Readonly
 
   return <>
     <header style={{ display: "grid", gridTemplateColumns: "auto 1fr auto", alignItems: "center", gap: metrics.gap }}>
-      <Button slot="previous" size={size} aria-label="Previous month" style={{ width: metrics.height, paddingInline: 0 }}>
+      <Button slot="previous" size={size} iconOnly aria-label="Previous month">
         <Chevron direction={direction === "rtl" ? "next" : "previous"} />
       </Button>
       <CalendarHeading style={{ margin: 0, textAlign: "center", fontFamily: "inherit", fontSize: "inherit", fontStyle: "inherit", lineHeight: "inherit", fontWeight: controlFontWeight }} />
-      <Button slot="next" size={size} aria-label="Next month" style={{ width: metrics.height, paddingInline: 0 }}>
+      <Button slot="next" size={size} iconOnly aria-label="Next month">
         <Chevron direction={direction === "rtl" ? "previous" : "next"} />
       </Button>
     </header>

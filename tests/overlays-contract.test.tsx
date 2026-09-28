@@ -54,7 +54,7 @@ describe("Popover", function () {
     expect(title.style.margin).toBe("0px")
     expect(title.style.fontFamily).toBe("inherit")
     expect(title.style.fontSize).toBe("0.8125em")
-    expect(title.style.lineHeight).toBe("1.5")
+    expect(title.style.lineHeight).toBe("1.45")
 
     await userEvent.setup().click(screen.getByRole("button", { name: "Done" }))
     expect(screen.queryByRole("dialog")).toBeNull()

@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react"
 import { describe, expect, it } from "vitest"
 import { defaultAppearance, resolveColor, resolveRadius, resolveSpacing, UIProvider, useColor, useContrastingColor, useScale } from "../source/main.js"
-import { colorLevel, contrast, darkCanvas, lightColor, luminance, mixColor, readability, readableColor } from "../source/foundation/color.js"
+import { colorLevel, contrast, darkCanvas, lightColor, luminance, mixColor, perceivedDistance, readability, readableColor } from "../source/foundation/color.js"
 
 const light = defaultAppearance.colors.light
 const dark = defaultAppearance.colors.dark
@@ -22,6 +22,23 @@ describe("color derivation", function () {
       expect(distance(colorLevel(base, "subtle", colors), colors.background)).toBeLessThan(distance(colorLevel(base, "soft", colors), colors.background))
       expect(distance(colorLevel(base, "intense", colors), colors.foreground)).toBeLessThan(distance(base, colors.foreground))
     }
+  })
+
+  it("places each level at one perceived distance, so a level reads the same in every Theme", function () {
+    const near = (value: number | null, expected: number) => expect(Math.abs((value ?? 0) - expected)).toBeLessThan(0.005)
+    for (const colors of [light, dark]) {
+      for (const role of ["primary", "danger", "success", "info"] as const) {
+        const base = colors[role]
+        near(perceivedDistance(colorLevel(base, "subtle", colors), colors.background), 0.07)
+        near(perceivedDistance(colorLevel(base, "soft", colors), colors.background), 0.16)
+        near(perceivedDistance(colorLevel(base, "strong", colors), base), 0.09)
+        near(perceivedDistance(colorLevel(base, "intense", colors), base), 0.17)
+      }
+    }
+    // A color already closer to the canvas than a level's distance is that level.
+    expect(colorLevel(light.default, "soft", light)).toBe(light.default)
+    // A color that cannot be measured still moves toward its target.
+    expect(colorLevel("var(--accent)", "soft", light)).toContain("color-mix(in oklab, var(--accent)")
   })
 
   it("keeps the Appearance text color unless the other reads better by one APCA step", function () {

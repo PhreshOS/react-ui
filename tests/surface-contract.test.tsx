@@ -3,7 +3,7 @@ import { cleanup, render, screen } from "@testing-library/react"
 import { createRef, forwardRef, type CSSProperties, type ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 import { defaultAppearance, Surface, UIProvider } from "../source/main.js"
-import { contrast, luminance, mixColor } from "../source/foundation/color.js"
+import { contrast, luminance, mixColor, recessColor } from "../source/foundation/color.js"
 import { resolveVisual } from "../source/foundation/visual.js"
 import { spillDepth, surfacePaint } from "../source/surface/surface.js"
 import { shadowStyle } from "../source/surface/shadow-options.js"
@@ -41,7 +41,7 @@ describe("Surface depth", function () {
   it("recesses with a slightly deeper paint, a dimmer rim, and no outer shadow", function () {
     const recessed = paint("background", "recessed")
     expect(lifted(recessed.shadow)).toBe(false)
-    expect(recessed.fill).toBe(mixColor(defaultAppearance.colors.light.background, "#000000", 0.03))
+    expect(recessed.fill).toBe(recessColor(defaultAppearance.colors.light.background))
     expect(variable(recessed, "spill-top")).toBe("none")
     expect(variable(recessed, "rim")).not.toBe(variable(paint("background", "raised"), "rim"))
   })

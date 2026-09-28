@@ -50,7 +50,7 @@ export const Snippet = forwardRef<HTMLDivElement, SnippetProps>(function Snippet
       fontSize: code ? "0.9em" : undefined
     }}>{children}</div>
     <Button size="small" shadow={false} aria-label={copied ? "Copied" : copyLabel}
-      style={{ position: "absolute", insetBlockStart: padding / 2, insetInlineEnd: padding / 2, width: metrics.height, paddingInline: 0 }}
+      iconOnly style={{ position: "absolute", insetBlockStart: padding / 2, insetInlineEnd: padding / 2 }}
       onPress={() => void copyText(children).then(setCopied)}>
       {copied ? <Check {...iconProps(14)} /> : <Copy {...iconProps(14)} />}
     </Button>

@@ -6,7 +6,7 @@ import type {
   TooltipTriggerComponentProps as AriaTooltipTriggerProps
 } from "react-aria-components"
 import { Button, type ButtonActionProps } from "./button.js"
-import { controlFontSizes } from "./control/control.js"
+import { controlFontSizes, controlLineHeight } from "./control/control.js"
 import { ariaOpenState, type AriaOverlayInternals, type OverlayRootProps } from "./control/open-state.js"
 import { resolveDirection, useDirection, type Direction } from "./foundation/direction.js"
 import MotionStyle, { overlayMotionClass, overlayTransition } from "./foundation/motion-style.js"
@@ -91,7 +91,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
         paddingInline: inset * 1.5,
         outline: "none",
         fontSize: controlFontSizes.small,
-        lineHeight: 1.4,
+        lineHeight: controlLineHeight,
         ...style
       }}
     >{children}</Surface>

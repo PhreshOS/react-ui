@@ -14,6 +14,7 @@ import type { Color } from "./foundation/color.js"
 import type { RadiusProps } from "./foundation/radius.js"
 import type { MaterialOverrides } from "./surface/material-options.js"
 import type { ShadowOverrides } from "./surface/shadow-options.js"
+import type { SurfaceDepth } from "./surface/surface.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "render" | "style">
 type NativeLinkProps = Omit<AriaLinkProps, "children" | "className" | "color" | "href" | "isDisabled" | "onClick" | "onPress" | "render" | "style">
@@ -22,7 +23,14 @@ type NativeLinkProps = Omit<AriaLinkProps, "children" | "className" | "color" | 
 export type ButtonColor = Color
 
 interface ButtonOwnProps extends ControlProps, RadiusProps, MaterialOverrides, ShadowOverrides {
+  /** Raised by default; `flat` keeps its color level with its surroundings. */
+  readonly depth?: Exclude<SurfaceDepth, "recessed">
   readonly children?: ReactNode
+  /**
+   * The Button holds only an icon: it is square, as wide as it is tall. Name it
+   * with `aria-label`, since no text does.
+   */
+  readonly iconOnly?: boolean
   /** Runs once for a normalized pointer, Enter, or Space activation. */
   readonly onPress?: () => void
 }
@@ -49,10 +57,11 @@ export type ButtonProps = ButtonActionProps | ButtonLinkProps
 
 /** A raised Surface you act on, or follow when it has an `href`. */
 export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(function Button(properties, ref) {
-  const { children, color = "default", disabled, radius, size, style, className, material, shadow, ...rest } = properties
+  const { children, color = "default", depth, disabled, iconOnly = false, radius, size, style, className, material, shadow, ...rest } = properties
   const metrics = useControlMetrics(size, radius)
   const surface = (state: Readonly<{ isHovered: boolean, isPressed: boolean, isFocusVisible: boolean, isDisabled: boolean }>, pending: boolean) => ({
     color,
+    depth,
     material,
     shadow,
     radius: metrics.radius,
@@ -78,7 +87,7 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
           ? surfaceRender<LinkRenderProps>("span", state => surface(state, false))(inert, state)
           : surfaceRender<LinkRenderProps>("a", state => surface(state, false))(native, state)
       }}
-      style={state => buttonStyle(metrics, !state.isDisabled && state.isPressed, state.isDisabled, false, style)}
+      style={state => buttonStyle(metrics, iconOnly, !state.isDisabled && state.isPressed, state.isDisabled, false, style)}
     >{children}</AriaLink>
   }
 
@@ -93,11 +102,11 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
     isDisabled={disabled}
     isPending={pending}
     render={surfaceRender<ButtonRenderProps>("button", state => surface(state, pending))}
-    style={state => buttonStyle(metrics, !state.isDisabled && !pending && state.isPressed, state.isDisabled, pending, style)}
+    style={state => buttonStyle(metrics, iconOnly, !state.isDisabled && !pending && state.isPressed, state.isDisabled, pending, style)}
   >{children}</AriaButton>
 })
 
-function buttonStyle(metrics: ReturnType<typeof useControlMetrics>, pressed: boolean, disabled: boolean, pending: boolean, style: CSSProperties | undefined): CSSProperties {
+function buttonStyle(metrics: ReturnType<typeof useControlMetrics>, iconOnly: boolean, pressed: boolean, disabled: boolean, pending: boolean, style: CSSProperties | undefined): CSSProperties {
   return {
     ...transition(metrics.visual, "box-shadow, color, outline-color, opacity, scale"),
     appearance: "none",
@@ -109,8 +118,9 @@ function buttonStyle(metrics: ReturnType<typeof useControlMetrics>, pressed: boo
     flexShrink: 0,
     minWidth: 0,
     height: metrics.height,
+    ...(iconOnly ? { width: metrics.height } : {}),
     paddingBlock: 0,
-    paddingInline: metrics.inset,
+    paddingInline: iconOnly ? 0 : metrics.inset,
     border: 0,
     background: "none",
     font: "inherit",

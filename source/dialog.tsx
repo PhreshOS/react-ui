@@ -15,7 +15,7 @@ import type {
   TextProps as AriaTextProps
 } from "react-aria-components"
 import { Button, type ButtonActionProps } from "./button.js"
-import { controlFontSizes, controlFontWeight, controlOpacity } from "./control/control.js"
+import { controlFontSizes, controlFontWeight, controlLineHeight, controlOpacity } from "./control/control.js"
 import { ariaOpenState, type AriaOverlayInternals, type OverlayRootProps } from "./control/open-state.js"
 import { colorOpacity, darkCanvas } from "./foundation/color.js"
 import { resolveDirection, useDirection, type Direction } from "./foundation/direction.js"
@@ -195,7 +195,7 @@ export const DialogTitle = forwardRef<HTMLHeadingElement, DialogTitleProps>(func
     fontFamily: "inherit",
     fontSize: controlFontSizes.large,
     fontWeight: controlFontWeight,
-    lineHeight: 1.5,
+    lineHeight: controlLineHeight,
     ...style
   }} />
 })
@@ -206,7 +206,7 @@ export const DialogDescription = forwardRef<HTMLElement, DialogDescriptionProps>
   return <AriaText {...properties} ref={ref} slot="description" style={{
     margin: 0,
     fontSize: controlFontSizes.medium,
-    lineHeight: 1.5,
+    lineHeight: controlLineHeight,
     opacity: controlOpacity.secondary,
     ...style
   }} />

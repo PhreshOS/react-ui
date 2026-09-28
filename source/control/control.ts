@@ -93,9 +93,10 @@ export function controlMetrics(visual: Visual, size: ScaleLevel, radius: Radius)
     visual,
     spacing,
     height,
-    // Side padding follows the size, never below half the Appearance spacing,
-    // so a compact icon-only control stays close to square.
-    inset: Math.max(visual.spacing / 2, spacing),
+    // Side padding follows the size, never below two thirds of the Appearance
+    // spacing, so a small control with text still reads as a control. A Button
+    // holding only an icon is square instead (`iconOnly`), whatever its padding.
+    inset: Math.max(visual.spacing * 2 / 3, spacing),
     gap: Math.max(4, spacing / 2),
     indicator: Math.round(14 + spacing / 3),
     listInset: Math.max(4, spacing / 3),

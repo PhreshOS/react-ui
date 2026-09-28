@@ -6,6 +6,7 @@ import parse from "colorjs.io/src/parse.js"
 import serialize from "colorjs.io/src/serialize.js"
 import to from "colorjs.io/src/to.js"
 import toGamut from "colorjs.io/src/toGamut.js"
+import deltaEOK from "colorjs.io/src/deltaE/deltaEOK.js"
 import sRGB from "colorjs.io/src/spaces/srgb.js"
 import sRGB_Linear from "colorjs.io/src/spaces/srgb-linear.js"
 import HSL from "colorjs.io/src/spaces/hsl.js"
@@ -39,12 +40,19 @@ export type Color = AppearanceColor | `${AppearanceColor}:${ColorLevel}` | (stri
  * Levels move a color toward the canvas (`subtle`, `soft`) or toward the
  * content color (`strong`, `intense`). Direction therefore follows the colors
  * themselves, so every level keeps its meaning in any Theme.
+ *
+ * Each level is a perceived distance (OKLab): how far a canvas level stays from
+ * the canvas, and how far a content level moves from the color itself. A fixed
+ * share of the way would fade a light color on a light canvas and barely move a
+ * dark one; one distance reads the same in every Theme. A color closer to the
+ * canvas than a level's distance is that level already. Colors that cannot be
+ * measured, such as CSS variables, move by the share instead.
  */
 const levels = {
-  subtle: { toward: "background", amount: 0.84 },
-  soft: { toward: "background", amount: 0.62 },
-  strong: { toward: "foreground", amount: 0.22 },
-  intense: { toward: "foreground", amount: 0.42 }
+  subtle: { toward: "background", distance: 0.07, share: 0.84 },
+  soft: { toward: "background", distance: 0.16, share: 0.62 },
+  strong: { toward: "foreground", distance: 0.09, share: 0.22 },
+  intense: { toward: "foreground", distance: 0.17, share: 0.42 }
 } as const
 
 /*
@@ -141,11 +149,25 @@ export function resolveColor(value: Color, colors: AppearanceColors): string {
   return result
 }
 
-/** Derives one level from a concrete base color. */
+/** Derives one level from a base color. */
 export function colorLevel(base: string, level: ColorLevel, colors: AppearanceColors): string {
   if (level === "base") return base
-  const { toward, amount } = levels[level]
-  return mixColor(base, colors[toward], amount)
+  const { toward, distance, share } = levels[level]
+  const target = colors[toward]
+  // Mixing in OKLab moves along a straight line, so the distance covered is exactly the share of the span.
+  const span = perceivedDistance(base, target)
+  if (span === null) return mixColor(base, target, share)
+  if (span === 0) return base
+  const amount = toward === "background" ? 1 - distance / span : distance / span
+  return mixColor(base, target, Math.round(Math.min(1, Math.max(0, amount)) * 1_000) / 1_000)
+}
+
+/** The perceived difference between two colors (OKLab distance), or `null` when either cannot be measured. */
+export function perceivedDistance(first: string, second: string): number | null {
+  const a = concreteColor(first)
+  const b = concreteColor(second)
+  if (a === null || b === null) return null
+  return deltaEOK(parse(a), parse(b))
 }
 
 /** Every level derived from one base color. */
@@ -245,7 +267,7 @@ export function recessColor(base: string): string {
 }
 
 /** The constant difference between a recess and the paint it sinks into. */
-const recessContrast = 1.085
+const recessContrast = 1.15
 
 /** The lighter Appearance content candidate: the paint of anything lit from above, such as a thumb. */
 export function lightColor(colors: AppearanceColors): string {

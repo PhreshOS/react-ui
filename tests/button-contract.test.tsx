@@ -25,6 +25,31 @@ describe("Button", function () {
     expect(button.querySelector("*")).toBeNull()
   })
 
+  it("pads its sides for text, and is square when it holds only an icon", function () {
+    renderButton(<>
+      <Button size="small">Docs</Button>
+      <Button size="small" iconOnly aria-label="Settings"><svg /></Button>
+    </>)
+    const text = screen.getByRole("button", { name: "Docs" })
+    const icon = screen.getByRole("button", { name: "Settings" })
+    // Two thirds of the Appearance spacing at least, so a small Button with text reads as a Button.
+    expect(text.style.paddingInline).toBe(`${defaultAppearance.spacing * 2 / 3}px`)
+    expect(icon.style.width).toBe(icon.style.height)
+    expect(icon.style.paddingInline).toBe("0px")
+  })
+
+  it("sits flat when asked, keeping its color without a shadow", function () {
+    renderButton(<>
+      <Button>Raised</Button>
+      <Button depth="flat">Flat</Button>
+    </>)
+    const raised = screen.getByRole("button", { name: "Raised" })
+    const flat = screen.getByRole("button", { name: "Flat" })
+    expect(lifted(paintDeclarations(raised)["box-shadow"])).toBe(true)
+    expect(lifted(paintDeclarations(flat)["box-shadow"])).toBe(false)
+    expect(surfaceFill(flat)).toBe(surfaceFill(raised))
+  })
+
   it("normalizes pointer, Enter, and Space activation", async function () {
     const onPress = vi.fn()
     const user = userEvent.setup()

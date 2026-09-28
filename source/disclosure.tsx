@@ -57,7 +57,7 @@ export const DisclosureRoot = forwardRef<HTMLDivElement, DisclosureRootProps>(fu
       className={className}
       isDisabled={disabled}
       onExpandedChange={onExpandedChange}
-      style={{ display: "grid", minWidth: 0, fontFamily: "inherit", fontSize: metrics.fontSize, ...style }}
+      style={{ display: "grid", minWidth: 0, fontFamily: "inherit", ...style }}
     >{children}</AriaDisclosure>
   </DisclosureStyleContext.Provider>
 })
@@ -103,6 +103,8 @@ export const DisclosureTrigger = forwardRef<HTMLButtonElement, DisclosureTrigger
       background: "none",
       cursor: "pointer",
       font: "inherit",
+      // Only the trigger takes the Disclosure's size: the revealed content keeps its own.
+      fontSize: metrics.fontSize,
       fontWeight: 500,
       lineHeight: controlLineHeight,
       textAlign: "start",

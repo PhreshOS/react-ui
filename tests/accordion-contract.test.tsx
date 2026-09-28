@@ -67,7 +67,7 @@ it("keeps independent items expanded in multiple mode", async function () {
   expect(onChange).toHaveBeenLastCalledWith(["general", "advanced"])
 })
 
-it("applies the inherited component size once at each Disclosure item", function () {
+it("applies the inherited component size once at each trigger, leaving the content at the size around it", function () {
   const view = renderAccordion(<Accordion size="medium">
     <Accordion.Item id="general">
       <Accordion.Trigger>General</Accordion.Trigger>
@@ -75,11 +75,16 @@ it("applies the inherited component size once at each Disclosure item", function
     </Accordion.Item>
   </Accordion>)
 
-  const item = screen.getByRole("button", { name: "General" }).parentElement
+  const trigger = screen.getByRole("button", { name: "General" })
   const root = view.container.firstElementChild as HTMLElement
 
   expect(root.style.fontSize).toBe("")
-  expect(item?.style.fontSize).toBe("0.8125em")
+  expect(trigger.style.fontSize).toBe("0.8125em")
+  let element: HTMLElement | null = screen.getByText("General settings")
+  while (element && element !== document.body) {
+    expect(element.style.fontSize).toBe("")
+    element = element.parentElement
+  }
 })
 
 function renderAccordion(component: ReactNode) {
