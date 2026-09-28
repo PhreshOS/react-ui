@@ -19,8 +19,10 @@ export type { ShadowOptions } from "./shadow-options.js"
  *   flat     — a region level with its surroundings: only a boundary.
  *   recessed — something that holds content: a slightly deeper paint and an
  *              inner shadow instead of an outer one.
+ *   none     — part of its surroundings: nothing painted at rest; hover, press,
+ *              and focus still show.
  */
-export type SurfaceDepth = "raised" | "flat" | "recessed"
+export type SurfaceDepth = "raised" | "flat" | "recessed" | "none"
 
 export interface SurfaceOwnProps extends MaterialOverrides, ShadowOverrides, RadiusProps {
   readonly color?: Color
@@ -165,9 +167,12 @@ export function surfacePaint(
   // A recess moves away from its surroundings toward whichever extreme has
   // room, by one constant perceptual difference on any canvas.
   const rest = depth === "recessed" ? recessColor(base) : base
-  // A transparent Surface has no substance of its own: it takes the content
-  // color of whatever it sits on and only reveals interaction as a veil.
-  const clear = base === "transparent"
+  // A clear Surface, with no depth or a transparent color, has no substance of
+  // its own: it paints nothing at rest, takes the content color of whatever it
+  // sits on, and only reveals interaction as a veil. With no depth, a color
+  // other than the neutral one colors its content instead of a fill.
+  const clear = depth === "none" || base === "transparent"
+  const tinted = depth === "none" && base !== "transparent" && base !== colors.default
   const fill = clear
     ? shift > 0 ? colorOpacity(colors.foreground, shift * clearVeil) : "transparent"
     : mixColor(rest, colors.foreground, shift)
@@ -220,7 +225,7 @@ export function surfacePaint(
     fill,
     // The label is chosen once for the resting paint: interaction shades stay
     // close to it, and re-deciding per state would flip text on near-ties.
-    text: clear ? "inherit" : readableColor(rest, colors),
+    text: tinted ? base : clear ? "inherit" : readableColor(rest, colors),
     ring: colorOpacity(ringBase, 0.34),
     shadow: [hairline, outer === "none" ? null : outer].filter(Boolean).join(", ") || "none",
     distortion: level >= materialLevel.full && translucent ? material.distortion : 0,
@@ -282,6 +287,11 @@ const edgeLightEnds = Object.freeze({
   recessed: {
     light: { edge: 0.45, side: 0.12, spill: 0, hairline: 0.12 },
     dark: { edge: 0.12, side: 0.04, spill: 0, hairline: 0.45 }
+  },
+  // Without depth nothing is edged; the ends only complete the table.
+  none: {
+    light: { edge: 0, side: 0, spill: 0, hairline: 0 },
+    dark: { edge: 0, side: 0, spill: 0, hairline: 0 }
   }
 } as const)
 

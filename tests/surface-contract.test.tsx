@@ -52,6 +52,22 @@ describe("Surface depth", function () {
     expect(variable(flat, "spill-top")).toBe("none")
   })
 
+  it("paints nothing at rest without depth, and shows interaction as a veil", function () {
+    const none = paint("default", "none")
+    expect(none.fill).toBe("transparent")
+    expect(none.shadow).toBe("none")
+    expect(variable(none, "rim")).toBe("none")
+    expect(variable(none, "grain")).toBe("none")
+    expect(none.text).toBe("inherit")
+    const hovered = paint("default", "none", undefined, undefined, { hovered: true })
+    expect(hovered.fill).not.toBe("transparent")
+    expect(paint("default", "none", undefined, undefined, { pressed: true }).fill).not.toBe(hovered.fill)
+    // A meaning color colors the content instead of a fill.
+    const danger = paint("danger", "none")
+    expect(danger.fill).toBe("transparent")
+    expect(danger.text).toBe(defaultAppearance.colors.light.danger)
+  })
+
   it("stays distinguishable from any canvas by moving toward the side with room", function () {
     const at = (background: string) => {
       const appearance = { ...defaultAppearance, colors: { ...defaultAppearance.colors, light: { ...defaultAppearance.colors.light, background } } }

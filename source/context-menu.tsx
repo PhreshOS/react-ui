@@ -1,5 +1,6 @@
-import { forwardRef, useCallback, useContext, useEffect, useRef } from "react"
-import type { ComponentProps, ComponentRef, ForwardedRef } from "react"
+import { Children, cloneElement, forwardRef, useCallback, useContext, useEffect, useRef } from "react"
+import type { ComponentProps, ComponentRef, ForwardedRef, ReactNode } from "react"
+import { ClearPressResponder } from "react-aria/private/interactions/PressResponder"
 import {
   MenuTrigger as AriaMenuTrigger,
   OverlayTriggerStateContext,
@@ -22,7 +23,12 @@ export interface ContextMenuTriggerProps {
 }
 
 export const ContextMenuTrigger = forwardRef<ComponentRef<typeof AriaPressable>, ContextMenuTriggerProps>(function ContextMenuTrigger({ children, disabled }, ref) {
-  return <AriaPressable ref={ref} isDisabled={disabled}>{children}</AriaPressable>
+  // The menu's press state belongs to the trigger alone. What the trigger holds, such as the rows of a
+  // list, keeps its own presses instead of all showing the menu's.
+  const child = Children.only(children)
+  const held = (child.props as { children?: ReactNode }).children
+  const content = held === undefined ? child : cloneElement(child, undefined, <ClearPressResponder>{held}</ClearPressResponder>) as typeof child
+  return <AriaPressable ref={ref} isDisabled={disabled}>{content}</AriaPressable>
 })
 
 export type ContextMenuContentProps = PopoverContentProps

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { ContextMenu, Menu } from "../source/main.js"
+import { Button, ContextMenu, Menu } from "../source/main.js"
 import { surfaceFill } from "./support/paint.js"
 
 afterEach(cleanup)
@@ -47,6 +47,26 @@ describe("ContextMenu", function () {
 
     expect(screen.getByRole("menu", { name: "Workspace tile" })).toBeTruthy()
     expect(action).not.toHaveBeenCalled()
+  })
+
+  it("keeps the menu's press state on the trigger, not on what it holds", function () {
+    render(<ContextMenu>
+      <ContextMenu.Trigger>
+        <div role="grid" tabIndex={0} aria-label="Entries">
+          <Button>First row</Button>
+          <Button>Second row</Button>
+        </div>
+      </ContextMenu.Trigger>
+      <ContextMenu.Content>
+        <Menu aria-label="Entry actions"><Menu.Item id="open">Open</Menu.Item></Menu>
+      </ContextMenu.Content>
+    </ContextMenu>)
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "First row" }))
+
+    expect(screen.getByRole("menu")).toBeTruthy()
+    expect(screen.getByRole("button", { name: "First row" }).hasAttribute("data-pressed")).toBe(false)
+    expect(screen.getByRole("button", { name: "Second row" }).hasAttribute("data-pressed")).toBe(false)
   })
 
   it("reports item activation and closes", async function () {
