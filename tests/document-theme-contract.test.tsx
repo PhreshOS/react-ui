@@ -31,7 +31,17 @@ it("writes into the declaration the document already has, and gives it back", fu
   expect(declared()).toEqual(["light dark"])
 })
 
-it("renders nothing", function () {
+it("changes the page to a new Theme in one step, and lets it ease again once painted", async function () {
+  const marked = () => document.documentElement.hasAttribute("data-phreshos-theme-change")
+  const rendered = render(themed("light"))
+  expect(marked()).toBe(false)
+  rendered.rerender(themed("dark"))
+  expect(marked()).toBe(true)
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+  expect(marked()).toBe(false)
+})
+
+it("renders nothing in place", function () {
   const { container } = render(themed("dark"))
   expect(container.innerHTML).toBe("")
 })
