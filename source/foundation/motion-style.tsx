@@ -51,6 +51,10 @@ const stylesheet = `
   color: inherit;
   opacity: 0.55;
 }
+.phreshos-ui-text-control::-webkit-search-cancel-button,
+.phreshos-ui-text-control::-webkit-search-decoration {
+  display: none;
+}
 @keyframes phreshos-ui-spin {
   to { rotate: 360deg; }
 }
