@@ -15,7 +15,7 @@ import type {
   TreeProps as AriaTreeProps
 } from "react-aria-components"
 import { proportionalRadius, transition, useControlMetrics, type ControlMetrics } from "./control/control.js"
-import { itemPaint, itemStyle } from "./control/item.js"
+import { dropTargetOutline, itemPaint, itemStyle } from "./control/item.js"
 import {
   ariaSelection,
   stringKey,
@@ -95,7 +95,7 @@ const TreeRootImplementation = forwardRef(function Tree<T extends object = objec
       dir={direction}
       className={className}
       onAction={onAction == null ? undefined : key => onAction(stringKey(key))}
-      style={{
+      style={state => ({
         display: "grid",
         alignContent: "start",
         gap: 2,
@@ -105,8 +105,10 @@ const TreeRootImplementation = forwardRef(function Tree<T extends object = objec
         outline: "none",
         fontFamily: "inherit",
         fontSize: metrics.fontSize,
+        borderRadius: metrics.radius,
+        ...dropTargetOutline(metrics, state.isDropTarget),
         ...style
-      }}
+      })}
     /></AriaDirectionBoundary>
   </TreeStyleContext.Provider>
 })
@@ -147,7 +149,8 @@ const TreeItemImplementation = forwardRef(function TreeItem<T = object>(
       return {
         ...itemStyle(metrics, state.isDisabled),
         ...itemPaint(metrics.visual, color, {
-          selected: state.isSelected,
+          // What a drag would drop into shows as chosen.
+          selected: state.isSelected || state.isDropTarget === true,
           hovered: responds && state.isHovered,
           pressed: responds && state.isPressed,
           focusVisible: false,

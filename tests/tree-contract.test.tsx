@@ -9,7 +9,8 @@ import {
   type TreeItemProps,
   type TreeMultipleSelectionProps,
   type TreeProps,
-  type TreeSingleSelectionProps
+  type TreeSingleSelectionProps,
+  useDragAndDrop
 } from "../source/main.js"
 
 afterEach(cleanup)
@@ -147,6 +148,20 @@ it("supports recursive dynamic collections without exposing collection keys", fu
 
   expect(screen.getByRole("row", { name: "source" })).toBeTruthy()
   expect(screen.getByRole("row", { name: "main.ts" })).toBeTruthy()
+})
+
+it("takes drops on its items, when given drag and drop hooks", function () {
+  function Places() {
+    const { dragAndDropHooks } = useDragAndDrop({ acceptedDragTypes: ["text/plain"], onItemDrop: () => undefined })
+    return <Tree aria-label="Places" dragAndDropHooks={dragAndDropHooks}>
+      <Tree.Item id="home" textValue="Home"><Tree.Content>Home</Tree.Content></Tree.Item>
+    </Tree>
+  }
+
+  renderTree(<Places />)
+
+  expect(screen.getByRole("treegrid")).toBeTruthy()
+  expect(screen.getByRole("row", { name: "Home" })).toBeTruthy()
 })
 
 function renderTree(component: ReactNode) {
