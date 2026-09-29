@@ -31,7 +31,7 @@ it("uses the shared size and color contracts", function () {
   const small = screen.getByRole("progressbar", { name: "Small" })
   const medium = screen.getByRole("progressbar", { name: "Medium" })
   const large = screen.getByRole("progressbar", { name: "Large" })
-  const head = large.querySelector<SVGCircleElement>("[data-spinner-part=head]")
+  const fill = large.querySelector<SVGCircleElement>("[data-spinner-fill]")
   const smallDiameter = Number.parseFloat(small.style.width)
   const mediumDiameter = Number.parseFloat(medium.style.width)
   const largeDiameter = Number.parseFloat(large.style.width)
@@ -39,30 +39,15 @@ it("uses the shared size and color contracts", function () {
   expect(mediumDiameter).toBe(defaultAppearance.spacing * 2)
   expect(mediumDiameter - smallDiameter).toBe(largeDiameter - mediumDiameter)
   expect(large.style.width).toBe(large.style.height)
-  expect(head?.querySelector("circle")?.getAttribute("stroke")).toBe(defaultAppearance.colors.light.danger)
+  expect(fill?.getAttribute("stroke")).toBe(defaultAppearance.colors.light.danger)
 })
 
-it("draws a comet whose tail follows its head a moment behind, fading, in the surrounding color", function () {
-  const { container } = renderSpinner(<Spinner decorative color="currentColor" />, true)
-  const head = container.querySelector<HTMLElement>("[data-spinner-part=head]")
-  const tail = [...container.querySelectorAll<HTMLElement>("[data-spinner-part=tail]")].reverse()
-  // The delay is the last time in the animation, just before it repeats.
-  const delay = (piece: HTMLElement) => Number(/(-?[\d.]+)ms infinite/.exec(piece.style.animation)?.[1])
+it("derives a contextual track from the surrounding current color", function () {
+  const { container } = renderSpinner(<Spinner decorative color="currentColor" />)
 
-  expect(head?.querySelector("circle")?.getAttribute("stroke")).toBe("currentColor")
-  expect(Number(head?.style.opacity)).toBe(1)
-  // Each piece makes the same turn a moment after the one ahead, and shows less of itself.
-  const pieces = [head!, ...tail]
-  expect(pieces.map(delay)).toEqual(pieces.map(delay).sort((a, b) => a - b))
-  expect(new Set(pieces.map(delay)).size).toBe(pieces.length)
-  expect(pieces.map(piece => Number(piece.style.opacity))).toEqual(pieces.map(piece => Number(piece.style.opacity)).sort((a, b) => b - a))
-})
-
-it("rests as its shape without motion", function () {
-  const { container } = renderSpinner(<Spinner decorative />, false)
-  const pieces = [...container.querySelectorAll<HTMLElement>("[data-spinner-part]")]
-  expect(pieces.every(piece => piece.style.animation === "")).toBe(true)
-  expect(new Set(pieces.map(piece => piece.style.rotate)).size).toBe(pieces.length)
+  expect(container.querySelector("[data-spinner-fill]")?.getAttribute("stroke")).toBe("currentColor")
+  expect(container.querySelector("[data-spinner-track]")?.getAttribute("stroke"))
+    .toBe("color-mix(in srgb, currentColor 20%, transparent)")
 })
 
 it("rotates continuously only while animations are enabled", function () {
