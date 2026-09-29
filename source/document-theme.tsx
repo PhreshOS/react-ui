@@ -1,5 +1,4 @@
-import { useContext, useLayoutEffect, useRef, type ReactElement } from "react"
-import { DocumentThemeOwner, themeTransition, themeTransitionDuration, themeTransitionEasing } from "./foundation/provider.js"
+import { useLayoutEffect, useRef, type ReactElement } from "react"
 import { usePreferences } from "./foundation/visual.js"
 
 /** Marks the document while its Theme changes, so what it paints changes in one step. */
@@ -18,11 +17,6 @@ html[${changing}] *::after {
   transition-delay: 0s !important;
   transition-duration: 0s !important;
 }
-html[${themeTransition}]::view-transition-old(root),
-html[${themeTransition}]::view-transition-new(root) {
-  animation-duration: var(${themeTransitionDuration});
-  animation-timing-function: var(${themeTransitionEasing});
-}
 `
 
 /**
@@ -37,21 +31,12 @@ html[${themeTransition}]::view-transition-new(root) {
  * the browser paints the frame opaque instead of letting what is behind it
  * show.
  *
- * It also makes the Theme the page's own: when it changes, the page crosses
- * from how it looked to how it looks in the new Theme, with the Appearance
- * transaction, as the Desktop around it does. Nothing in the page eases on its
- * own meanwhile, so the page changes in one step, inside that crossing.
+ * A change of Theme takes the page there in one step; the Desktop around the
+ * page carries the movement from one Theme to the other.
  */
 export function DocumentTheme(): ReactElement {
   const { theme } = usePreferences()
   const shown = useRef(theme)
-  const owner = useContext(DocumentThemeOwner)
-
-  useLayoutEffect(() => {
-    if (!owner) return
-    owner.current = true
-    return () => { owner.current = false }
-  }, [owner])
 
   useLayoutEffect(() => {
     if (shown.current === theme) return
