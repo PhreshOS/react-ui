@@ -133,7 +133,8 @@ export {
   type TreeMultipleValue,
   type TreeItemProps,
   type TreeContentProps,
-  type TreeCollectionProps
+  type TreeCollectionProps,
+  type TreeLoadMoreProps
 } from "./tree.js"
 export { Slider, type SliderProps } from "./slider.js"
 export { ProgressBar, type ProgressBarProps } from "./progress-bar.js"

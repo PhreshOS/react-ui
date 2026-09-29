@@ -169,3 +169,24 @@ function renderTree(component: ReactNode) {
     {component}
   </UIProvider>)
 }
+
+it("asks for more Items when the end of a list shown in parts comes into view", function () {
+  const observers: Array<(entries: Array<{ isIntersecting: boolean }>) => void> = []
+  vi.stubGlobal("IntersectionObserver", class {
+    constructor(callback: (entries: Array<{ isIntersecting: boolean }>) => void) { observers.push(callback) }
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  })
+  const onLoadMore = vi.fn()
+
+  renderTree(<Tree aria-label="Files">
+    <Tree.Item id="a" textValue="a"><Tree.Content>a</Tree.Content></Tree.Item>
+    <Tree.LoadMore onLoadMore={onLoadMore} />
+  </Tree>)
+
+  expect(onLoadMore).not.toHaveBeenCalled()
+  for (const observe of observers) observe([{ isIntersecting: true }])
+  expect(onLoadMore).toHaveBeenCalled()
+  vi.unstubAllGlobals()
+})

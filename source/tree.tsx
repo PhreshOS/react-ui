@@ -5,7 +5,8 @@ import {
   Collection as AriaCollection,
   Tree as AriaTree,
   TreeItem as AriaTreeItem,
-  TreeItemContent as AriaTreeItemContent
+  TreeItemContent as AriaTreeItemContent,
+  TreeLoadMoreItem as AriaTreeLoadMoreItem
 } from "react-aria-components"
 import type {
   CollectionProps as AriaCollectionProps,
@@ -210,6 +211,19 @@ const TreeContent = forwardRef<Element, TreeContentProps>(function TreeContent({
 
 export type TreeCollectionProps<T extends object = object> = AriaCollectionProps<T>
 
+export type TreeLoadMoreProps = Readonly<{
+  /** Asks for more Items once the end of the list comes near while scrolling. */
+  onLoadMore: () => void
+}>
+
+/**
+ * The end of a list shown in parts, such as a long folder: when scrolling brings it near, the
+ * list is asked for more. It is placed after the Items it follows, at their level, and draws nothing.
+ */
+function TreeLoadMore({ onLoadMore }: TreeLoadMoreProps) {
+  return <AriaTreeLoadMoreItem onLoadMore={onLoadMore} />
+}
+
 function useTreeStyle() {
   const context = useContext(TreeStyleContext)
   if (context == null) throw new Error("Tree parts must be used inside Tree")
@@ -220,7 +234,8 @@ function useTreeStyle() {
 export const Tree = Object.assign(TreeRootImplementation as TreeRootComponent, {
   Item: TreeItemImplementation as TreeItemComponent,
   Content: TreeContent,
-  Collection: AriaCollection
+  Collection: AriaCollection,
+  LoadMore: TreeLoadMore
 })
 
 export type TreeProps<T extends object = object> = TreeRootProps<T>
