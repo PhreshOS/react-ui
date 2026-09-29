@@ -1,34 +1,47 @@
 import { useEffect, useRef, useState } from "react"
-import type { CSSProperties } from "react"
+import type { CSSProperties, ReactNode } from "react"
 import { Check } from "lucide-react"
 import { useControlMetrics } from "./control/control.js"
 import { iconProps } from "./control/icon.js"
-import { Readiness, type ReadinessProps, type ReadinessState } from "./readiness.js"
+import { Readiness, useReadiness, type ReadinessProps, type ReadinessState } from "./readiness.js"
 import { Spinner, spinnerDiameter } from "./spinner.js"
-import { Surface, type SurfaceOwnProps } from "./surface/surface.js"
 import { Text } from "./typography.js"
 
-/** The cover is a Surface: its own props set its color, depth, material, and radius. */
-export interface LoadingProps extends Pick<ReadinessProps, "children" | "delay">, SurfaceOwnProps {
+export interface LoadingProps extends Pick<ReadinessProps, "children" | "delay"> {
+  /** Class of the layer that shows the loading. */
   readonly className?: string
+  /** Style of the layer that shows the loading, such as where it stands. */
   readonly style?: CSSProperties
   /** Lists every requirement with a message, each with its own progress, instead of one message. */
   readonly steps?: boolean
 }
 
 /**
- * A Readiness boundary drawn the way the System draws loading: a Surface that
- * covers the waiting interface, with a Spinner and the message of the first
- * waiting requirement, or every step. A requirement's detail is its message
- * when it is a string; other requirements are waited for without being shown.
+ * A Readiness boundary drawn the way the System draws loading: the waiting
+ * interface is hidden, not covered, and a Spinner with the message of the
+ * first waiting requirement, or every step, stands where it will be. Nothing
+ * is painted behind the Spinner, so the Surface the interface sits on shows
+ * through. A requirement's detail is its message when it is a string; other
+ * requirements are waited for without being shown.
  *
- * The cover fills the nearest positioned ancestor, which owns its shape. It appears at once and
- * fades out with the Appearance transaction when everything is ready.
+ * The loading fills the nearest positioned ancestor. It appears at once; when
+ * everything is ready it fades out with the Appearance transaction and the
+ * interface appears whole at once.
  */
-export function Loading({ children, delay, steps = false, ...surface }: LoadingProps) {
-  return <Readiness delay={delay} status={state => <LoadingCover state={state} steps={steps} surface={surface} />}>
-    {children}
+export function Loading({ children, delay, steps = false, className, style }: LoadingProps) {
+  return <Readiness delay={delay} status={state => <LoadingStatus state={state} steps={steps} className={className} style={style} />}>
+    <Hidden>{children}</Hidden>
   </Readiness>
+}
+
+/**
+ * Hides the waiting interface while it keeps its layout, so it appears whole and in place. It
+ * draws no box of its own, so the interface stays a direct part of the layout around it; such a
+ * box cannot fade, which is why the interface appears at once.
+ */
+function Hidden({ children }: Readonly<{ children?: ReactNode }>) {
+  const { ready } = useReadiness()
+  return <div data-loading-content="" style={{ display: "contents", visibility: ready ? undefined : "hidden" }}>{children}</div>
 }
 
 interface Step {
@@ -36,9 +49,7 @@ interface Step {
   readonly ready: boolean
 }
 
-type CoverSurface = Omit<LoadingProps, "children" | "delay" | "steps">
-
-function LoadingCover({ state, steps, surface }: Readonly<{ state: ReadinessState, steps: boolean, surface: CoverSurface }>) {
+function LoadingStatus({ state, steps, className, style }: Readonly<{ state: ReadinessState, steps: boolean, className?: string, style?: CSSProperties }>) {
   const metrics = useControlMetrics()
   const { duration, easing } = metrics.visual
   const { ready } = state
@@ -59,22 +70,20 @@ function LoadingCover({ state, steps, surface }: Readonly<{ state: ReadinessStat
 
   if (gone) return null
 
-  const { depth = "flat", radius = 0, style, ...paint } = surface
-  const cover: CSSProperties = {
+  const layer: CSSProperties = {
     position: "absolute",
     inset: 0,
     display: "grid",
     placeItems: "center",
     opacity: ready ? 0 : 1,
-    // New waiting covers at once; only readiness fades.
+    // New waiting shows at once; only readiness fades.
     transition: ready ? `opacity ${duration}ms ${easing}` : "none",
     pointerEvents: ready ? "none" : undefined,
     ...style
   }
   const progress = steps ? <StepList steps={shown.current} /> : <Message message={shown.current.find(step => !step.ready)?.message} />
 
-  // Flat and without a shape of its own by default: the container it fills owns its shape.
-  return <Surface {...paint} depth={depth} radius={radius} role="status" aria-hidden={ready || undefined} style={cover}>{progress}</Surface>
+  return <div className={className} role="status" aria-hidden={ready || undefined} style={layer}>{progress}</div>
 }
 
 function Message({ message }: Readonly<{ message: string | undefined }>) {

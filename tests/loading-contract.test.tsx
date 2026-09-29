@@ -74,7 +74,7 @@ it("fades out when ready, keeping its last message, then leaves the tree", funct
   expect(document.querySelector("[role=status]")).toBeNull()
 })
 
-it("covers again at once when a requirement stops being ready", function () {
+it("shows again at once when a requirement stops being ready", function () {
   const { rerender } = render(view(<Loading><Need ready detail="Connected" /></Loading>))
   act(() => vi.advanceTimersByTime(defaultAppearance.transaction.duration))
   expect(document.querySelector("[role=status]")).toBeNull()
@@ -95,25 +95,37 @@ it("passes its delay to the boundary", function () {
   expect(held()).toBe(false)
 })
 
-it("covers the waiting interface with a flat Surface that has no shape of its own", function () {
+it("hides the waiting interface, keeping its layout, and shows it whole once ready", function () {
+  const { rerender } = render(view(<Loading><Need ready={false} /><p>Desktop</p></Loading>))
+  const content = document.querySelector<HTMLElement>("[data-loading-content]")
+
+  expect(content?.style.visibility).toBe("hidden")
+  expect(content?.style.display).toBe("contents")
+
+  rerender(view(<Loading><Need ready /><p>Desktop</p></Loading>))
+  expect(content?.style.visibility).toBe("")
+})
+
+it("paints nothing behind the Spinner, so the Surface beneath shows through", function () {
   render(view(<Loading><Need ready={false} /></Loading>))
-  const cover = document.querySelector<HTMLElement>("[role=status]")
+  const status = document.querySelector<HTMLElement>("[role=status]")
 
-  expect(cover?.classList.contains("phreshos-surface")).toBe(true)
-  expect(getComputedStyle(cover!).borderRadius).toBe("0px")
-  expect(cover?.style.pointerEvents).toBe("")
+  expect(status?.classList.contains("phreshos-surface")).toBe(false)
+  expect(status?.style.background).toBe("")
+  expect(status?.style.pointerEvents).toBe("")
 })
 
-it("takes Surface props for its cover", function () {
-  render(view(<Loading radius="large" style={{ inset: 8 }}><Need ready={false} /></Loading>))
-  const cover = document.querySelector<HTMLElement>("[role=status]")
+it("takes a class and a style for the layer that shows the loading", function () {
+  render(view(<Loading className="opening" style={{ inset: 8 }}><Need ready={false} /></Loading>))
+  const status = document.querySelector<HTMLElement>("[role=status]")
 
-  expect(getComputedStyle(cover!).borderRadius).not.toBe("0px")
-  expect(cover?.style.inset).toBe("8px")
+  expect(status?.classList.contains("opening")).toBe(true)
+  expect(status?.style.inset).toBe("8px")
 })
 
-it("is covered and held in server HTML", function () {
+it("is hidden and held in server HTML", function () {
   const html = renderToString(view(<Loading><p>Desktop</p></Loading>))
   expect(html).toContain("inert")
+  expect(html).toContain("visibility:hidden")
   expect(html).toContain('role="status"')
 })
