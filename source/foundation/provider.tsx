@@ -1,11 +1,12 @@
 import { LucideProvider } from "lucide-react"
-import { useMemo } from "react"
+import { createContext, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { flushSync } from "react-dom"
 import { RouterProvider } from "react-aria-components"
 import type { CSSProperties, ReactNode } from "react"
 import { mergeAppearance, type AppearanceUpdate } from "./appearance.js"
 import { DirectionContext, fixedDirectionSource, type Direction } from "./direction.js"
-import type { Preferences, PreferencesUpdate } from "./preferences.js"
-import { AppearanceContext, fixedPreferencesSource, PreferencesContext, useAppearance, usePreferences } from "./visual.js"
+import type { Preferences, PreferencesUpdate, Theme } from "./preferences.js"
+import { AppearanceContext, cssEasing, fixedPreferencesSource, PreferencesContext, useAppearance, usePreferences } from "./visual.js"
 
 const directionBoundaryStyle = { display: "contents" } satisfies CSSProperties
 
@@ -70,14 +71,66 @@ function PreferencesBoundary({ children, update }: Readonly<{ children: ReactNod
 }
 
 function CompletePreferencesBoundary({ animations, children, theme }: Readonly<Preferences & { children: ReactNode }>) {
-  const source = useMemo(() => fixedPreferencesSource(Object.freeze({ theme, animations })), [theme, animations])
-  return <PreferencesContext.Provider value={source}>{children}</PreferencesContext.Provider>
+  return <ShownPreferences theme={theme} animations={animations}>{children}</ShownPreferences>
 }
 
 function InheritedPreferencesBoundary({ children, update }: Readonly<{ children: ReactNode, update: PreferencesUpdate }>) {
   const inherited = usePreferences()
-  const theme = update.theme ?? inherited.theme
-  const animations = update.animations ?? inherited.animations
-  const source = useMemo(() => fixedPreferencesSource(Object.freeze({ theme, animations })), [theme, animations])
-  return <PreferencesContext.Provider value={source}>{children}</PreferencesContext.Provider>
+  return <ShownPreferences theme={update.theme ?? inherited.theme} animations={update.animations ?? inherited.animations}>{children}</ShownPreferences>
+}
+
+/**
+ * Whether the Theme of the nearest boundary is the page's own. `DocumentTheme` says so; a Theme
+ * that owns the page moves the whole page from one Theme to the other.
+ */
+export const DocumentThemeOwner = createContext<{ current: boolean } | null>(null)
+
+/** The Theme a page moves between, marked while it does, with its timing. */
+export const themeTransition = "data-phreshos-theme-transition"
+export const themeTransitionDuration = "--phreshos-theme-transition-duration"
+export const themeTransitionEasing = "--phreshos-theme-transition-easing"
+
+type ViewTransitionDocument = Document & Readonly<{
+  startViewTransition?: (update: () => void) => Readonly<{ finished: Promise<unknown> }>
+}>
+
+/** How many page transitions have started, so only the latest one ends the mark. */
+let transitions = 0
+
+/**
+ * Provides the Theme the subtree shows. A new Theme is shown at once, unless it is the page's own
+ * and moves with animations: then the page is taken as it looks, shown in the new Theme, and the
+ * two views cross with the Appearance transaction, as the Desktop does around the page.
+ */
+function ShownPreferences({ animations, children, theme }: Readonly<Preferences & { children: ReactNode }>) {
+  const [shown, setShown] = useState<Theme>(theme)
+  const owner = useRef({ current: false }).current
+  const { transaction } = useAppearance()
+
+  useLayoutEffect(() => {
+    if (shown === theme) return
+    const page = document as ViewTransitionDocument
+    if (!owner.current || !animations || typeof page.startViewTransition !== "function") {
+      setShown(theme)
+      return
+    }
+    const root = document.documentElement
+    const transition = ++transitions
+    root.setAttribute(themeTransition, "")
+    root.style.setProperty(themeTransitionDuration, `${transaction.duration}ms`)
+    root.style.setProperty(themeTransitionEasing, cssEasing(transaction.easing))
+    const view = page.startViewTransition.call(page, () => flushSync(() => setShown(theme)))
+    const end = () => {
+      if (transition !== transitions) return
+      root.removeAttribute(themeTransition)
+      root.style.removeProperty(themeTransitionDuration)
+      root.style.removeProperty(themeTransitionEasing)
+    }
+    view.finished.then(end, end)
+  }, [theme, shown, animations, owner, transaction])
+
+  const source = useMemo(() => fixedPreferencesSource(Object.freeze({ theme: shown, animations })), [shown, animations])
+  return <DocumentThemeOwner.Provider value={owner}>
+    <PreferencesContext.Provider value={source}>{children}</PreferencesContext.Provider>
+  </DocumentThemeOwner.Provider>
 }
