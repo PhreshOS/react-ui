@@ -3,8 +3,8 @@ import type { CSSProperties } from "react"
 import { ProgressBar as AriaProgressBar } from "react-aria-components"
 import type { ProgressBarProps as AriaProgressBarProps } from "react-aria-components"
 import { useControlMetrics } from "./control/control.js"
-import { colorOpacity, resolveColor, type Color } from "./foundation/color.js"
-import MotionStyle from "./foundation/motion-style.js"
+import { resolveColor, type Color } from "./foundation/color.js"
+import MotionStyle, { loopDuration } from "./foundation/motion-style.js"
 import { scale, type ScaleLevel } from "./foundation/scale.js"
 
 type NativeSpinnerProps = Omit<
@@ -60,11 +60,10 @@ export const Spinner = forwardRef<HTMLDivElement, SpinnerProps>(function Spinner
   }
   const indicator = <>
     <MotionStyle />
+    {/* A ring missing its last quarter, turning at an even pace once every repeating motion's loop. */}
     <svg data-spinner-indicator="" aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="100%" height="100%" fill="none"
-      style={{ display: "block", animation: metrics.visual.duration > 0 ? `phreshos-ui-spin ${Math.max(600, metrics.visual.appearance.transaction.duration * 5)}ms linear infinite` : undefined }}>
-      {/* The track belongs to whatever the Spinner sits on, so it is a veil of the arc itself. */}
-      <circle data-spinner-track="" cx="12" cy="12" r="9" stroke={colorOpacity(arc, 0.2)} strokeWidth="3" />
-      <circle data-spinner-fill="" cx="12" cy="12" r="9" pathLength="100" stroke={arc} strokeWidth="3" strokeLinecap="round" strokeDasharray="30 70" />
+      style={{ display: "block", animation: metrics.visual.duration > 0 ? `phreshos-ui-spin ${loopDuration(metrics.visual)}ms linear infinite` : undefined }}>
+      <circle data-spinner-fill="" cx="12" cy="12" r="11" pathLength="100" stroke={arc} strokeWidth="2" strokeDasharray="75 25" transform="rotate(-90 12 12)" />
     </svg>
   </>
 

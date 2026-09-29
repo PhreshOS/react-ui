@@ -42,12 +42,20 @@ it("uses the shared size and color contracts", function () {
   expect(fill?.getAttribute("stroke")).toBe(defaultAppearance.colors.light.danger)
 })
 
-it("derives a contextual track from the surrounding current color", function () {
+it("is a ring missing a quarter, following the surrounding current color when asked", function () {
   const { container } = renderSpinner(<Spinner decorative color="currentColor" />)
+  const fill = container.querySelector("[data-spinner-fill]")
 
-  expect(container.querySelector("[data-spinner-fill]")?.getAttribute("stroke")).toBe("currentColor")
-  expect(container.querySelector("[data-spinner-track]")?.getAttribute("stroke"))
-    .toBe("color-mix(in srgb, currentColor 20%, transparent)")
+  expect(fill?.getAttribute("stroke")).toBe("currentColor")
+  expect(fill?.getAttribute("stroke-dasharray")).toBe("75 25")
+  expect(container.querySelector("[data-spinner-track]")).toBeNull()
+})
+
+it("turns once every repeating motion loop", function () {
+  const { container } = renderSpinner(<Spinner label="Loading" />, true)
+  const duration = Math.max(900, defaultAppearance.transaction.duration * 8)
+
+  expect(container.querySelector<SVGElement>("[data-spinner-indicator]")?.style.animation).toBe(`phreshos-ui-spin ${duration}ms linear infinite`)
 })
 
 it("rotates continuously only while animations are enabled", function () {
