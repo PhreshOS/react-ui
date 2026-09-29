@@ -31,7 +31,7 @@ it("uses the shared size and color contracts", function () {
   const small = screen.getByRole("progressbar", { name: "Small" })
   const medium = screen.getByRole("progressbar", { name: "Medium" })
   const large = screen.getByRole("progressbar", { name: "Large" })
-  const fill = large.querySelector<SVGCircleElement>("[data-spinner-fill]")
+  const head = large.querySelector<SVGCircleElement>("[data-spinner-part=head]")
   const smallDiameter = Number.parseFloat(small.style.width)
   const mediumDiameter = Number.parseFloat(medium.style.width)
   const largeDiameter = Number.parseFloat(large.style.width)
@@ -39,15 +39,22 @@ it("uses the shared size and color contracts", function () {
   expect(mediumDiameter).toBe(defaultAppearance.spacing * 2)
   expect(mediumDiameter - smallDiameter).toBe(largeDiameter - mediumDiameter)
   expect(large.style.width).toBe(large.style.height)
-  expect(fill?.getAttribute("stroke")).toBe(defaultAppearance.colors.light.danger)
+  expect(head?.getAttribute("stroke")).toBe(defaultAppearance.colors.light.danger)
 })
 
-it("derives a contextual track from the surrounding current color", function () {
+it("draws a comet whose head leads a tail fading behind it, in the surrounding color", function () {
   const { container } = renderSpinner(<Spinner decorative color="currentColor" />)
+  const head = container.querySelector("[data-spinner-part=head]")
+  const tail = [...container.querySelectorAll("[data-spinner-part=tail]")]
 
-  expect(container.querySelector("[data-spinner-fill]")?.getAttribute("stroke")).toBe("currentColor")
-  expect(container.querySelector("[data-spinner-track]")?.getAttribute("stroke"))
-    .toBe("color-mix(in srgb, currentColor 20%, transparent)")
+  expect(head?.getAttribute("stroke")).toBe("currentColor")
+  expect(Number(head?.getAttribute("opacity"))).toBe(1)
+  // Each piece lies further behind the head and shows less of itself.
+  const behind = tail.map(piece => Number(piece.getAttribute("stroke-dashoffset")))
+  const strength = tail.map(piece => Number(piece.getAttribute("opacity")))
+  expect(behind).toEqual([...behind].sort((a, b) => b - a))
+  expect(strength).toEqual([...strength].sort((a, b) => a - b))
+  expect(Math.max(...strength)).toBeLessThan(1)
 })
 
 it("rotates continuously only while animations are enabled", function () {

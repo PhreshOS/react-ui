@@ -54,7 +54,6 @@ export const controlFontWeight = 600
 
 /** Attenuation shared by every control family. */
 export const controlOpacity = Object.freeze({
-  pending: 0.68,
   secondary: 0.66,
   placeholder: 0.55
 })

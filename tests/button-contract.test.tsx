@@ -79,6 +79,13 @@ describe("Button", function () {
     expect(onPress).not.toHaveBeenCalled()
   })
 
+  it("shows a Spinner in place of its content while pending, keeping its name", function () {
+    renderButton(<Button pending>Continue</Button>)
+    const button = screen.getByRole("button", { name: "Continue" })
+    expect(button.querySelector("[data-spinner-indicator]")).toBeTruthy()
+    expect(screen.getByText("Continue").closest("span")?.style.opacity).toBe("0")
+  })
+
   it("is a raised neutral Surface by default", function () {
     renderButton(<Button>Continue</Button>)
     const paint = paintDeclarations(screen.getByRole("button"))

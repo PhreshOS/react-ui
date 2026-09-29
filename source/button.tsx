@@ -8,13 +8,14 @@ import {
   type LinkProps as AriaLinkProps,
   type LinkRenderProps
 } from "react-aria-components"
-import { controlOpacity, transition, useControlMetrics, type ControlProps } from "./control/control.js"
+import { transition, useControlMetrics, type ControlProps } from "./control/control.js"
 import { surfaceRender } from "./control/surface-render.js"
 import type { Color } from "./foundation/color.js"
 import type { RadiusProps } from "./foundation/radius.js"
 import type { MaterialOverrides } from "./surface/material-options.js"
 import type { ShadowOverrides } from "./surface/shadow-options.js"
 import type { SurfaceDepth } from "./surface/surface.js"
+import { Spinner } from "./spinner.js"
 
 type NativeButtonProps = Omit<AriaButtonProps, "children" | "className" | "color" | "isDisabled" | "isPending" | "onClick" | "onPress" | "render" | "style">
 type NativeLinkProps = Omit<AriaLinkProps, "children" | "className" | "color" | "href" | "isDisabled" | "onClick" | "onPress" | "render" | "style">
@@ -38,7 +39,10 @@ interface ButtonOwnProps extends ControlProps, RadiusProps, MaterialOverrides, S
 /** A Button that acts: a native `<button>`. */
 export interface ButtonActionProps extends NativeButtonProps, ButtonOwnProps {
   readonly href?: undefined
-  /** Prevents activation while keeping the Button focusable. */
+  /**
+   * Work the Button started is under way: a Spinner shows in its place, the Button keeps its size
+   * and its name, and it stays focusable without activating.
+   */
   readonly pending?: boolean
 }
 
@@ -103,7 +107,13 @@ export const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonPr
     isPending={pending}
     render={surfaceRender<ButtonRenderProps>("button", state => surface(state, pending))}
     style={state => buttonStyle(metrics, iconOnly, !state.isDisabled && !pending && state.isPressed, state.isDisabled, pending, style)}
-  >{children}</AriaButton>
+  >{pending ? <>
+    {/* The content keeps the Button's size and its name, unseen, while the Spinner shows in its place. */}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: metrics.gap, opacity: 0 }}>{children}</span>
+    <span style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center" }}>
+      <Spinner decorative color="currentColor" style={{ width: metrics.indicator, height: metrics.indicator }} />
+    </span>
+  </> : children}</AriaButton>
 })
 
 function buttonStyle(metrics: ReturnType<typeof useControlMetrics>, iconOnly: boolean, pressed: boolean, disabled: boolean, pending: boolean, style: CSSProperties | undefined): CSSProperties {
@@ -133,7 +143,7 @@ function buttonStyle(metrics: ReturnType<typeof useControlMetrics>, iconOnly: bo
     WebkitTapHighlightColor: "transparent",
     cursor: disabled ? "not-allowed" : pending ? "progress" : "pointer",
     scale: pressed ? "0.97" : "1",
-    ...(pending ? { opacity: controlOpacity.pending } : {}),
+    ...(pending ? { position: "relative" } : {}),
     ...style
   }
 }

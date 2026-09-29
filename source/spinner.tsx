@@ -3,7 +3,7 @@ import type { CSSProperties } from "react"
 import { ProgressBar as AriaProgressBar } from "react-aria-components"
 import type { ProgressBarProps as AriaProgressBarProps } from "react-aria-components"
 import { useControlMetrics } from "./control/control.js"
-import { colorOpacity, resolveColor, type Color } from "./foundation/color.js"
+import { resolveColor, type Color } from "./foundation/color.js"
 import MotionStyle from "./foundation/motion-style.js"
 import { scale, type ScaleLevel } from "./foundation/scale.js"
 
@@ -35,6 +35,9 @@ type DecorativeSpinnerProps = Readonly<{
 
 export type SpinnerProps = SpinnerVisualProps & (NamedSpinnerProps | DecorativeSpinnerProps)
 
+/** How strongly each piece of the comet shows, from its head back along its tail. */
+const tail = [1, 0.78, 0.58, 0.4, 0.24, 0.12] as const
+
 /** A standalone status stays visibly distinct from the compact control indicator. */
 export function spinnerDiameter(spacing: number, size: ScaleLevel): number {
   return spacing + scale(spacing, size)
@@ -58,13 +61,16 @@ export const Spinner = forwardRef<HTMLDivElement, SpinnerProps>(function Spinner
     verticalAlign: "middle",
     ...style
   }
+  // A comet: a head leading a tail that fades behind it, so the turn has no hard ends. One turn
+  // lasts eight Appearance transactions, the interface's own rhythm drawn out; none without motion.
+  const turn = Math.max(800, metrics.visual.appearance.transaction.duration * 8)
   const indicator = <>
     <MotionStyle />
     <svg data-spinner-indicator="" aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="100%" height="100%" fill="none"
-      style={{ display: "block", animation: metrics.visual.duration > 0 ? `phreshos-ui-spin ${Math.max(600, metrics.visual.appearance.transaction.duration * 5)}ms linear infinite` : undefined }}>
-      {/* The track belongs to whatever the Spinner sits on, so it is a veil of the arc itself. */}
-      <circle data-spinner-track="" cx="12" cy="12" r="9" stroke={colorOpacity(arc, 0.2)} strokeWidth="3" />
-      <circle data-spinner-fill="" cx="12" cy="12" r="9" pathLength="100" stroke={arc} strokeWidth="3" strokeLinecap="round" strokeDasharray="30 70" />
+      style={{ display: "block", animation: metrics.visual.duration > 0 ? `phreshos-ui-spin ${turn}ms linear infinite` : undefined }}>
+      {tail.map((strength, index) => <circle key={index} data-spinner-part={index === 0 ? "head" : "tail"} cx="12" cy="12" r="9" pathLength="100"
+        stroke={arc} strokeWidth="3" strokeDasharray="9 91" strokeDashoffset={index * 8} strokeLinecap={index === 0 ? "round" : "butt"}
+        opacity={strength} />).reverse()}
     </svg>
   </>
 
