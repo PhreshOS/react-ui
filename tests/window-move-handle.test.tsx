@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react"
-import type { BeginWindowMoveGesture, WindowMoveGesture } from "@phreshos/core"
+import type { BeginPresentationMoveGesture, PresentationMoveGesture } from "@phreshos/core"
 import { describe, expect, it, vi } from "vitest"
 import useWindowMoveHandle from "../source/use-window-move-handle.js"
 
@@ -7,8 +7,8 @@ describe("Window move handle", function () {
   it("retains capture until the supplied host is ready for the handoff", async function () {
     let markReady: () => void = () => undefined
     const ready = new Promise<void>(resolve => { markReady = resolve })
-    const gesture = { ready, finished: new Promise<void>(() => undefined), cancel: vi.fn() } satisfies WindowMoveGesture
-    const begin = vi.fn(() => gesture) satisfies BeginWindowMoveGesture
+    const gesture = { ready, finished: new Promise<void>(() => undefined), cancel: vi.fn() } satisfies PresentationMoveGesture
+    const begin = vi.fn(() => gesture) satisfies BeginPresentationMoveGesture
     const captured = new Set<number>()
     const currentTarget = {
       setPointerCapture(pointer: number) { captured.add(pointer) },

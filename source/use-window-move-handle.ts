@@ -1,4 +1,4 @@
-import type { BeginWindowMoveGesture, WindowMoveGesture, WindowMovePoint } from "@phreshos/core"
+import type { BeginPresentationMoveGesture, PresentationMoveGesture, PresentationMovePoint } from "@phreshos/core"
 import { useEffect, useMemo, useRef, type PointerEvent as ReactPointerEvent, type PointerEventHandler } from "react"
 
 export interface WindowMoveHandle {
@@ -11,7 +11,7 @@ export interface WindowMoveHandle {
 
 /** Turns one DOM element into a move handle for any compatible host gesture. */
 export default function useWindowMoveHandle(
-  beginMoveGesture?: BeginWindowMoveGesture,
+  beginMoveGesture?: BeginPresentationMoveGesture,
   onError?: (error: unknown) => void
 ): WindowMoveHandle {
   const active = useRef<ActiveMove | null>(null)
@@ -119,7 +119,7 @@ export default function useWindowMoveHandle(
 interface ActiveMove {
   pointer: number
   element: HTMLElement
-  origin: WindowMovePoint
-  gesture: WindowMoveGesture | null
+  origin: PresentationMovePoint
+  gesture: PresentationMoveGesture | null
   handedOff: boolean
 }

@@ -1,6 +1,6 @@
 import { createContext, forwardRef, useContext } from "react"
 import type { CSSProperties, HTMLAttributes, ReactNode } from "react"
-import type { BeginWindowMoveGesture } from "@phreshos/core"
+import type { BeginPresentationMoveGesture } from "@phreshos/core"
 import { Button, type ButtonActionProps } from "./button.js"
 import { controlFontSizes, transition } from "./control/control.js"
 import { resolveColor, type Color } from "./foundation/color.js"
@@ -83,7 +83,7 @@ export interface WindowHeaderProps extends Omit<HTMLAttributes<HTMLDivElement>, 
   readonly color?: Color
 
   /** Hands an intentional header drag to its host after the pointer threshold. */
-  readonly beginMoveGesture?: BeginWindowMoveGesture
+  readonly beginMoveGesture?: BeginPresentationMoveGesture
 
   /** Whether the represented window is currently maximized. */
   readonly maximized?: boolean
