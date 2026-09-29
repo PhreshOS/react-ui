@@ -47,6 +47,8 @@ export interface TooltipContentProps extends
   readonly children?: ReactNode
   readonly className?: string
   readonly dir?: Direction
+  /** DOM container that owns the positioned overlay's coordinate space. */
+  readonly portalContainer?: Element
   readonly style?: CSSProperties
 }
 
@@ -61,6 +63,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
   offset,
   placement = "top",
   dir,
+  portalContainer,
   ...attributes
 }, ref) {
   const visual = useVisual()
@@ -74,6 +77,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
     dir={direction}
     offset={offset ?? inset}
     placement={resolveDirectionalPlacement(placement, direction)}
+    UNSTABLE_portalContainer={portalContainer}
     className={overlayMotionClass}
     style={transition}
   >

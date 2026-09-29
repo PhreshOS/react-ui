@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { DropdownMenu, Menu, Popover, Tooltip } from "../source/main.js"
+import { Button, ContextMenu, DropdownMenu, Menu, Popover, Tooltip } from "../source/main.js"
 
 afterEach(cleanup)
 
@@ -73,5 +73,27 @@ describe("Tooltip", function () {
 
     expect((await screen.findByRole("tooltip")).textContent).toBe("Save this document")
     expect(screen.getByRole("button", { name: "Save" }).getAttribute("aria-describedby")).toBeTruthy()
+  })
+
+  it("describes any Button inside it, one with its own context menu too, from a container of its own", async function () {
+    const user = userEvent.setup()
+    const container = document.createElement("div")
+    document.body.append(container)
+    render(<Tooltip delay={0} closeDelay={0}>
+      <ContextMenu>
+        <ContextMenu.Trigger><Button>Notes</Button></ContextMenu.Trigger>
+        <ContextMenu.Content><Menu aria-label="Notes"><Menu.Item id="close">Close</Menu.Item></Menu></ContextMenu.Content>
+      </ContextMenu>
+      <Tooltip.Content portalContainer={container}>Notes, minimized</Tooltip.Content>
+    </Tooltip>)
+
+    await user.tab()
+    const tooltip = await screen.findByRole("tooltip")
+    expect(tooltip.textContent).toBe("Notes, minimized")
+    expect(container.contains(tooltip)).toBe(true)
+
+    await user.pointer({ keys: "[MouseRight]", target: screen.getByRole("button", { name: "Notes" }) })
+    expect(await screen.findByRole("menuitem", { name: "Close" })).toBeTruthy()
+    container.remove()
   })
 })
