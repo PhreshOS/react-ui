@@ -106,3 +106,17 @@ it("keeps the sidebar footer at the foot, outside what scrolls", function () {
   expect(scrolling!.contains(screen.getByText("In progress"))).toBe(false)
   expect(screen.getByRole("complementary", { name: "Places" }).lastElementChild!.contains(screen.getByText("In progress"))).toBe(true)
 })
+
+it("raises the content by default, and recesses it when asked", function () {
+  const content = (depth?: "recessed") => {
+    const { unmount } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+      <AppLayout><AppLayout.Content depth={depth}>Files</AppLayout.Content></AppLayout>
+    </UIProvider>)
+    const style = screen.getByRole("main").className
+    unmount()
+    return style
+  }
+
+  expect(content()).toBe(content())
+  expect(content()).not.toBe(content("recessed"))
+})

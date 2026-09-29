@@ -6,7 +6,7 @@ import { resolveRadius } from "./foundation/radius.js"
 import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
 import { ScrollArea } from "./scroll-area.js"
-import { Surface } from "./surface/surface.js"
+import { Surface, type SurfaceDepth } from "./surface/surface.js"
 import { containerPadding } from "./foundation/spacing.js"
 
 const AppLayoutContext = createContext(false)
@@ -51,6 +51,10 @@ const AppLayoutRoot = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLay
 })
 
 export type AppLayoutRegionProps = HTMLAttributes<HTMLElement>
+export type AppLayoutContentProps = AppLayoutRegionProps & Readonly<{
+  /** How the content's Surface stands in the layout: raised by default, or recessed into it. */
+  depth?: SurfaceDepth
+}>
 export type AppLayoutSidebarProps = AppLayoutRegionProps & Readonly<{
   /** What stays at the foot of the sidebar while the rest scrolls, such as work in progress. */
   footer?: ReactNode
@@ -102,10 +106,10 @@ const AppLayoutHeader = forwardRef<HTMLElement, AppLayoutRegionProps>(function A
 })
 
 /** The content, on its Surface. It scrolls on its own, padded by the Appearance spacing. */
-const AppLayoutContent = forwardRef<HTMLElement, AppLayoutRegionProps>(function AppLayoutContent({ children, style, ...properties }, ref) {
+const AppLayoutContent = forwardRef<HTMLElement, AppLayoutContentProps>(function AppLayoutContent({ children, depth, style, ...properties }, ref) {
   const { spacing, radius } = useLayout()
 
-  return <Surface as="main" {...properties} ref={ref} material="extended" radius={resolveRadius("medium", radius)} style={{
+  return <Surface as="main" {...properties} ref={ref} depth={depth} material="extended" radius={resolveRadius("medium", radius)} style={{
     gridArea: "content",
     minWidth: 0,
     minHeight: 0,
