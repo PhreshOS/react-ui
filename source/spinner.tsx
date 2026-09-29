@@ -68,9 +68,11 @@ export const Spinner = forwardRef<HTMLDivElement, SpinnerProps>(function Spinner
   // the tail stretches as the comet quickens and gathers into the head as it slows, while the whole
   // drifts so it never slows twice in one place. Each piece turns by itself as a whole element,
   // which the browser moves without drawing again. Without motion it rests as its shape.
-  const loop = loopDuration(metrics.visual)
+  // A turn is one and a half repeating loops, and each piece a twelfth of it behind the one ahead,
+  // so the tail stretches nearly half way round before it gathers again.
+  const loop = loopDuration(metrics.visual) * 1.5
   const moving = metrics.visual.duration > 0
-  const lag = loop / 24
+  const lag = loop / 12
   const indicator = <>
     <MotionStyle />
     <div data-spinner-indicator="" aria-hidden="true" style={{ position: "relative", width: "100%", height: "100%", animation: moving ? `phreshos-ui-spin ${loop * 3}ms linear infinite` : undefined }}>
