@@ -16,7 +16,9 @@ import { useVisual } from "./foundation/visual.js"
 import { floatingShadow } from "./surface/shadow-options.js"
 import { Surface, type SurfaceOwnProps } from "./surface/surface.js"
 
-export type TooltipRootProps = OverlayRootProps & Readonly<Pick<AriaTooltipTriggerProps, "delay" | "closeDelay" | "trigger">> & Readonly<{
+export type TooltipRootProps = OverlayRootProps & Readonly<Pick<AriaTooltipTriggerProps, "closeDelay" | "trigger">> & Readonly<{
+  /** Milliseconds the pointer rests on the trigger before the Tooltip opens: four Appearance transactions by default. */
+  delay?: number
   /** Whether the Tooltip is prevented from opening. */
   disabled?: boolean
   /** Whether pressing the trigger closes the Tooltip. Defaults to `true`. */
@@ -24,9 +26,11 @@ export type TooltipRootProps = OverlayRootProps & Readonly<Pick<AriaTooltipTrigg
 }>
 
 export function TooltipRoot({ children, delay, closeDelay, trigger, disabled, closeOnPress, ...state }: TooltipRootProps) {
+  // A pointer resting on a trigger for four Appearance transactions is asking what it is.
+  const rest = useVisual().appearance.transaction.duration * 4
   return <AriaTooltipTrigger
     {...ariaOpenState(state)}
-    delay={delay}
+    delay={delay ?? rest}
     closeDelay={closeDelay}
     trigger={trigger}
     isDisabled={disabled}
