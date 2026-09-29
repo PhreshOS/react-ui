@@ -55,6 +55,18 @@ const stylesheet = `
 .phreshos-ui-text-control::-webkit-search-decoration {
   display: none;
 }
+.phreshos-ui-drawer[data-state="opening"] {
+  animation: phreshos-ui-drawer-in var(--phreshos-ui-motion-duration) var(--phreshos-ui-motion-easing);
+}
+.phreshos-ui-drawer[data-state="closing"] {
+  animation: phreshos-ui-drawer-out var(--phreshos-ui-motion-duration) var(--phreshos-ui-motion-easing) forwards;
+}
+:dir(rtl).phreshos-ui-drawer[data-state="opening"] { animation-name: phreshos-ui-drawer-in-rtl; }
+:dir(rtl).phreshos-ui-drawer[data-state="closing"] { animation-name: phreshos-ui-drawer-out-rtl; }
+@keyframes phreshos-ui-drawer-in { from { translate: calc(-100% - 1rem) 0; } }
+@keyframes phreshos-ui-drawer-out { to { translate: calc(-100% - 1rem) 0; } }
+@keyframes phreshos-ui-drawer-in-rtl { from { translate: calc(100% + 1rem) 0; } }
+@keyframes phreshos-ui-drawer-out-rtl { to { translate: calc(100% + 1rem) 0; } }
 @keyframes phreshos-ui-spin {
   to { rotate: 360deg; }
 }

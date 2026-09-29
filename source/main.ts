@@ -65,6 +65,7 @@ export {
   type WindowMoveCaptureProps
 } from "./window.js"
 export { default as useWindowMoveHandle, type WindowMoveHandle } from "./use-window-move-handle.js"
+export { Drawer, type DrawerProps } from "./drawer.js"
 export { Button, type ButtonActionProps, type ButtonColor, type ButtonLinkProps, type ButtonProps } from "./button.js"
 export { Input, type InputProps } from "./input.js"
 export { Textarea, type TextareaProps } from "./textarea.js"
