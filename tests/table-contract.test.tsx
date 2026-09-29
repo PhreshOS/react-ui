@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import type { ReactNode } from "react"
+import { useState, type ReactNode } from "react"
 import { afterEach, expect, expectTypeOf, it, vi } from "vitest"
 import {
   Table,
@@ -247,4 +247,27 @@ it("drags its rows with the browser's own drag, when given drag and drop hooks",
   renderTable(<Files />)
 
   for (const row of screen.getAllByRole("row").slice(1)) expect(row.getAttribute("draggable")).toBe("true")
+})
+
+it("extends a controlled selection over a range with Shift", async function () {
+  const user = userEvent.setup()
+  function Files() {
+    const [value, setValue] = useState<readonly string[] | "all">([])
+    return <Table aria-label="Files" selectionMode="multiple" selectionBehavior="replace" value={value} onChange={setValue}>
+      <Table.Header><Table.Column id="name" rowHeader>Name</Table.Column></Table.Header>
+      <Table.Body>
+        {["one", "two", "three", "four"].map(id => <Table.Row key={id} id={id}><Table.Cell>{id}</Table.Cell></Table.Row>)}
+      </Table.Body>
+    </Table>
+  }
+
+  renderTable(<Files />)
+  const rows = screen.getAllByRole("row").slice(1)
+
+  await user.click(rows[0]!)
+  await user.keyboard("{Shift>}")
+  await user.click(rows[2]!)
+  await user.keyboard("{/Shift}")
+
+  expect(rows.map(row => row.getAttribute("aria-selected"))).toEqual(["true", "true", "true", "false"])
 })

@@ -14,12 +14,19 @@ export type MultipleStringSelectionProps = Readonly<{
   onChange?: (value: MultipleStringSelection) => void
 }>
 
+/**
+ * The selection React Aria reported for each value handed out. It also remembers where a range
+ * started, which the strings alone lose; when the same value comes back, React Aria gets its own
+ * selection again, so Shift extends from the entry chosen last.
+ */
+const reported = new WeakMap<readonly string[], Set<Key>>()
+
 export function toAriaSelection(value: string | null | MultipleStringSelection | undefined): "all" | Set<string> | undefined {
   if (value === undefined) return undefined
   if (value === "all") return "all"
   if (value === null) return new Set()
   if (typeof value === "string") return new Set([value])
-  return new Set(value)
+  return (reported.get(value) as Set<string> | undefined) ?? new Set(value)
 }
 
 export function stringKey(value: Key): string {
@@ -36,7 +43,10 @@ export function singleSelection(selection: Selection): string | null {
 }
 
 export function multipleSelection(selection: Selection): MultipleStringSelection {
-  return selection === "all" ? "all" : [...selection].map(stringKey)
+  if (selection === "all") return "all"
+  const value = [...selection].map(stringKey)
+  reported.set(value, selection)
+  return value
 }
 
 export function stringKeys(values: Iterable<Key>): readonly string[] {
