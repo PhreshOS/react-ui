@@ -51,6 +51,10 @@ const AppLayoutRoot = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLay
 })
 
 export type AppLayoutRegionProps = HTMLAttributes<HTMLElement>
+export type AppLayoutSidebarProps = AppLayoutRegionProps & Readonly<{
+  /** What stays at the foot of the sidebar while the rest scrolls, such as work in progress. */
+  footer?: ReactNode
+}>
 export type AppLayoutTitleProps = HTMLAttributes<HTMLHeadingElement>
 
 /** The program's title above the sidebar, in the header row. */
@@ -71,12 +75,14 @@ const AppLayoutTitle = forwardRef<HTMLHeadingElement, AppLayoutTitleProps>(funct
   }} />
 })
 
-/** The sidebar, such as a program's navigation. It scrolls on its own. */
-const AppLayoutSidebar = forwardRef<HTMLElement, AppLayoutRegionProps>(function AppLayoutSidebar({ children, style, ...properties }, ref) {
+/** The sidebar, such as a program's navigation. It scrolls on its own, above its footer. */
+const AppLayoutSidebar = forwardRef<HTMLElement, AppLayoutSidebarProps>(function AppLayoutSidebar({ children, footer, style, ...properties }, ref) {
   const { spacing } = useLayout()
+  const padding = scale(spacing, "small")
 
-  return <aside {...properties} ref={ref} style={{ gridArea: "sidebar", minHeight: 0, ...style }}>
-    <ScrollArea style={{ height: "100%" }}><div style={{ padding: scale(spacing, "small") }}>{children}</div></ScrollArea>
+  return <aside {...properties} ref={ref} style={{ gridArea: "sidebar", minHeight: 0, display: "flex", flexDirection: "column", ...style }}>
+    <ScrollArea style={{ flex: "1 1 auto", minHeight: 0 }}><div style={{ padding }}>{children}</div></ScrollArea>
+    {footer != null && <div style={{ flex: "none", paddingInline: padding, paddingBottom: padding }}>{footer}</div>}
   </aside>
 })
 

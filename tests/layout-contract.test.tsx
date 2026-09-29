@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { createRef } from "react"
 import { afterEach, describe, expect, it } from "vitest"
-import { UIProvider, Flex, Grid, defaultAppearance } from "../source/main.js"
+import { AppLayout, UIProvider, Flex, Grid, defaultAppearance } from "../source/main.js"
 
 afterEach(cleanup)
 
@@ -91,4 +91,18 @@ it("pads a container one level above the spacing a control pads with", async fun
   const { containerPadding } = await import("../source/foundation/spacing.js")
   expect(containerPadding(12)).toBe(18)
   expect(containerPadding(8)).toBe(12)
+})
+
+it("keeps the sidebar footer at the foot, outside what scrolls", function () {
+  render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    <AppLayout>
+      <AppLayout.Sidebar aria-label="Places" footer={<p>In progress</p>}><p>Home</p></AppLayout.Sidebar>
+      <AppLayout.Content>Files</AppLayout.Content>
+    </AppLayout>
+  </UIProvider>)
+
+  const scrolling = screen.getByText("Home").closest("[data-phreshos-scroll-area-viewport]")
+  expect(scrolling).not.toBeNull()
+  expect(scrolling!.contains(screen.getByText("In progress"))).toBe(false)
+  expect(screen.getByRole("complementary", { name: "Places" }).lastElementChild!.contains(screen.getByText("In progress"))).toBe(true)
 })
