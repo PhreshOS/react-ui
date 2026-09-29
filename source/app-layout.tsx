@@ -52,7 +52,7 @@ const AppLayoutRoot = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLay
 
 export type AppLayoutRegionProps = HTMLAttributes<HTMLElement>
 export type AppLayoutContentProps = AppLayoutRegionProps & Readonly<{
-  /** How the content's Surface stands in the layout: raised by default, or recessed into it. */
+  /** How the content's Surface stands in the layout: recessed into it by default, or raised. */
   depth?: SurfaceDepth
 }>
 export type AppLayoutSidebarProps = AppLayoutRegionProps & Readonly<{
@@ -106,7 +106,7 @@ const AppLayoutHeader = forwardRef<HTMLElement, AppLayoutRegionProps>(function A
 })
 
 /** The content, on its Surface. It scrolls on its own, padded by the Appearance spacing. */
-const AppLayoutContent = forwardRef<HTMLElement, AppLayoutContentProps>(function AppLayoutContent({ children, depth, style, ...properties }, ref) {
+const AppLayoutContent = forwardRef<HTMLElement, AppLayoutContentProps>(function AppLayoutContent({ children, depth = "recessed", style, ...properties }, ref) {
   const { spacing, radius } = useLayout()
 
   return <Surface as="main" {...properties} ref={ref} depth={depth} material="extended" radius={resolveRadius("medium", radius)} style={{
