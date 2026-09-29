@@ -39,22 +39,30 @@ it("uses the shared size and color contracts", function () {
   expect(mediumDiameter).toBe(defaultAppearance.spacing * 2)
   expect(mediumDiameter - smallDiameter).toBe(largeDiameter - mediumDiameter)
   expect(large.style.width).toBe(large.style.height)
-  expect(head?.getAttribute("stroke")).toBe(defaultAppearance.colors.light.danger)
+  expect(head?.querySelector("circle")?.getAttribute("stroke")).toBe(defaultAppearance.colors.light.danger)
 })
 
-it("draws a comet whose head leads a tail fading behind it, in the surrounding color", function () {
-  const { container } = renderSpinner(<Spinner decorative color="currentColor" />)
-  const head = container.querySelector("[data-spinner-part=head]")
-  const tail = [...container.querySelectorAll("[data-spinner-part=tail]")]
+it("draws a comet whose tail follows its head a moment behind, fading, in the surrounding color", function () {
+  const { container } = renderSpinner(<Spinner decorative color="currentColor" />, true)
+  const head = container.querySelector<HTMLElement>("[data-spinner-part=head]")
+  const tail = [...container.querySelectorAll<HTMLElement>("[data-spinner-part=tail]")].reverse()
+  // The delay is the last time in the animation, just before it repeats.
+  const delay = (piece: HTMLElement) => Number(/(-?[\d.]+)ms infinite/.exec(piece.style.animation)?.[1])
 
-  expect(head?.getAttribute("stroke")).toBe("currentColor")
-  expect(Number(head?.getAttribute("opacity"))).toBe(1)
-  // Each piece lies further behind the head and shows less of itself.
-  const behind = tail.map(piece => Number(piece.getAttribute("stroke-dashoffset")))
-  const strength = tail.map(piece => Number(piece.getAttribute("opacity")))
-  expect(behind).toEqual([...behind].sort((a, b) => b - a))
-  expect(strength).toEqual([...strength].sort((a, b) => a - b))
-  expect(Math.max(...strength)).toBeLessThan(1)
+  expect(head?.querySelector("circle")?.getAttribute("stroke")).toBe("currentColor")
+  expect(Number(head?.style.opacity)).toBe(1)
+  // Each piece makes the same turn a moment after the one ahead, and shows less of itself.
+  const pieces = [head!, ...tail]
+  expect(pieces.map(delay)).toEqual(pieces.map(delay).sort((a, b) => a - b))
+  expect(new Set(pieces.map(delay)).size).toBe(pieces.length)
+  expect(pieces.map(piece => Number(piece.style.opacity))).toEqual(pieces.map(piece => Number(piece.style.opacity)).sort((a, b) => b - a))
+})
+
+it("rests as its shape without motion", function () {
+  const { container } = renderSpinner(<Spinner decorative />, false)
+  const pieces = [...container.querySelectorAll<HTMLElement>("[data-spinner-part]")]
+  expect(pieces.every(piece => piece.style.animation === "")).toBe(true)
+  expect(new Set(pieces.map(piece => piece.style.rotate)).size).toBe(pieces.length)
 })
 
 it("rotates continuously only while animations are enabled", function () {
