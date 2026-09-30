@@ -8,12 +8,12 @@ it("grows the motion across a distance with the distance, gently and within boun
   const oneView = timing("view", { distance: 1440 })
   const twoViews = timing("view", { distance: 2880 })
 
-  expect(near.duration).toBe(330)
+  expect(near.duration).toBe(Math.round(187 + 8.5 * Math.sqrt(120)))
   expect(twoViews.duration).toBeGreaterThan(oneView.duration)
   // Twice as far does not take twice as long.
   expect(twoViews.duration).toBeLessThan(oneView.duration * 1.5)
-  expect(timing("view", { distance: 20_000 }).duration).toBe(1000)
-  expect(timing("view", { distance: 1 }).duration).toBe(300)
+  expect(timing("view", { distance: 20_000 }).duration).toBe(850)
+  expect(timing("view", { distance: 1 }).duration).toBe(255)
   // The view moves as a body on a spring that arrives without passing its place.
   expect(oneView.easing).toEqual({ spring: { bounce: 0 } })
 })
@@ -22,9 +22,9 @@ it("moves a Window as a lighter body than the view", () => {
   for (const distance of [40, 400, 1440, 5000]) {
     expect(timing("window", { distance }).duration).toBeLessThan(timing("view", { distance }).duration)
   }
-  expect(timing("window", { distance: 1 }).duration).toBe(130)
-  expect(timing("window", { distance: 20_000 }).duration).toBe(650)
-  expect(timing("window", { distance: 300 }).duration).toBe(Math.round(85 + 4 * Math.sqrt(300)))
+  expect(timing("window", { distance: 1 }).duration).toBe(110)
+  expect(timing("window", { distance: 20_000 }).duration).toBe(553)
+  expect(timing("window", { distance: 300 }).duration).toBe(Math.round(72 + 3.4 * Math.sqrt(300)))
   // A Window answers a hand: it sets off at once.
   expect(timing("window", { distance: 400 }).easing).toEqual([0.22, 1, 0.36, 1])
 })
@@ -43,8 +43,8 @@ it("keeps one change in place per tempo, and only the few tempos in use", () => 
 })
 
 it("stretches only time with the tempo, never the shape", () => {
-  expect(timing("change")).toEqual({ duration: 120, easing: "ease-out" })
-  expect(timing("change", { tempo: 2 })).toEqual({ duration: 240, easing: "ease-out" })
+  expect(timing("change")).toEqual({ duration: 102, easing: "ease-out" })
+  expect(timing("change", { tempo: 2 })).toEqual({ duration: 204, easing: "ease-out" })
   const slow = timing("view", { distance: 1440, tempo: 2 })
   expect(Math.abs(slow.duration - timing("view", { distance: 1440 }).duration * 2)).toBeLessThanOrEqual(1)
   expect(slow.easing).toEqual(timing("view", { distance: 1440 }).easing)

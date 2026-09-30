@@ -54,7 +54,7 @@ export function timing(kind: MotionKind, options: TimingOptions = {}): Transacti
   return Object.freeze({ duration: Math.round(designed * tempo), easing: options.leaving ? departure : pace.easing })
 }
 
-const change = Object.freeze({ duration: 120, easing: "ease-out" as Easing })
+const change = Object.freeze({ duration: 102, easing: "ease-out" as Easing })
 
 const changes = new Map<number, Transaction>()
 
@@ -64,6 +64,6 @@ const departure: Easing = Object.freeze([0.65, 0, 0.35, 1] as const)
 type Pace = Readonly<{ base: number, growth: number, far: number, minimum: number, maximum: number, easing: Easing }>
 
 const paces: Record<Exclude<MotionKind, "change">, Pace> = {
-  view: { base: 220, growth: 10, far: 0, minimum: 300, maximum: 1000, easing: Object.freeze({ spring: Object.freeze({ bounce: 0 }) }) },
-  window: { base: 85, growth: 4, far: 0.05, minimum: 130, maximum: 650, easing: Object.freeze([0.22, 1, 0.36, 1] as const) }
+  view: { base: 187, growth: 8.5, far: 0, minimum: 255, maximum: 850, easing: Object.freeze({ spring: Object.freeze({ bounce: 0 }) }) },
+  window: { base: 72, growth: 3.4, far: 0.0425, minimum: 110, maximum: 553, easing: Object.freeze([0.22, 1, 0.36, 1] as const) }
 }
