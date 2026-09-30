@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen } from "@testing-library/react"
 import { renderToString } from "react-dom/server"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
-import { Loading, UIProvider, defaultAppearance, useRequirement } from "../source/main.js"
+import { Loading, UIProvider, defaultAppearance, timing, useRequirement } from "../source/main.js"
 
 beforeEach(() => vi.useFakeTimers())
 afterEach(() => {
@@ -70,13 +70,13 @@ it("fades out when ready, keeping its last message, then leaves the tree", funct
   expect(status?.style.opacity).toBe("0")
   expect(status?.textContent).toBe("Connecting…")
 
-  act(() => vi.advanceTimersByTime(defaultAppearance.transaction.duration))
+  act(() => vi.advanceTimersByTime(timing("change").duration))
   expect(document.querySelector("[role=status]")).toBeNull()
 })
 
 it("shows again at once when a requirement stops being ready", function () {
   const { rerender } = render(view(<Loading><Need ready detail="Connected" /></Loading>))
-  act(() => vi.advanceTimersByTime(defaultAppearance.transaction.duration))
+  act(() => vi.advanceTimersByTime(timing("change").duration))
   expect(document.querySelector("[role=status]")).toBeNull()
 
   rerender(view(<Loading><Need ready={false} detail="Reconnecting…" /></Loading>))

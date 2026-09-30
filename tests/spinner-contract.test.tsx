@@ -1,6 +1,6 @@
 import { cleanup, render, screen } from "@testing-library/react"
 import { afterEach, expect, expectTypeOf, it } from "vitest"
-import { Spinner, UIProvider, defaultAppearance, type SpinnerProps } from "../source/main.js"
+import { Spinner, UIProvider, defaultAppearance, timing, type SpinnerProps } from "../source/main.js"
 
 afterEach(cleanup)
 
@@ -53,7 +53,7 @@ it("is a ring missing a quarter, following the surrounding current color when as
 
 it("turns once every repeating motion loop", function () {
   const { container } = renderSpinner(<Spinner label="Loading" />, true)
-  const duration = Math.max(900, defaultAppearance.transaction.duration * 8)
+  const duration = Math.max(900, timing("change").duration * 8)
 
   expect(container.querySelector<SVGElement>("[data-spinner-indicator]")?.style.animation).toBe(`phreshos-ui-spin ${duration}ms linear infinite`)
 })

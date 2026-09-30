@@ -6,6 +6,7 @@ import {
   Disclosure,
   UIProvider,
   defaultAppearance,
+  timing,
   type DisclosureProps
 } from "../source/main.js"
 
@@ -60,7 +61,7 @@ it("derives content motion from Appearance and Preferences", function () {
     </Disclosure>
   </UIProvider>)
 
-  expect(screen.getByRole("group").style.transitionDuration).toBe(`${defaultAppearance.transaction.duration}ms`)
+  expect(screen.getByRole("group").style.transitionDuration).toBe(`${timing("change").duration}ms`)
 
   rerender(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: false }}>
     <Disclosure defaultExpanded>

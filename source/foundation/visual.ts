@@ -1,11 +1,12 @@
-import { createContext, useContext, useSyncExternalStore } from "react"
+import { createContext, useCallback, useContext, useSyncExternalStore } from "react"
+import { cssEasing, type Transaction } from "@phreshos/core"
+import { timing, type MotionKind, type TimingOptions } from "./timing.js"
 import {
   defaultAppearance,
   type Appearance,
   type AppearanceColors,
   type AppearanceMaterial,
   type AppearanceShadow,
-  type Easing,
   type ThemedValue
 } from "./appearance.js"
 import type { Preferences } from "./preferences.js"
@@ -23,9 +24,9 @@ export interface Visual {
   readonly shadow: AppearanceShadow
   readonly spacing: number
   readonly radius: number
-  /** Duration in milliseconds, already zero when animations are disabled. */
+  /** Duration in milliseconds of a change in place, already zero when animations are disabled. */
   readonly duration: number
-  /** CSS timing function for the Appearance transaction. */
+  /** CSS timing function of a change in place. */
   readonly easing: string
 }
 
@@ -39,7 +40,8 @@ export function resolveVisual(appearance: Appearance, preferences: Preferences):
   const cached = resolved.get(key)
   if (cached !== undefined) return cached
 
-  const duration = preferences.animations ? appearance.transaction.duration : 0
+  const change = timing("change", { tempo: appearance.tempo })
+  const duration = preferences.animations ? change.duration : 0
   const visual: Visual = Object.freeze({
     appearance,
     preferences,
@@ -49,7 +51,7 @@ export function resolveVisual(appearance: Appearance, preferences: Preferences):
     spacing: appearance.spacing,
     radius: appearance.radius,
     duration,
-    easing: cssEasing(appearance.transaction.easing)
+    easing: cssEasing(change.easing)
   })
   resolved.set(key, visual)
   return visual
@@ -79,6 +81,18 @@ export function useVisual(): Visual {
   return resolveVisual(useAppearance(), usePreferences())
 }
 
+/**
+ * Derives the motion of a change from the nearest Appearance's tempo: what moves, how far, and
+ * whether it leaves sight. With animations off, every motion takes no time.
+ */
+export function useTiming(): (kind: MotionKind, options?: Omit<TimingOptions, "tempo">) => Transaction {
+  const visual = useVisual()
+  return useCallback(function (kind: MotionKind, options: Omit<TimingOptions, "tempo"> = {}) {
+    if (!visual.preferences.animations) return still
+    return timing(kind, { ...options, tempo: visual.appearance.tempo })
+  }, [visual])
+}
+
 /** Selects the active branch of one themed value. */
 export function useThemedValue<Value>(value: ThemedValue<Value>): Value {
   return value[usePreferences().theme]
@@ -102,9 +116,9 @@ export function fixedPreferencesSource(preferences: Preferences): PreferencesSou
   }
 }
 
-export function cssEasing(easing: Easing): string {
-  return typeof easing === "string" ? easing : `cubic-bezier(${easing.join(", ")})`
-}
+
+// Every motion with animations off: it takes no time, so its curve never shows.
+const still: Transaction = Object.freeze({ duration: 0, easing: "linear" })
 
 const defaultPreferences: Preferences = Object.freeze({ theme: "light", animations: true })
 const subscribers = new Set<() => void>()

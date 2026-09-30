@@ -13,7 +13,7 @@ export {
   type AppearanceMaterial,
   type AppearanceRange,
   type AppearanceShadow,
-  type AppearanceTransaction,
+  type Transaction,
   type AppearanceUpdate,
   type Easing,
   type ThemedValue
@@ -24,8 +24,10 @@ export {
   useAppearance,
   useBrowserPreferences,
   usePreferences,
-  useThemedValue
+  useThemedValue,
+  useTiming
 } from "./foundation/visual.js"
+export { timing, type MotionKind, type TimingOptions } from "./foundation/timing.js"
 export { useDirection, useDocumentDirection, type Direction } from "./foundation/direction.js"
 export type { Preferences, PreferencesUpdate, Theme } from "./foundation/preferences.js"
 export { Flex, type FlexProps } from "./flex.js"

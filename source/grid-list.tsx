@@ -30,7 +30,7 @@ import type { RadiusProps } from "./foundation/radius.js"
 import type { ScaleLevel } from "./foundation/scale.js"
 import { collectionHeaderStyle } from "./list-box.js"
 
-type GridListContext = Readonly<{ color: Color, metrics: ControlMetrics, columns: string }>
+type GridListContext = Readonly<{ color: Color, restColor: Color, metrics: ControlMetrics, columns: string }>
 
 const GridListStyleContext = createContext<GridListContext | null>(null)
 
@@ -41,6 +41,8 @@ type GridListRootBaseProps<T extends object> = Omit<
   className?: string
   /** Color laid beneath selected Items. */
   color?: Color
+  /** Color of Items that are not selected: `default` unless given. */
+  restColor?: Color
   /** The narrowest an Item may be; the grid fits as many columns as that allows. Sixteen times the spacing by default. */
   itemWidth?: CSSProperties["width"]
   size?: ScaleLevel
@@ -65,14 +67,14 @@ const GridListRootImplementation = forwardRef(function GridList<T extends object
   ref: ForwardedRef<HTMLDivElement>
 ) {
   const {
-    className, color = "primary", defaultValue: _defaultValue, itemWidth, onChange: _onChange, radius,
+    className, color = "primary", restColor = "default", defaultValue: _defaultValue, itemWidth, onChange: _onChange, radius,
     selectionMode: _selectionMode, size, style, value: _value, ...native
   } = properties
   const metrics = useControlMetrics(size, radius)
   const width = itemWidth ?? metrics.visual.spacing * 16
   // As many columns as fit, each at least the Item width; a Section repeats the same columns.
   const columns = `repeat(auto-fill, minmax(min(${typeof width === "number" ? `${width}px` : width}, 100%), 1fr))`
-  const context = useMemo(() => ({ color, metrics, columns }), [color, metrics, columns])
+  const context = useMemo(() => ({ color, restColor, metrics, columns }), [color, restColor, metrics, columns])
   const direction = resolveDirection(native.dir, useDirection())
 
   return <GridListStyleContext.Provider value={context}>
@@ -111,13 +113,15 @@ export interface GridListItemProps<T = object> extends Omit<AriaGridListItemProp
   readonly className?: string
   /** Color laid beneath this Item when it is selected. */
   readonly color?: Color
+  /** Color of this Item while it is not selected; the GridList's unless given. */
+  readonly restColor?: Color
   readonly disabled?: boolean
   readonly style?: CSSProperties
 }
 
 /** One card. It holds whatever it is given, and shows a check in its corner when selected. */
 const GridListItemImplementation = forwardRef(function GridListItem<T = object>(
-  { children, className, color, disabled = false, style, textValue, ...properties }: GridListItemProps<T>,
+  { children, className, color, restColor, disabled = false, style, textValue, ...properties }: GridListItemProps<T>,
   ref: ForwardedRef<HTMLDivElement>
 ) {
   const inherited = useGridListStyle()
@@ -139,9 +143,9 @@ const GridListItemImplementation = forwardRef(function GridListItem<T = object>(
         focusVisible: state.isFocusVisible,
         disabled: state.isDisabled
       }, metrics.radius),
-      // Unlike a list row, a card is a whole Surface: flat, in the default color at rest, in its
-      // selection color once selected, with the default material in both.
-      ...(state.isSelected || state.isDropTarget === true ? {} : { color: "default" }),
+      // Unlike a list row, a card is a whole Surface: flat, in its rest color, in its selection
+      // color once selected, with the default material in both.
+      ...(state.isSelected || state.isDropTarget === true ? {} : { color: restColor ?? inherited.restColor }),
       material: undefined
     }))}
     style={{

@@ -10,7 +10,7 @@ describe("UIProvider", function () {
     expect(defaultAppearance.colors).toBe(systemDefaultAppearance.colors)
     expect(defaultAppearance.shadow).toBe(systemDefaultAppearance.shadow)
     expect(defaultAppearance.material).toBe(systemDefaultAppearance.material)
-    expect(defaultAppearance.transaction).toBe(systemDefaultAppearance.transaction)
+    expect(defaultAppearance.tempo).toBe(systemDefaultAppearance.tempo)
     expect(defaultAppearance.spacing).toBe(systemDefaultAppearance.spacing)
     expect(defaultAppearance.radius).toBe(systemDefaultAppearance.radius)
     expect("taskbar" in defaultAppearance).toBe(false)

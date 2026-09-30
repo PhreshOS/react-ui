@@ -21,7 +21,7 @@ export interface DrawerProps {
  * A narrow layout's sidebar, over its content from the start side, such as the navigation a narrow
  * window gives up to its content. It is placed in its nearest positioned container. A press
  * outside or Escape closes it. It slides in and back out along the same path, timed by the
- * Appearance transaction, the way out its own animation so its end is seen; without motion it
+ * motion of a change in place, the way out its own animation so its end is seen; without motion it
  * simply shows and goes. Only its position moves:
  * fading it would switch off the blur it draws of what is behind it.
  */

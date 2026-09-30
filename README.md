@@ -231,7 +231,7 @@ component-owned.
 Text fields, Select, ComboBox, and the date fields recess the `background` by
 default. Checkbox, Switch, and RadioGroup indicators are recessed beds that rise
 in their color when selected. Slider and ProgressBar fill a recessed rail with
-their color. Motion follows `appearance.transaction`; Preferences with
+their color. Motion is derived from what moves, how far, and `appearance.tempo` (`timing`, `useTiming`); Preferences with
 animations disabled make every change immediate without changing Appearance.
 
 | Component | Value contract | Purpose |

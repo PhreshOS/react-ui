@@ -99,6 +99,20 @@ it("draws each card as a whole flat Surface in the default color, in its selecti
   expect(surfaceFill(card)).not.toBe(surfaceFill(reference))
 })
 
+it("draws cards at rest in another color when given one, on the GridList or on one card", function () {
+  renderGrid(<>
+    <GridList aria-label="Programs" selectionMode="none" restColor="primary:soft">
+      <GridList.Item id="notes">Notes</GridList.Item>
+      <GridList.Item id="terminal" restColor="success:soft">Terminal</GridList.Item>
+    </GridList>
+    <Surface data-testid="primary" depth="flat" color="primary:soft" />
+    <Surface data-testid="success" depth="flat" color="success:soft" />
+  </>)
+
+  expect(surfaceFill(screen.getByRole("row", { name: "Notes" }))).toBe(surfaceFill(screen.getByTestId("primary")))
+  expect(surfaceFill(screen.getByRole("row", { name: "Terminal" }))).toBe(surfaceFill(screen.getByTestId("success")))
+})
+
 it("only shows its cards when nothing is to be chosen", async function () {
   const user = userEvent.setup()
   renderGrid(<>

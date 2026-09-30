@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createRef, type ReactNode } from "react"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { UIProvider, Surface, Window, defaultAppearance } from "../source/main.js"
+import { UIProvider, Surface, Window, defaultAppearance, timing } from "../source/main.js"
 import { surfaceFill } from "./support/paint.js"
 
 afterEach(cleanup)
@@ -133,7 +133,7 @@ describe("Window", () => {
     const close = screen.getByRole("button", { name: "Close" })
 
     expect(identity.style.opacity).toBe("0.6")
-    expect(identity.style.transitionDuration).toBe(`${defaultAppearance.transaction.duration}ms`)
+    expect(identity.style.transitionDuration).toBe(`${timing("change").duration}ms`)
     expect(close.hasAttribute("disabled")).toBe(true)
     rendered.rerender(content(true))
     expect(identity.style.opacity).toBe("1")

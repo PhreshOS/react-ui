@@ -25,7 +25,7 @@ export interface LoadingProps extends Pick<ReadinessProps, "children" | "delay">
  * requirements are waited for without being shown.
  *
  * The loading fills the nearest positioned ancestor. It appears at once; when
- * everything is ready it fades out with the Appearance transaction and the
+ * everything is ready it fades out as a change in place and the
  * interface appears whole at once.
  */
 export function Loading({ children, delay, steps = false, className, style }: LoadingProps) {

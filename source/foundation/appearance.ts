@@ -5,7 +5,6 @@ import {
   type AppearanceColors,
   type AppearanceMaterial,
   type AppearanceShadow,
-  type AppearanceTransaction,
   type ThemedValue
 } from "@phreshos/core"
 
@@ -15,13 +14,13 @@ export type {
   AppearanceMaterial,
   AppearanceRange,
   AppearanceShadow,
-  AppearanceTransaction,
+  Transaction,
   Easing,
   ThemedValue
 } from "@phreshos/core"
 
 /** The System Appearance fields consumed by React UI. */
-export type Appearance = Pick<SystemAppearance, "colors" | "spacing" | "radius" | "shadow" | "material" | "transaction">
+export type Appearance = Pick<SystemAppearance, "colors" | "spacing" | "radius" | "shadow" | "material" | "tempo">
 
 type Themed<Value> = Readonly<{
   light?: Readonly<Partial<Value>>
@@ -34,7 +33,7 @@ type AppearanceUpdateFields = Readonly<{
   radius?: number
   shadow?: Themed<AppearanceShadow>
   material?: Themed<AppearanceMaterial>
-  transaction?: Readonly<Partial<AppearanceTransaction>>
+  tempo?: number
 }>
 
 /** At least one partial visual field merged recursively with the nearest UIProvider. */
@@ -49,7 +48,8 @@ export const appearanceLimits = Object.freeze({
   spacing: coreAppearanceLimits.spacing,
   radius: coreAppearanceLimits.radius,
   shadow: coreAppearanceLimits.shadow,
-  material: coreAppearanceLimits.material
+  material: coreAppearanceLimits.material,
+  tempo: coreAppearanceLimits.tempo
 })
 
 /** The visual portion of the System's default Appearance. */
@@ -59,7 +59,7 @@ export const defaultAppearance: Appearance = Object.freeze({
   radius: systemDefaultAppearance.radius,
   shadow: systemDefaultAppearance.shadow,
   material: systemDefaultAppearance.material,
-  transaction: systemDefaultAppearance.transaction
+  tempo: systemDefaultAppearance.tempo
 })
 
 /** Applies one partial update; omitted leaves continue to inherit. */
@@ -70,9 +70,7 @@ export function mergeAppearance(appearance: Appearance, update: AppearanceUpdate
     radius: update.radius ?? appearance.radius,
     shadow: mergeThemed(appearance.shadow, update.shadow),
     material: mergeThemed(appearance.material, update.material),
-    transaction: update.transaction === undefined
-      ? appearance.transaction
-      : Object.freeze({ ...appearance.transaction, ...update.transaction })
+    tempo: update.tempo ?? appearance.tempo
   })
 }
 

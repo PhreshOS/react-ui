@@ -121,7 +121,7 @@ export function proportionalRadius(visual: Visual, height: number, level: ScaleL
   return Math.round(scale(visual.radius, level) * height / medium * 100) / 100
 }
 
-/** A CSS transition for the given properties using the Appearance transaction. */
+/** A CSS transition for the given properties moving as a change in place. */
 export function transition(visual: Visual, properties: string, factor = 1): CSSProperties {
   return {
     transitionProperty: properties,

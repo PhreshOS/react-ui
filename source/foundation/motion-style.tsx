@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react"
 import type { Visual } from "./visual.js"
+import { timing } from "./timing.js"
 
 /** Per-overlay variables consumed by the shared entrance keyframes. */
 export function overlayTransition(visual: Visual): CSSProperties {
@@ -11,11 +12,11 @@ export function overlayTransition(visual: Visual): CSSProperties {
 
 /**
  * How long one pass of a repeating motion takes, such as an indeterminate
- * progress sweep or a skeleton pulse: eight Appearance transactions, and never
+ * progress sweep or a skeleton pulse: eight changes in place, and never
  * quicker than a calm breath.
  */
 export function loopDuration(visual: Visual): number {
-  return Math.max(900, visual.appearance.transaction.duration * 8)
+  return Math.max(900, timing("change", { tempo: visual.appearance.tempo }).duration * 8)
 }
 
 /** The stacking layer of content above an interface: dialogs and notifications. */
