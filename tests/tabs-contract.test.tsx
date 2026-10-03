@@ -136,3 +136,21 @@ it("sizes only its Tabs, leaving the content of its Panels at the size around th
     element = element.parentElement
   }
 })
+
+it("lets a Tab's label fill the Tab and follow its alignment, centered unless the Tab says otherwise", function () {
+  renderTabs(<Tabs defaultValue="one">
+    <Tabs.List aria-label="Sessions">
+      <Tabs.Tab id="one"><span data-testid="centered">One</span></Tabs.Tab>
+      <Tabs.Tab id="two" style={{ width: "10rem", justifyContent: "flex-start" }}><span data-testid="start">Two</span></Tabs.Tab>
+    </Tabs.List>
+  </Tabs>)
+
+  const centered = screen.getByTestId("centered").parentElement!
+  const start = screen.getByTestId("start").parentElement!
+  for (const label of [centered, start]) {
+    expect(label.style.flex).toBe("1 1 auto")
+    expect(label.style.justifyContent).toBe("inherit")
+  }
+  expect(screen.getByRole("tab", { name: "One" }).style.justifyContent).toBe("center")
+  expect(screen.getByRole("tab", { name: "Two" }).style.justifyContent).toBe("flex-start")
+})

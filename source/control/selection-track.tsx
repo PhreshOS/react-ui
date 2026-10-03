@@ -94,11 +94,17 @@ export function selectionItemStyle(metrics: ControlMetrics, color: Color, orient
   }
 }
 
-/** An item's label: an optional leading icon and text, centered a gap apart. */
+/**
+ * An item's label: an optional leading icon and text, a gap apart. It fills its item and follows the
+ * item's alignment, so a label stays centered in a centered item, and content given the item's whole
+ * width, such as a tab's title with its close button at the end, can take it.
+ */
 export function SelectionItemLabel({ metrics, emphasized, children }: Readonly<{ metrics: ControlMetrics, emphasized: boolean, children: ReactNode }>) {
   return <span style={{
     ...transition(metrics.visual, "opacity"),
     display: "flex",
+    flex: "1 1 auto",
+    justifyContent: "inherit",
     alignItems: "center",
     gap: metrics.gap,
     minWidth: 0,
