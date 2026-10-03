@@ -35,7 +35,8 @@ function Example({ onOpenChange }: Readonly<{ onOpenChange?(open: boolean): void
 
 describe("Dialog", function () {
   it("dims by default, and blurs with the Appearance material while dimming less", function () {
-    const content = (variant?: "dim" | "blur") => <UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    const appearance = { ...defaultAppearance, material: { ...defaultAppearance.material, light: { ...defaultAppearance.material.light, backdrop: 8 } } }
+    const content = (variant?: "dim" | "blur") => <UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
       <Dialog open>
         <Dialog.Backdrop variant={variant} data-testid="dialog-backdrop">
           <Dialog.Content aria-label="Example">Content</Dialog.Content>
@@ -49,8 +50,20 @@ describe("Dialog", function () {
 
     view.rerender(content("blur"))
 
-    expect(backdrop.style.backdropFilter).toBe(`blur(${defaultAppearance.material.light.backdrop}px)`)
+    expect(backdrop.style.backdropFilter).toBe("blur(8px)")
     expect(backdrop.style.background).not.toBe(dimmed)
+  })
+
+  it("reads nothing behind its backdrop when the material has no blur", function () {
+    const appearance = { ...defaultAppearance, material: { ...defaultAppearance.material, light: { ...defaultAppearance.material.light, backdrop: 0 } } }
+    render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
+      <Dialog open>
+        <Dialog.Backdrop variant="blur" data-testid="dialog-backdrop">
+          <Dialog.Content aria-label="Example">Content</Dialog.Content>
+        </Dialog.Backdrop>
+      </Dialog>
+    </UIProvider>)
+    expect(screen.getByTestId("dialog-backdrop").style.backdropFilter).toBe("")
   })
 
   it("stays centered at any width: the width sizes the centered modal, which the Surface fills", async function () {

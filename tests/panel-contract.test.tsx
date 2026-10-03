@@ -6,8 +6,11 @@ import { lifted, paintDeclarations } from "./support/paint.js"
 
 afterEach(cleanup)
 
+// A material with blur, so the frosted shell differs from its content region.
+const frosted = { ...defaultAppearance.material, light: { ...defaultAppearance.material.light, backdrop: 8 } }
+
 function provider(children: ReactNode, spacing = 12) {
-  return <UIProvider appearance={{ ...defaultAppearance, spacing }} preferences={{ theme: "light", animations: true }}>{children}</UIProvider>
+  return <UIProvider appearance={{ ...defaultAppearance, spacing, material: frosted }} preferences={{ theme: "light", animations: true }}>{children}</UIProvider>
 }
 
 describe("Panel", () => {
