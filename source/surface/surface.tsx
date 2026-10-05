@@ -148,6 +148,24 @@ export const interactionShift = Object.freeze({ hovered: 0.05, pressed: 0.1 })
 /** A clear Surface has no paint to move, so it shows the same shift as a slightly stronger veil. */
 export const clearVeil = 1.3
 
+/**
+ * The color a Surface of this color and depth is painted with at rest, before its material: a recess
+ * sinks below the color it is given; a clear Surface, with no depth or a transparent color, paints
+ * nothing. Whatever draws on a Surface and must match it, such as a terminal telling its programs
+ * what it stands on, takes this color.
+ */
+export function surfaceColor(color: Color, depth: SurfaceDepth, colors: Visual["colors"]): string {
+  const base = resolveColor(color, colors)
+  if (depth === "none" || base === "transparent") return "transparent"
+  return depth === "recessed" ? recessColor(base) : base
+}
+
+/** The color a Surface of this color and depth is painted with at rest, in the active Appearance. */
+export function useSurfaceColor(color: Color = "background", depth: SurfaceDepth = "raised"): string {
+  const { colors } = useVisual()
+  return surfaceColor(color, depth, colors)
+}
+
 /** Resolves every visual value of one Surface. Pure over its inputs. */
 export function surfacePaint(
   visual: Visual,
@@ -166,7 +184,7 @@ export function surfacePaint(
   const darkness = canvasDarkness(colors)
   // A recess moves away from its surroundings toward whichever extreme has
   // room, by one constant perceptual difference on any canvas.
-  const rest = depth === "recessed" ? recessColor(base) : base
+  const rest = depth === "recessed" ? surfaceColor(color, depth, colors) : base
   // A clear Surface, with no depth or a transparent color, has no substance of
   // its own: it paints nothing at rest, takes the content color of whatever it
   // sits on, and only reveals interaction as a veil. With no depth, a color

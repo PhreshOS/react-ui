@@ -34,6 +34,7 @@ export { Flex, type FlexProps } from "./flex.js"
 export { Grid, type GridProps } from "./grid.js"
 export {
   Surface,
+  useSurfaceColor,
   type MaterialMode,
   type MaterialOptions,
   type ShadowOptions,

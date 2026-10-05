@@ -2,7 +2,7 @@ import { renderToString } from "react-dom/server"
 import { cleanup, render, screen } from "@testing-library/react"
 import { createRef, forwardRef, type CSSProperties, type ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
-import { defaultAppearance, Surface, UIProvider } from "../source/main.js"
+import { defaultAppearance, Surface, UIProvider, useSurfaceColor } from "../source/main.js"
 import { contrast, luminance, mixColor, recessColor } from "../source/foundation/color.js"
 import { resolveVisual } from "../source/foundation/visual.js"
 import { spillDepth, surfacePaint } from "../source/surface/surface.js"
@@ -44,6 +44,18 @@ describe("Surface depth", function () {
     expect(recessed.fill).toBe(recessColor(defaultAppearance.colors.light.background))
     expect(variable(recessed, "spill-top")).toBe("none")
     expect(variable(recessed, "rim")).not.toBe(variable(paint("background", "raised"), "rim"))
+  })
+
+  it("tells the color a Surface is painted with at rest, so what draws on it can match it", function () {
+    function Probe({ depth }: Readonly<{ depth: "raised" | "recessed" | "none" }>) {
+      return <span data-testid={depth}>{useSurfaceColor("background", depth)}</span>
+    }
+    render(<UIProvider preferences={{ theme: "light", animations: true }}>
+      <Probe depth="raised" /><Probe depth="recessed" /><Probe depth="none" />
+    </UIProvider>)
+    expect(screen.getByTestId("recessed").textContent).toBe(paint("background", "recessed").fill)
+    expect(screen.getByTestId("raised").textContent).toBe(defaultAppearance.colors.light.background)
+    expect(screen.getByTestId("none").textContent).toBe("transparent")
   })
 
   it("sits level when flat, keeping only its rim and hairline", function () {
