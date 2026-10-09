@@ -1,5 +1,7 @@
-import { createContext, forwardRef, useContext } from "react"
-import type { CSSProperties, HTMLAttributes, ReactNode } from "react"
+import { createContext, forwardRef, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState } from "react"
+import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from "react"
+import { PanelLeft } from "lucide-react"
+import { Button } from "./button.js"
 import { controlFontSizes, controlFontWeight } from "./control/control.js"
 import { headerHeight } from "./foundation/layout.js"
 import { resolveRadius } from "./foundation/radius.js"
@@ -8,8 +10,27 @@ import { useVisual } from "./foundation/visual.js"
 import { ScrollArea } from "./scroll-area.js"
 import { Surface, type SurfaceDepth } from "./surface/surface.js"
 import { containerPadding } from "./foundation/spacing.js"
+import { Drawer } from "./drawer.js"
 
-const AppLayoutContext = createContext(false)
+/** At this width or less, a sidebar beside the content would crowd it out. */
+export const narrowAppLayoutWidth = 640
+
+type LayoutState = Readonly<{
+  narrow: boolean
+  sidebarOpen: boolean
+  setSidebarOpen: (open: boolean) => void
+  title: ReactNode
+  sidebarLabel: string | undefined
+}>
+
+type LayoutRegistry = Readonly<{
+  setTitle: (title: ReactNode) => void
+  setSidebarLabel: (label: string | undefined) => void
+}>
+
+const AppLayoutContext = createContext<LayoutState | null>(null)
+// Kept apart from the state, so a part that names itself does not render again when it is read.
+const AppLayoutRegistry = createContext<LayoutRegistry | null>(null)
 
 export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
   readonly children: ReactNode
@@ -22,18 +43,34 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * the content, and an optional footer beside them. Only the content is a
  * Surface, the same inset region as a Panel's content; the other regions sit
  * on whatever holds the layout, separated by spacing alone.
+ *
+ * At `narrowAppLayoutWidth` or less it gives the content the whole width: the title and sidebar
+ * wait in a Drawer, which `AppLayout.SidebarToggle` opens.
  */
 const AppLayoutRoot = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLayout({ children, sidebarWidth, style, ...properties }, ref) {
   const visual = useVisual()
   const inset = scale(visual.spacing, "small")
+  const [element, setElement] = useState<HTMLDivElement | null>(null)
+  const narrow = useNarrow(element)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [title, setTitle] = useState<ReactNode>(null)
+  const [sidebarLabel, setSidebarLabel] = useState<string | undefined>(undefined)
+  const attach = useCallback((value: HTMLDivElement | null) => { setElement(value); assign(ref, value) }, [ref])
 
-  return <AppLayoutContext.Provider value>
-    <div {...properties} ref={ref} style={{
+  // Widening puts the sidebar back beside the content, so its Drawer has nothing left to hold.
+  useEffect(() => { if (!narrow) setSidebarOpen(false) }, [narrow])
+
+  const state = useMemo(() => ({ narrow, sidebarOpen, setSidebarOpen, title, sidebarLabel }), [narrow, sidebarOpen, title, sidebarLabel])
+  const registry = useMemo(() => ({ setTitle, setSidebarLabel }), [])
+
+  return <AppLayoutRegistry.Provider value={registry}><AppLayoutContext.Provider value={state}>
+    <div {...properties} ref={attach} style={{
+      position: "relative",
       display: "grid",
-      gridTemplateColumns: `${typeof sidebarWidth === "number" ? `${sidebarWidth}px` : sidebarWidth ?? `${visual.spacing * 18}px`} minmax(0, 1fr)`,
+      gridTemplateColumns: narrow ? "minmax(0, 1fr)" : `${typeof sidebarWidth === "number" ? `${sidebarWidth}px` : sidebarWidth ?? `${visual.spacing * 18}px`} minmax(0, 1fr)`,
       gridTemplateRows: "auto minmax(0, 1fr) auto",
-      gridTemplateAreas: `"title header" "sidebar content" "sidebar footer"`,
-      columnGap: inset,
+      gridTemplateAreas: narrow ? `"header" "content" "footer"` : `"title header" "sidebar content" "sidebar footer"`,
+      columnGap: narrow ? 0 : inset,
       // The header row supplies the space above the content, as in a Panel.
       padding: inset,
       paddingTop: 0,
@@ -47,7 +84,7 @@ const AppLayoutRoot = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLay
       fontFamily: "inherit",
       ...style
     }}>{children}</div>
-  </AppLayoutContext.Provider>
+  </AppLayoutContext.Provider></AppLayoutRegistry.Provider>
 })
 
 export type AppLayoutRegionProps = HTMLAttributes<HTMLElement>
@@ -61,9 +98,15 @@ export type AppLayoutSidebarProps = AppLayoutRegionProps & Readonly<{
 }>
 export type AppLayoutTitleProps = HTMLAttributes<HTMLHeadingElement>
 
-/** The program's title above the sidebar, in the header row. */
-const AppLayoutTitle = forwardRef<HTMLHeadingElement, AppLayoutTitleProps>(function AppLayoutTitle({ style, ...properties }, ref) {
+/** The program's title above the sidebar, in the header row; in a narrow layout, atop its Drawer. */
+const AppLayoutTitle = forwardRef<HTMLHeadingElement, AppLayoutTitleProps>(function AppLayoutTitle({ style, children, ...properties }, ref) {
   const { spacing } = useLayout()
+  const { narrow } = useLayoutState()
+  const { setTitle } = useRegistry()
+
+  useLayoutEffect(() => { setTitle(children); return () => setTitle(null) }, [children, setTitle])
+
+  if (narrow) return null
 
   return <h1 {...properties} ref={ref} style={{
     gridArea: "title",
@@ -76,13 +119,27 @@ const AppLayoutTitle = forwardRef<HTMLHeadingElement, AppLayoutTitleProps>(funct
     fontSize: controlFontSizes.large,
     fontWeight: controlFontWeight,
     ...style
-  }} />
+  }}>{children}</h1>
 })
 
-/** The sidebar, such as a program's navigation. It scrolls on its own, above its footer. */
+/**
+ * The sidebar, such as a program's navigation. It scrolls on its own, above its footer. In a
+ * narrow layout it waits in a Drawer under the title; choosing something in it is the program's to
+ * follow with `useAppLayout().closeSidebar()`.
+ */
 const AppLayoutSidebar = forwardRef<HTMLElement, AppLayoutSidebarProps>(function AppLayoutSidebar({ children, footer, style, ...properties }, ref) {
   const { spacing } = useLayout()
+  const { narrow, sidebarOpen, setSidebarOpen, title } = useLayoutState()
+  const { setSidebarLabel } = useRegistry()
   const padding = scale(spacing, "small")
+  const label = properties["aria-label"]
+
+  useLayoutEffect(() => { setSidebarLabel(label); return () => setSidebarLabel(undefined) }, [label, setSidebarLabel])
+
+  if (narrow) return <Drawer open={sidebarOpen} onClose={() => setSidebarOpen(false)} title={title} aria-label={label}>
+    {children}
+    {footer != null && <div style={{ paddingTop: padding }}>{footer}</div>}
+  </Drawer>
 
   return <aside {...properties} ref={ref} style={{ gridArea: "sidebar", minHeight: 0, display: "flex", flexDirection: "column", ...style }}>
     <ScrollArea style={{ flex: "1 1 auto", minHeight: 0 }}><div style={{ padding }}>{children}</div></ScrollArea>
@@ -137,14 +194,64 @@ const AppLayoutFooter = forwardRef<HTMLElement, AppLayoutRegionProps>(function A
   }} />
 })
 
+/** In a narrow layout, the button that opens the sidebar's Drawer; otherwise nothing. */
+function AppLayoutSidebarToggle() {
+  const { narrow, sidebarOpen, setSidebarOpen, sidebarLabel } = useLayoutState()
+
+  if (!narrow) return null
+
+  return <Button iconOnly depth="flat" size="small" aria-label={sidebarLabel ?? "Sidebar"} aria-expanded={sidebarOpen} onPress={() => setSidebarOpen(!sidebarOpen)}><PanelLeft /></Button>
+}
+
+/** Whether the nearest AppLayout is narrow, and closing its sidebar's Drawer, such as after a choice in it. */
+export function useAppLayout() {
+  const { narrow, setSidebarOpen } = useLayoutState()
+  const closeSidebar = useCallback(() => setSidebarOpen(false), [setSidebarOpen])
+  return useMemo(() => ({ narrow, closeSidebar }), [narrow, closeSidebar])
+}
+
+function useLayoutState() {
+  const state = useContext(AppLayoutContext)
+  if (!state) throw new Error("AppLayout parts must be used inside AppLayout")
+  return state
+}
+
+function useRegistry() {
+  const registry = useContext(AppLayoutRegistry)
+  if (!registry) throw new Error("AppLayout parts must be used inside AppLayout")
+  return registry
+}
+
 function useLayout() {
-  if (!useContext(AppLayoutContext)) throw new Error("AppLayout parts must be used inside AppLayout")
+  useLayoutState()
   return useVisual()
+}
+
+/** Follows whether the layout itself, not the window, is narrow. */
+function useNarrow(element: HTMLElement | null) {
+  const [narrow, setNarrow] = useState(false)
+  useLayoutEffect(() => {
+    if (!element) return
+    // A width of 0 is a layout not laid out yet, not a narrow one.
+    const follow = (width: number) => { if (width > 0) setNarrow(width <= narrowAppLayoutWidth) }
+    follow(element.getBoundingClientRect().width)
+    if (typeof ResizeObserver !== "function") return
+    const observer = new ResizeObserver(([entry]) => { if (entry) follow(entry.contentRect.width) })
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [element])
+  return narrow
+}
+
+function assign<Value>(ref: Ref<Value> | undefined, value: Value) {
+  if (typeof ref === "function") ref(value)
+  else if (ref) (ref as { current: Value }).current = value
 }
 
 export const AppLayout = Object.assign(AppLayoutRoot, {
   Title: AppLayoutTitle,
   Sidebar: AppLayoutSidebar,
+  SidebarToggle: AppLayoutSidebarToggle,
   Header: AppLayoutHeader,
   Content: AppLayoutContent,
   Footer: AppLayoutFooter

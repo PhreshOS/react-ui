@@ -1,7 +1,7 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { createRef } from "react"
 import { afterEach, describe, expect, it } from "vitest"
-import { AppLayout, UIProvider, Flex, Grid, defaultAppearance } from "../source/main.js"
+import { AppLayout, UIProvider, Flex, Grid, defaultAppearance, useAppLayout } from "../source/main.js"
 
 afterEach(cleanup)
 
@@ -119,4 +119,33 @@ it("recesses the content by default, and raises it when asked", function () {
 
   expect(content()).toBe(content("recessed"))
   expect(content()).not.toBe(content("raised"))
+})
+
+it("gives a narrow layout's title and sidebar to a Drawer that its toggle opens, and a choice closes", async function () {
+  const width = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "getBoundingClientRect")
+  HTMLElement.prototype.getBoundingClientRect = function () { return { width: 500, height: 400, x: 0, y: 0, top: 0, left: 0, right: 500, bottom: 400, toJSON() {} } as DOMRect }
+  try {
+    function Choice() {
+      const { narrow, closeSidebar } = useAppLayout()
+      return <button type="button" onClick={closeSidebar}>{narrow ? "Home (narrow)" : "Home"}</button>
+    }
+    render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: false }}>
+      <AppLayout>
+        <AppLayout.Title>Files</AppLayout.Title>
+        <AppLayout.Sidebar aria-label="Places"><Choice /></AppLayout.Sidebar>
+        <AppLayout.Header><AppLayout.SidebarToggle /></AppLayout.Header>
+        <AppLayout.Content>Content</AppLayout.Content>
+      </AppLayout>
+    </UIProvider>)
+
+    expect(screen.queryByRole("heading", { name: "Files" })).toBeNull()
+    expect(screen.queryByText("Home (narrow)")).toBeNull()
+
+    fireEvent.click(screen.getByRole("button", { name: "Places" }))
+    expect(screen.getByText("Files")).toBeTruthy()
+    fireEvent.click(screen.getByText("Home (narrow)"))
+    expect(screen.queryByText("Home (narrow)")).toBeNull()
+  } finally {
+    if (width) Object.defineProperty(HTMLElement.prototype, "getBoundingClientRect", width)
+  }
 })
