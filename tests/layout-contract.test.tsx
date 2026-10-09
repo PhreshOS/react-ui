@@ -138,11 +138,12 @@ it("gives a narrow layout's title and sidebar to a Drawer that its toggle opens,
       </AppLayout>
     </UIProvider>)
 
-    expect(screen.queryByRole("heading", { name: "Files" })).toBeNull()
+    // The title stays the page's heading, out of sight.
+    expect(screen.getByRole("heading", { name: "Files" }).style.position).toBe("absolute")
     expect(screen.queryByText("Home (narrow)")).toBeNull()
 
     fireEvent.click(screen.getByRole("button", { name: "Places" }))
-    expect(screen.getByText("Files")).toBeTruthy()
+    expect(screen.getAllByText("Files")).toHaveLength(2)
     fireEvent.click(screen.getByText("Home (narrow)"))
     expect(screen.queryByText("Home (narrow)")).toBeNull()
   } finally {

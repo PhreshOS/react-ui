@@ -98,7 +98,13 @@ export type AppLayoutSidebarProps = AppLayoutRegionProps & Readonly<{
 }>
 export type AppLayoutTitleProps = HTMLAttributes<HTMLHeadingElement>
 
+const visuallyHidden: CSSProperties = {
+  position: "absolute", width: 1, height: 1, margin: -1, padding: 0, border: 0,
+  overflow: "hidden", clip: "rect(0 0 0 0)", whiteSpace: "nowrap"
+}
+
 /** The program's title above the sidebar, in the header row; in a narrow layout, atop its Drawer. */
+
 const AppLayoutTitle = forwardRef<HTMLHeadingElement, AppLayoutTitleProps>(function AppLayoutTitle({ style, children, ...properties }, ref) {
   const { spacing } = useLayout()
   const { narrow } = useLayoutState()
@@ -106,7 +112,8 @@ const AppLayoutTitle = forwardRef<HTMLHeadingElement, AppLayoutTitleProps>(funct
 
   useLayoutEffect(() => { setTitle(children); return () => setTitle(null) }, [children, setTitle])
 
-  if (narrow) return null
+  // Out of sight while narrow, but still the page's heading, so what is named by it keeps its name.
+  if (narrow) return <h1 {...properties} ref={ref} style={visuallyHidden}>{children}</h1>
 
   return <h1 {...properties} ref={ref} style={{
     gridArea: "title",
