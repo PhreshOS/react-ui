@@ -45,6 +45,11 @@ type GridListRootBaseProps<T extends object> = Omit<
   restColor?: Color
   /** The narrowest an Item may be; the grid fits as many columns as that allows. Sixteen times the spacing by default. */
   itemWidth?: CSSProperties["width"]
+  /**
+   * Whether fewer Items than fit share the whole width. Off by default, so an open collection keeps
+   * its Item width whatever it holds; on for a fixed set, such as a row of counts.
+   */
+  stretch?: boolean
   size?: ScaleLevel
   style?: CSSProperties
 }>
@@ -68,12 +73,13 @@ const GridListRootImplementation = forwardRef(function GridList<T extends object
 ) {
   const {
     className, color = "primary", restColor = "default", defaultValue: _defaultValue, itemWidth, onChange: _onChange, radius,
-    selectionMode: _selectionMode, size, style, value: _value, ...native
+    selectionMode: _selectionMode, size, stretch = false, style, value: _value, ...native
   } = properties
   const metrics = useControlMetrics(size, radius)
   const width = itemWidth ?? metrics.visual.spacing * 16
   // As many columns as fit, each at least the Item width; a Section repeats the same columns.
-  const columns = `repeat(auto-fill, minmax(min(${typeof width === "number" ? `${width}px` : width}, 100%), 1fr))`
+  // Stretched, the columns no Item fills fold away and the rest share their width.
+  const columns = `repeat(${stretch ? "auto-fit" : "auto-fill"}, minmax(min(${typeof width === "number" ? `${width}px` : width}, 100%), 1fr))`
   const context = useMemo(() => ({ color, restColor, metrics, columns }), [color, restColor, metrics, columns])
   const direction = resolveDirection(native.dir, useDirection())
 

@@ -34,6 +34,14 @@ it("lays cards out in as many columns as the item width allows", function () {
   expect(screen.getByRole("grid").style.gridTemplateColumns).toBe("repeat(auto-fill, minmax(min(200px, 100%), 1fr))")
 })
 
+it("lets a fixed set of cards share the whole width", function () {
+  renderGrid(<GridList aria-label="Counts" itemWidth={200} stretch>
+    <GridList.Item id="programs">Programs</GridList.Item>
+  </GridList>)
+
+  expect(screen.getByRole("grid").style.gridTemplateColumns).toBe("repeat(auto-fit, minmax(min(200px, 100%), 1fr))")
+})
+
 it("selects several cards and reports the selection as identities", async function () {
   const onChange = vi.fn()
   const user = userEvent.setup()
