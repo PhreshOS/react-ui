@@ -138,6 +138,31 @@ it("cuts a cell's text short in a narrow column, and a Text beside other things 
   expect(name.style.minWidth).toBe("0px")
 })
 
+it("never grows narrower than the room its Columns state, and is as wide as its content when none do", function () {
+  const { unmount } = renderTable(<Table aria-label="Programs">
+    <Table.Header>
+      <Table.Column id="name" rowHeader minWidth="10rem">Name</Table.Column>
+      <Table.Column id="version" width={84}>Version</Table.Column>
+    </Table.Header>
+    <Table.Body>
+      <Table.Row id="files"><Table.Cell>Files</Table.Cell><Table.Cell>0.1.5</Table.Cell></Table.Row>
+    </Table.Body>
+  </Table>)
+
+  const table = screen.getByRole("grid", { name: "Programs" })
+  expect(table.style.tableLayout).toBe("fixed")
+  expect(table.style.minWidth).toMatch(/10rem/)
+  expect(table.style.minWidth).toMatch(/84px/)
+  expect(screen.getByText("Version").closest("[role=columnheader]")!.getAttribute("style")).toMatch(/width: 84px/)
+  unmount()
+
+  renderTable(<Table aria-label="Free">
+    <Table.Header><Table.Column id="name" rowHeader>Name</Table.Column></Table.Header>
+    <Table.Body><Table.Row id="files"><Table.Cell>Files</Table.Cell></Table.Row></Table.Body>
+  </Table>)
+  expect(screen.getByRole("grid", { name: "Free" }).style.minWidth).toBe("max-content")
+})
+
 it("draws internal row separators without a bottom border on the final row", function () {
   renderTable(<Table aria-label="Processes">
     <Table.Header>

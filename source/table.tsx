@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useContext, useMemo } from "react"
+import { createContext, forwardRef, useCallback, useContext, useLayoutEffect, useMemo, useState } from "react"
 import type { CSSProperties, ForwardedRef, ReactElement, RefAttributes } from "react"
 import {
   Cell as AriaCell,
@@ -37,7 +37,13 @@ import { dimmedClass } from "./surface/surface.js"
 import { ChevronUp } from "lucide-react"
 import { iconProps } from "./control/icon.js"
 
-type TableContext = Readonly<{ color: Color, interactive: boolean, metrics: ControlMetrics }>
+type TableContext = Readonly<{
+  color: Color
+  interactive: boolean
+  metrics: ControlMetrics
+  /** A Column says the least room it takes, or forgets it with `null`. */
+  measure: (column: string, least: string | null) => void
+}>
 
 const TableStyleContext = createContext<TableContext | null>(null)
 
@@ -84,10 +90,18 @@ const TableRoot = forwardRef<HTMLTableElement | HTMLDivElement, TableRootProps>(
     radius, selectOnPressUp, selectionMode = "none", size, sort, style, value: _value, ...native
   } = properties
   const metrics = useControlMetrics(size, radius)
+  // The least room each Column takes, from its width or its minimum.
+  const [least, setLeast] = useState<Readonly<Record<string, string>>>({})
+  const measure = useCallback((column: string, room: string | null) => setLeast(current => {
+    if ((current[column] ?? null) === room) return current
+    const { [column]: _previous, ...rest } = current
+    return room === null ? rest : { ...rest, [column]: room }
+  }), [])
   const context = useMemo<TableContext>(
-    () => ({ color, interactive: selectionMode !== "none" || onAction != null, metrics }),
-    [color, metrics, onAction, selectionMode]
+    () => ({ color, interactive: selectionMode !== "none" || onAction != null, metrics, measure }),
+    [color, metrics, onAction, selectionMode, measure]
   )
+  const rooms = Object.values(least)
   const direction = resolveDirection(native.dir, useDirection())
 
   return <TableStyleContext.Provider value={context}>
@@ -103,7 +117,12 @@ const TableRoot = forwardRef<HTMLTableElement | HTMLDivElement, TableRootProps>(
       onSortChange={onSortChange == null ? undefined : descriptor => onSortChange(tableSort(descriptor))}
       style={state => ({
         width: "100%",
-        minWidth: "max-content",
+        // Columns that state their room lay the Table out by it, and the Table never grows narrower
+        // than all of it together: past what holds it, it is scrolled, never crushed. Otherwise the
+        // Table is as wide as its content.
+        ...rooms.length
+          ? { tableLayout: "fixed", minWidth: `calc(${rooms.join(" + ")})` }
+          : { minWidth: "max-content" },
         borderCollapse: "separate",
         borderSpacing: 0,
         boxSizing: "border-box",
@@ -140,7 +159,7 @@ export type TableHeaderComponent = <T extends object = object>(
   properties: TableHeaderProps<T> & RefAttributes<HTMLTableSectionElement | HTMLDivElement>
 ) => ReactElement | null
 
-export interface TableColumnProps extends Omit<AriaColumnProps, "allowsSorting" | "allowsArrowNavigation" | "className" | "id" | "isRowHeader" | "style"> {
+export interface TableColumnProps extends Omit<AriaColumnProps, "allowsSorting" | "allowsArrowNavigation" | "className" | "id" | "isRowHeader" | "style" | "width" | "minWidth" | "maxWidth" | "defaultWidth"> {
   /** Whether arrow keys move between cells while focus is inside this one. */
   readonly arrowNavigation?: boolean
 
@@ -150,16 +169,30 @@ export interface TableColumnProps extends Omit<AriaColumnProps, "allowsSorting" 
   readonly rowHeader?: boolean
   /** Whether pressing this Column requests a sort. */
   readonly sortable?: boolean
+  /** The Column's width, in pixels or any CSS length. */
+  readonly width?: number | string
+  /**
+   * For a Column without a width, which takes the room the others leave: the least it keeps when
+   * that room runs out.
+   */
+  readonly minWidth?: number | string
   readonly className?: string
   readonly style?: CSSProperties
 }
 
 const TableColumn = forwardRef<HTMLTableCellElement | HTMLDivElement, TableColumnProps>(function TableColumn(
-  { sortable = false, rowHeader, arrowNavigation, children, className, style, textValue, ...properties },
+  { sortable = false, rowHeader, arrowNavigation, children, className, style, textValue, width, minWidth, ...properties },
   ref
 ) {
-  const { metrics } = useTableStyle()
+  const { metrics, measure } = useTableStyle()
   const { colors } = metrics.visual
+  const room = width ?? minWidth
+  const least = room === undefined ? null : typeof room === "number" ? `${room}px` : room
+
+  useLayoutEffect(() => {
+    measure(properties.id, least)
+    return () => measure(properties.id, null)
+  }, [measure, properties.id, least])
 
   return <AriaColumn
     {...properties}
@@ -182,6 +215,7 @@ const TableColumn = forwardRef<HTMLTableCellElement | HTMLDivElement, TableColum
       textAlign: "start",
       userSelect: "none",
       opacity: state.isHovered && sortable ? 1 : controlOpacity.secondary,
+      width,
       ...style
     })}
   >{state => <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: metrics.gap, minWidth: 0 }}>
