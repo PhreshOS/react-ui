@@ -169,7 +169,10 @@ const AppLayoutHeader = forwardRef<HTMLElement, AppLayoutRegionProps>(function A
   }} />
 })
 
-/** The content, on its Surface. It scrolls on its own, padded by the Appearance spacing. */
+/**
+ * The content, on its Surface. It scrolls on its own, padded by the Appearance spacing. It is a size
+ * container, so what stands in for the content can fill what shows of it.
+ */
 const AppLayoutContent = forwardRef<HTMLElement, AppLayoutContentProps>(function AppLayoutContent({ children, depth = "recessed", style, ...properties }, ref) {
   const { spacing, radius } = useLayout()
 
@@ -179,10 +182,29 @@ const AppLayoutContent = forwardRef<HTMLElement, AppLayoutContentProps>(function
     minHeight: 0,
     // The Surface owns its shape: what scrolls inside stays within its corners.
     overflow: "clip",
+    containerType: "size",
     ...style
   }}>
     <ScrollArea style={{ height: "100%" }}><div style={{ padding: containerPadding(spacing) }}>{children}</div></ScrollArea>
   </Surface>
+})
+
+/**
+ * What stands in for the content while there is none to show: a wait, what went wrong, or that there
+ * is nothing. It stands in the middle of the content, wherever the content would have been.
+ */
+const AppLayoutPlaceholder = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivElement>>(function AppLayoutPlaceholder({ style, ...properties }, ref) {
+  const { spacing } = useLayout()
+
+  return <div {...properties} ref={ref} style={{
+    display: "grid",
+    placeItems: "center",
+    alignContent: "center",
+    gap: scale(spacing, "medium"),
+    textAlign: "center",
+    minHeight: `calc(100cqh - ${containerPadding(spacing) * 2}px)`,
+    ...style
+  }} />
 })
 
 /** An optional row below the content, such as the actions that apply to it. */
@@ -261,5 +283,6 @@ export const AppLayout = Object.assign(AppLayoutRoot, {
   SidebarToggle: AppLayoutSidebarToggle,
   Header: AppLayoutHeader,
   Content: AppLayoutContent,
+  Placeholder: AppLayoutPlaceholder,
   Footer: AppLayoutFooter
 })

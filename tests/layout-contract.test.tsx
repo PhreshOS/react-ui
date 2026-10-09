@@ -107,6 +107,18 @@ it("keeps the sidebar footer at the foot, outside what scrolls", function () {
   expect(screen.getByRole("complementary", { name: "Places" }).lastElementChild!.contains(screen.getByText("In progress"))).toBe(true)
 })
 
+it("stands a placeholder in the middle of what shows of the content", function () {
+  render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+    <AppLayout><AppLayout.Content><AppLayout.Placeholder>Nothing here</AppLayout.Placeholder></AppLayout.Content></AppLayout>
+  </UIProvider>)
+
+  expect(screen.getByRole("main").style.containerType).toBe("size")
+  const placeholder = screen.getByText("Nothing here")
+  expect(placeholder.style.placeItems).toBe("center")
+  // As tall as what shows of the content, less its padding above and below.
+  expect(placeholder.style.minHeight).toMatch(/100cqh/)
+})
+
 it("recesses the content by default, and raises it when asked", function () {
   const content = (depth?: "recessed" | "raised") => {
     const { unmount } = render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
