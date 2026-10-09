@@ -7,7 +7,7 @@ import { resolveRadius } from "./foundation/radius.js"
 import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
 import { paintClass, usePaintClasses } from "./surface/paint-class.js"
-import { Surface, type SurfaceProps } from "./surface/surface.js"
+import { FloatingLayer, Surface, type SurfaceProps } from "./surface/surface.js"
 import { containerPadding } from "./foundation/spacing.js"
 
 const PanelContext = createContext<{ color: Color | undefined, hasHeader: boolean, radius: CSSProperties["borderRadius"] }>({ color: undefined, hasHeader: false, radius: undefined })
@@ -42,14 +42,14 @@ export const PanelRoot = forwardRef<HTMLDivElement, PanelRootProps>(function Pan
   const radius = resolveRadius(properties.radius ?? "medium", useVisual().radius)
 
   return <PanelContext.Provider value={{ color: properties.color, hasHeader, radius }}>
-    <Surface material="full" {...properties} ref={ref} radius={radius} style={{
+    <FloatingLayer><Surface material="full" {...properties} ref={ref} radius={radius} style={{
       display: "grid",
       gridTemplateRows: hasHeader ? "auto minmax(0, 1fr)" : "minmax(0, 1fr)",
       minWidth: 0,
       minHeight: 0,
       maxHeight: "inherit",
       ...style
-    }}>{children}</Surface>
+    }}>{children}</Surface></FloatingLayer>
   </PanelContext.Provider>
 })
 

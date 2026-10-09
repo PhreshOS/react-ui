@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { defaultAppearance, Surface, UIProvider, useSurfaceColor } from "../source/main.js"
 import { contrast, luminance, mixColor, recessColor } from "../source/foundation/color.js"
 import { resolveVisual } from "../source/foundation/visual.js"
-import { spillDepth, surfacePaint } from "../source/surface/surface.js"
+import { FloatingLayer, spillDepth, surfacePaint } from "../source/surface/surface.js"
 import { shadowStyle } from "../source/surface/shadow-options.js"
 import { lifted } from "./support/paint.js"
 
@@ -183,6 +183,19 @@ describe("Surface element", function () {
     expect(paintClass).toBeDefined()
     expect(screen.getByTestId("second").classList.contains(paintClass!)).toBe(true)
     expect(ruleText(paintClass!)).toContain("--phreshos-surface-paint")
+  })
+
+  it("keeps a nested Surface apart, but not one in a layer floating above", function () {
+    renderLight(<>
+      <Surface data-testid="alone" />
+      <Surface>
+        <Surface data-testid="nested" />
+        <FloatingLayer><Surface data-testid="floating" /></FloatingLayer>
+      </Surface>
+    </>)
+    const paintOf = (id: string) => [...screen.getByTestId(id).classList].find(name => name.startsWith("phreshos-paint-"))
+    expect(paintOf("nested")).not.toBe(paintOf("alone"))
+    expect(paintOf("floating")).toBe(paintOf("alone"))
   })
 
   it("keeps consumer classes and styles above its own paint", function () {

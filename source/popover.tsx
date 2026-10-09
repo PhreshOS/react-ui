@@ -20,7 +20,7 @@ import { resolveDirectionalPlacement } from "./foundation/overlay-placement.js"
 import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
 import { floatingShadow } from "./surface/shadow-options.js"
-import { Surface, type SurfaceOwnProps } from "./surface/surface.js"
+import { FloatingLayer, Surface, type SurfaceOwnProps } from "./surface/surface.js"
 
 export type PopoverRootProps = OverlayRootProps
 
@@ -85,7 +85,7 @@ const PositionedContent = forwardRef<HTMLElement, PositionedContentProps>(functi
     className={overlayMotionClass}
     style={transition}
   >
-    <Surface
+    <FloatingLayer><Surface
       dir={direction}
       className={className}
       color={color}
@@ -99,7 +99,7 @@ const PositionedContent = forwardRef<HTMLElement, PositionedContentProps>(functi
         outline: "none",
         ...style
       }}
-    >{children}</Surface>
+    >{children}</Surface></FloatingLayer>
   </AriaPopover></>
 })
 

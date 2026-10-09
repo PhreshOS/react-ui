@@ -24,7 +24,7 @@ import { scale } from "./foundation/scale.js"
 import { containerPadding } from "./foundation/spacing.js"
 import { useVisual } from "./foundation/visual.js"
 import { floatingShadow } from "./surface/shadow-options.js"
-import { Surface, type SurfaceOwnProps } from "./surface/surface.js"
+import { FloatingLayer, Surface, type SurfaceOwnProps } from "./surface/surface.js"
 
 export type DialogRootProps = OverlayRootProps
 
@@ -142,7 +142,7 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
       outline: "none"
     }}
   >
-    <Surface
+    <FloatingLayer><Surface
       className={className}
       color={color}
       material={material}
@@ -171,7 +171,7 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
           outline: "none"
         }}
       >{children}</AriaDialog>
-    </Surface>
+    </Surface></FloatingLayer>
   </AriaModal></>
 })
 

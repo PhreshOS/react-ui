@@ -69,6 +69,14 @@ type SurfaceImplementationProps = SurfaceOwnProps
 const SurroundingPaint = createContext<string | null>(null)
 
 /**
+ * A layer that floats above everything, such as a popover, a dialog, or a panel: it is not inside the
+ * Surface it was opened from, so what it holds has nothing around it to keep apart from.
+ */
+export function FloatingLayer({ children }: Readonly<{ children: ReactNode }>) {
+  return <SurroundingPaint.Provider value={null}>{children}</SurroundingPaint.Provider>
+}
+
+/**
  * How far a nested Surface keeps from the one it sits on: farther on a dark canvas, where
  * differences read smaller.
  */

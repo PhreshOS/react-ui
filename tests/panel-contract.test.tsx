@@ -14,6 +14,15 @@ function provider(children: ReactNode, spacing = 12) {
 }
 
 describe("Panel", () => {
+  it("floats: opened from inside a Surface, it paints as it does on its own", () => {
+    render(provider(<>
+      <Panel data-testid="alone" />
+      <Surface><Panel data-testid="opened" /></Surface>
+    </>))
+    const paintOf = (id: string) => [...screen.getByTestId(id).classList].find(name => name.startsWith("phreshos-paint-"))
+    expect(paintOf("opened")).toBe(paintOf("alone"))
+  })
+
   it("composes independently configurable root, header, and content parts", () => {
     render(provider(<>
       <Panel data-testid="panel">

@@ -15,7 +15,7 @@ import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
 import { timing } from "./foundation/timing.js"
 import { floatingShadow } from "./surface/shadow-options.js"
-import { Surface, type SurfaceOwnProps } from "./surface/surface.js"
+import { FloatingLayer, Surface, type SurfaceOwnProps } from "./surface/surface.js"
 
 export type TooltipRootProps = OverlayRootProps & Readonly<Pick<AriaTooltipTriggerProps, "closeDelay" | "trigger">> & Readonly<{
   /** Milliseconds the pointer rests on the trigger before the Tooltip opens: four changes in place by default. */
@@ -86,7 +86,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
     className={overlayMotionClass}
     style={transition}
   >
-    <Surface
+    <FloatingLayer><Surface
       dir={direction}
       className={className}
       color={color ?? "foreground"}
@@ -103,7 +103,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
         lineHeight: controlLineHeight,
         ...style
       }}
-    >{children}</Surface>
+    >{children}</Surface></FloatingLayer>
   </AriaTooltip></>
 })
 
