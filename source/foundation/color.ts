@@ -269,6 +269,30 @@ export function recessColor(base: string): string {
 /** The constant difference between a recess and the paint it sinks into. */
 const recessContrast = 1.15
 
+const separateCache = new Map<string, string>()
+
+/**
+ * A paint moved just far enough from the paint it sits on to be told apart: at least `minimum`
+ * perceived difference (OKLab), stepping lighter, or darker only when lighter has no room. Raised
+ * and level things stand out the same way everywhere, whatever happens to be beneath them. A paint
+ * already far enough stays as it is.
+ */
+export function separateColor(paint: string, surroundings: string, minimum: number): string {
+  const key = `${paint}|${surroundings}|${minimum}`
+  const cached = separateCache.get(key)
+  if (cached !== undefined) return cached
+  const distance = perceivedDistance(paint, surroundings)
+  if (distance === null || distance >= minimum) return remember(separateCache, key, paint)
+  const directions = ["#ffffff", "#000000"]
+  for (const toward of directions) {
+    for (let amount = 0.01; amount <= 0.6; amount += 0.01) {
+      const result = mixColor(paint, toward, Math.round(amount * 1_000) / 1_000)
+      if ((perceivedDistance(result, surroundings) ?? 0) >= minimum) return remember(separateCache, key, result)
+    }
+  }
+  return remember(separateCache, key, paint)
+}
+
 /** The lighter Appearance content candidate: the paint of anything lit from above, such as a thumb. */
 export function lightColor(colors: AppearanceColors): string {
   return darkCanvas(colors) ? colors.foreground : colors.default

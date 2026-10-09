@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
 import { AlertDialog, Dialog, UIProvider, defaultAppearance } from "../source/main.js"
 import { surfaceFill } from "./support/paint.js"
+import { canvasDarkness, perceivedDistance } from "../source/foundation/color.js"
+import { nestingDistance } from "../source/surface/surface.js"
 
 afterEach(cleanup)
 
@@ -161,7 +163,13 @@ describe("AlertDialog", function () {
 
     await user.click(screen.getByRole("button", { name: "Delete workspace" }))
     expect(screen.getByRole("alertdialog", { name: "Delete permanently?" })).toBeTruthy()
-    expect(surfaceFill(screen.getByRole("button", { name: "Cancel" }))).toBe(defaultAppearance.colors.light.default)
+    // A raised Button keeps apart from the Dialog it sits on, though both are the neutral color.
+    const colors = defaultAppearance.colors.light
+    const cancelButton = screen.getByRole("button", { name: "Cancel" })
+    // The Surface the Button sits on: the nearest painted one around it.
+    const dialog = surfaceFill(cancelButton.parentElement!.closest("[class*='phreshos-paint-']")!)
+    const cancel = surfaceFill(cancelButton)
+    expect(perceivedDistance(cancel, dialog)!).toBeGreaterThanOrEqual(nestingDistance(canvasDarkness(colors)) - 0.001)
     expect(surfaceFill(screen.getByRole("button", { name: "Delete" }))).toBe(defaultAppearance.colors.light.danger)
 
     await user.keyboard("[Escape]")

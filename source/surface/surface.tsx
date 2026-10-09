@@ -1,6 +1,6 @@
-import { createElement, forwardRef, useId, useInsertionEffect } from "react"
+import { createContext, createElement, forwardRef, useContext, useId, useInsertionEffect } from "react"
 import type { ComponentPropsWithRef, ComponentPropsWithoutRef, CSSProperties, ElementType, ReactElement, ReactNode } from "react"
-import { canvasDarkness, colorOpacity, contrast, mixColor, readableColor, recessColor, resolveColor, type Color } from "../foundation/color.js"
+import { canvasDarkness, colorOpacity, contrast, mixColor, readableColor, recessColor, resolveColor, separateColor, type Color } from "../foundation/color.js"
 import type { Direction } from "../foundation/direction.js"
 import { resolveRadius, type RadiusProps } from "../foundation/radius.js"
 import { useVisual, type Visual } from "../foundation/visual.js"
@@ -65,6 +65,17 @@ type SurfaceImplementationProps = SurfaceOwnProps
   & Readonly<{ as?: ElementType, interaction?: SurfaceInteraction }>
   & Omit<ComponentPropsWithoutRef<"div">, keyof SurfaceOwnProps | "as" | "color">
 
+/** The resting paint of the nearest painted Surface around, which a nested Surface keeps apart from. */
+const SurroundingPaint = createContext<string | null>(null)
+
+/**
+ * How far a nested Surface keeps from the one it sits on: farther on a dark canvas, where
+ * differences read smaller.
+ */
+export function nestingDistance(darkness: number) {
+  return 0.04 + 0.03 * darkness
+}
+
 /**
  * The single visual primitive. Components express what they are through
  * color, depth, and interaction; paint, grain, frost, edge, shadow, focus,
@@ -85,7 +96,8 @@ export const SurfaceView = forwardRef<Element, SurfaceImplementationProps>(funct
 }, ref) {
   const visual = useVisual()
   const identity = useId()
-  const paint = surfacePaint(visual, color, depth, material, shadow, interaction)
+  const surroundings = useContext(SurroundingPaint)
+  const paint = surfacePaint(visual, color, depth, material, shadow, interaction, surroundings)
   const borderRadius = radius === undefined && style?.borderRadius !== undefined
     ? style.borderRadius
     : resolveRadius(radius ?? "medium", visual.radius)
@@ -110,7 +122,9 @@ export const SurfaceView = forwardRef<Element, SurfaceImplementationProps>(funct
     className: [surfaceClass, paint.grain?.name, painted, dimmedClass(interaction?.disabled ?? false), className].filter(Boolean).join(" "),
     // Without a document (server rendering), the same declarations travel inline.
     style: painted === undefined ? { ...inlineDeclarations(declarations), ...style } : style
-  }, <SurfaceStyle />, paint.grain && <GrainStyle grain={paint.grain} />, paint.distortion > 0 && <Refraction identity={identity} distortion={paint.distortion} />, children)
+  }, <SurfaceStyle />, paint.grain && <GrainStyle grain={paint.grain} />, paint.distortion > 0 && <Refraction identity={identity} distortion={paint.distortion} />,
+  // A clear Surface paints nothing, so what is inside it sits on what is around it.
+  paint.rest === null ? children : <SurroundingPaint.Provider value={paint.rest}>{children}</SurroundingPaint.Provider>)
 })
 
 function inlineDeclarations(declarations: string): CSSProperties {
@@ -173,7 +187,8 @@ export function surfacePaint(
   depth: SurfaceDepth,
   options: MaterialMode | MaterialOptions | undefined,
   shadowOptions: ShadowOverrides["shadow"],
-  interaction: SurfaceInteraction | undefined
+  interaction: SurfaceInteraction | undefined,
+  surroundings: string | null = null
 ) {
   const { colors } = visual
   const base = resolveColor(color, colors)
@@ -184,12 +199,15 @@ export function surfacePaint(
   const darkness = canvasDarkness(colors)
   // A recess moves away from its surroundings toward whichever extreme has
   // room, by one constant perceptual difference on any canvas.
-  const rest = depth === "recessed" ? surfaceColor(color, depth, colors) : base
+  const own = depth === "recessed" ? surfaceColor(color, depth, colors) : base
   // A clear Surface, with no depth or a transparent color, has no substance of
   // its own: it paints nothing at rest, takes the content color of whatever it
   // sits on, and only reveals interaction as a veil. With no depth, a color
   // other than the neutral one colors its content instead of a fill.
   const clear = depth === "none" || base === "transparent"
+  // A raised or level Surface nested in another keeps apart from it, however deep the nesting goes.
+  // A recess keeps its own constant depth below its color, so a well reads the same wherever it is.
+  const rest = clear || depth === "recessed" || surroundings === null ? own : separateColor(own, surroundings, nestingDistance(darkness))
   const tinted = depth === "none" && base !== "transparent" && base !== colors.default
   const fill = clear
     ? shift > 0 ? colorOpacity(colors.foreground, shift * clearVeil) : "transparent"
@@ -241,6 +259,8 @@ export function surfacePaint(
 
   return {
     fill,
+    /** The paint at rest, or `null` for a clear Surface. */
+    rest: clear ? null : rest,
     // The label is chosen once for the resting paint: interaction shades stay
     // close to it, and re-deciding per state would flip text on near-ties.
     text: tinted ? base : clear ? "inherit" : readableColor(rest, colors),
