@@ -152,7 +152,7 @@ test("package contract", async () => {
   const desktopThemed = <UIProvider preferences={desktopPreferences}><Surface>Desktop preferences</Surface></UIProvider>
   const systemAppearance = {
     ...defaultAppearance,
-    wallpaper: {
+    wallpapers: {
       light: { signIn: "sign-in-light.webp", desktop: "desktop-light.webp" },
       dark: { signIn: "sign-in-dark.webp", desktop: "desktop-dark.webp" }
     }
