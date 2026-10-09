@@ -280,6 +280,12 @@ const TableCell = forwardRef<HTMLTableCellElement | HTMLDivElement, TableCellPro
       outline: `3px solid ${state.isFocusVisible ? colorOpacity(metrics.visual.colors.primary, 0.34) : "transparent"}`,
       outlineOffset: -3,
       textAlign: "start",
+      // A narrow column cuts a cell's text short instead of letting it spill into the next. What
+      // the cell holds still paints a focus ring's width past its edge.
+      overflow: "clip",
+      overflowClipMargin: 3,
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
       ...style
     })}
   />

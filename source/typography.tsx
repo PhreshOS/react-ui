@@ -47,6 +47,13 @@ export interface TextProps {
   readonly tone?: "default" | "secondary"
   /** The control text scale; omitted, the text keeps the size around it. */
   readonly size?: ScaleLevel
+  /**
+   * Keeps the text to one line, cut short with an ellipsis where its space ends: for a name beside
+   * other things, such as an icon or a badge, in a row too narrow for all of it.
+   */
+  readonly truncate?: boolean
+  /** What a pointer resting on it shows, such as the whole of a text cut short. */
+  readonly title?: string
   /** A slot name when the text describes a field or item, such as `description`. */
   readonly slot?: string
   readonly elementType?: string
@@ -56,11 +63,12 @@ export interface TextProps {
 }
 
 /** Running text in the tone and scale of the interface. */
-export const Text = forwardRef<HTMLElement, TextProps>(function Text({ tone = "default", size, style, ...properties }, ref) {
+export const Text = forwardRef<HTMLElement, TextProps>(function Text({ tone = "default", size, truncate = false, style, ...properties }, ref) {
   return <AriaText {...properties} ref={ref} style={{
     fontSize: size === undefined ? undefined : controlFontSizes[size],
     lineHeight: controlLineHeight,
     opacity: tone === "secondary" ? controlOpacity.secondary : undefined,
+    ...truncate && { display: "block", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
     ...style
   }} />
 })

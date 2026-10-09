@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react"
 import { afterEach, expect, expectTypeOf, it, vi } from "vitest"
 import {
   Table,
+  Text,
   UIProvider,
   defaultAppearance,
   type TableMultipleSelectionProps,
@@ -110,6 +111,31 @@ it("cuts a column's name short in a narrow column", function () {
   expect(name.style.overflow).toBe("hidden")
   expect(name.style.textOverflow).toBe("ellipsis")
   expect(name.style.whiteSpace).toBe("nowrap")
+})
+
+it("cuts a cell's text short in a narrow column, and a Text beside other things when asked", function () {
+  renderTable(<Table aria-label="Sessions">
+    <Table.Header>
+      <Table.Column id="device" rowHeader>Signed in from</Table.Column>
+      <Table.Column id="active">Last active</Table.Column>
+    </Table.Header>
+    <Table.Body>
+      <Table.Row id="one">
+        <Table.Cell><span style={{ display: "flex" }}><Text truncate>Chrome on macOS</Text><span>This browser</span></span></Table.Cell>
+        <Table.Cell>Now</Table.Cell>
+      </Table.Row>
+    </Table.Body>
+  </Table>)
+
+  const cell = screen.getByText("Now")
+  expect(cell.style.textOverflow).toBe("ellipsis")
+  expect(cell.style.whiteSpace).toBe("nowrap")
+  expect(cell.style.overflow).toBe("clip")
+
+  const name = screen.getByText("Chrome on macOS")
+  expect(name.style.textOverflow).toBe("ellipsis")
+  expect(name.style.overflow).toBe("hidden")
+  expect(name.style.minWidth).toBe("0px")
 })
 
 it("draws internal row separators without a bottom border on the final row", function () {
