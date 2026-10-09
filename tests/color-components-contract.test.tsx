@@ -102,3 +102,22 @@ function hexToRgb(hex: string) {
   const [r, g, b] = [1, 3, 5].map(index => Number.parseInt(hex.slice(index, index + 2), 16))
   return `rgb(${r}, ${g}, ${b})`
 }
+
+it("applies a typed hex color in a picker as soon as it is whole, before the field is left", async function () {
+  const onChange = vi.fn()
+  renderUI(<ColorPicker defaultValue="#ff0000" onChange={onChange}>
+    <ColorPicker.Trigger aria-label="Pick a color" />
+    <ColorPicker.Content>
+      <ColorField aria-label="Hex" />
+    </ColorPicker.Content>
+  </ColorPicker>)
+  const user = userEvent.setup()
+
+  await user.click(screen.getByRole("button", { name: "Pick a color" }))
+  const hex = await screen.findByRole("textbox", { name: "Hex" })
+  await user.clear(hex)
+  await user.type(hex, "#3366f")
+  expect(onChange).not.toHaveBeenCalled()
+  await user.type(hex, "f")
+  await waitFor(() => expect(onChange).toHaveBeenLastCalledWith("#3366FF"))
+})

@@ -1,5 +1,5 @@
-import { forwardRef } from "react"
-import { ColorField as AriaColorField, Input as AriaInput } from "react-aria-components"
+import { forwardRef, useContext } from "react"
+import { ColorField as AriaColorField, ColorPickerStateContext, Input as AriaInput, parseColor } from "react-aria-components"
 import type { ColorFieldProps as AriaColorFieldProps } from "react-aria-components"
 import { colorValue } from "./control/color-value.js"
 import { useControlMetrics, type ControlOverrides, type ControlProps, type FieldProps } from "./control/control.js"
@@ -25,14 +25,30 @@ export interface ColorFieldProps extends
 }
 
 /**
+ * A whole six-digit hex color, with or without its `#`. A three-digit one is
+ * also the start of a six-digit one, so it waits until the field is left.
+ */
+const completeHex = /^#?[\da-f]{6}$/i
+
+/**
  * A color typed as text: a hex value, or one channel when `channel` is set.
- * Inside a ColorPicker it edits the picker's color.
+ * Inside a ColorPicker it edits the picker's color. A hex value applies as soon
+ * as it is a whole color, as the picker's other parts apply while they move,
+ * not only when the field is left.
  */
 export const ColorField = forwardRef<HTMLInputElement, ColorFieldProps>(function ColorField({
   label, description, errorMessage, disabled, readOnly, required, invalid, value, defaultValue, onChange,
   size, color = "background", radius, style, className, placeholder, material, ...properties
 }, ref) {
   const metrics = useControlMetrics(size, radius)
+  const picker = useContext(ColorPickerStateContext)
+
+  function typed(text: string) {
+    if (properties.channel !== undefined || !completeHex.test(text.trim())) return
+    const next = parseColor(text.trim().startsWith("#") ? text.trim() : `#${text.trim()}`)
+    if (picker) picker.setColor(next)
+    else onChange?.(colorValue(next))
+  }
 
   return <AriaColorField
     {...properties}
@@ -50,7 +66,7 @@ export const ColorField = forwardRef<HTMLInputElement, ColorFieldProps>(function
     <FieldLabel label={label} />
     <AriaInput ref={ref} placeholder={placeholder} className={textControlClass}
       render={(native, state) => <TextWell color={color} material={material} metrics={metrics} state={state}>
-        <input {...native} />
+        <input {...native} onChange={event => { native.onChange?.(event); typed(event.currentTarget.value) }} />
       </TextWell>}
       style={{ ...nativeTextStyle(metrics, false), fontVariantNumeric: "tabular-nums" }} />
     <FieldFeedback metrics={metrics} description={description} errorMessage={errorMessage} />
