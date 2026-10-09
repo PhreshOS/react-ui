@@ -185,7 +185,8 @@ const TableColumn = forwardRef<HTMLTableCellElement | HTMLDivElement, TableColum
       ...style
     })}
   >{state => <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: metrics.gap, minWidth: 0 }}>
-    <span style={{ minWidth: 0 }}>{typeof children === "function" ? children(state) : children}</span>
+    {/* A narrow column cuts its name short rather than spilling into the next one. */}
+    <span style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{typeof children === "function" ? children(state) : children}</span>
     {sortable && state.sortDirection != null && <ChevronUp {...iconProps(14)}
       style={{ ...transition(metrics.visual, "rotate"), flexShrink: 0, rotate: state.sortDirection === "descending" ? "180deg" : "0deg" }} />}
   </span>}</AriaColumn>

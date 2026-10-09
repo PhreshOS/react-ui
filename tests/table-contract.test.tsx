@@ -96,6 +96,22 @@ it("clips row and header paints to its resolved radius", function () {
   expect(table.style.overflow).toBe("hidden")
 })
 
+it("cuts a column's name short in a narrow column", function () {
+  renderTable(<Table aria-label="Programs">
+    <Table.Header>
+      <Table.Column id="name" rowHeader>Name</Table.Column>
+    </Table.Header>
+    <Table.Body>
+      <Table.Row id="files"><Table.Cell>Files</Table.Cell></Table.Row>
+    </Table.Body>
+  </Table>)
+
+  const name = screen.getByText("Name")
+  expect(name.style.overflow).toBe("hidden")
+  expect(name.style.textOverflow).toBe("ellipsis")
+  expect(name.style.whiteSpace).toBe("nowrap")
+})
+
 it("draws internal row separators without a bottom border on the final row", function () {
   renderTable(<Table aria-label="Processes">
     <Table.Header>
