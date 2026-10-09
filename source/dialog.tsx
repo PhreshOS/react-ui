@@ -217,7 +217,9 @@ export const DialogDescription = forwardRef<HTMLElement, DialogDescriptionProps>
 export type DialogBodyProps = HTMLAttributes<HTMLDivElement>
 
 export const DialogBody = forwardRef<HTMLDivElement, DialogBodyProps>(function DialogBody({ style, ...properties }, ref) {
-  return <div {...properties} ref={ref} style={{ minWidth: 0, minHeight: 0, ...style }} />
+  // What a Body holds stands apart, as the Header's and the Footer's parts do.
+  const gap = scale(useVisual().spacing, "medium")
+  return <div {...properties} ref={ref} style={{ display: "grid", gap, minWidth: 0, minHeight: 0, ...style }} />
 })
 
 export type DialogFooterProps = HTMLAttributes<HTMLDivElement>
