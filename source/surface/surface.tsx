@@ -1,6 +1,6 @@
 import { createContext, createElement, forwardRef, useContext, useId, useInsertionEffect } from "react"
 import type { ComponentPropsWithRef, ComponentPropsWithoutRef, CSSProperties, ElementType, ReactElement, ReactNode } from "react"
-import { canvasDarkness, colorOpacity, contrast, mixColor, readableColor, recessColor, resolveColor, separateColor, type Color } from "../foundation/color.js"
+import { canvasDarkness, colorOpacity, contrast, mixColor, perceivedDistance, readableColor, recessColor, resolveColor, separateColor, type Color } from "../foundation/color.js"
 import type { Direction } from "../foundation/direction.js"
 import { resolveRadius, type RadiusProps } from "../foundation/radius.js"
 import { useVisual, type Visual } from "../foundation/visual.js"
@@ -207,14 +207,20 @@ export function surfacePaint(
   const darkness = canvasDarkness(colors)
   // A recess moves away from its surroundings toward whichever extreme has
   // room, by one constant perceptual difference on any canvas.
-  const own = depth === "recessed" ? surfaceColor(color, depth, colors) : base
+  const recess = depth === "recessed" ? surfaceColor(color, depth, colors) : base
+  // A recess that would vanish into paint like its own, such as a field or a checkbox in a well,
+  // sinks one step below that paint instead.
+  const own = depth === "recessed" && surroundings !== null && (perceivedDistance(recess, surroundings) ?? Infinity) < nestingDistance(darkness)
+    ? recessColor(surroundings)
+    : recess
   // A clear Surface, with no depth or a transparent color, has no substance of
   // its own: it paints nothing at rest, takes the content color of whatever it
   // sits on, and only reveals interaction as a veil. With no depth, a color
   // other than the neutral one colors its content instead of a fill.
   const clear = depth === "none" || base === "transparent"
   // A raised or level Surface nested in another keeps apart from it, however deep the nesting goes.
-  // A recess keeps its own constant depth below its color, so a well reads the same wherever it is.
+  // A recess keeps its own constant depth below its color, so a well reads the same wherever it is,
+  // unless it would vanish into what it sits on (above).
   const rest = clear || depth === "recessed" || surroundings === null ? own : separateColor(own, surroundings, nestingDistance(darkness))
   const tinted = depth === "none" && base !== "transparent" && base !== colors.default
   const fill = clear

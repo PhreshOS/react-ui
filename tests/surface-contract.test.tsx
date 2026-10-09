@@ -198,6 +198,31 @@ describe("Surface element", function () {
     expect(paintOf("floating")).toBe(paintOf("alone"))
   })
 
+  it("sinks a recess below a well like its own, and leaves it where it already shows", function () {
+    renderLight(<>
+      <Surface depth="recessed" data-testid="alone" />
+      <Surface depth="recessed"><Surface depth="recessed" data-testid="in-well" /></Surface>
+      <Surface><Surface depth="recessed" data-testid="on-raised" /></Surface>
+      <Surface depth="flat" color="default"><Surface depth="recessed" data-testid="in-group" /></Surface>
+    </>)
+    const paintOf = (id: string) => [...screen.getByTestId(id).classList].find(name => name.startsWith("phreshos-paint-"))
+    expect(paintOf("in-well")).not.toBe(paintOf("alone"))
+    expect(paintOf("on-raised")).toBe(paintOf("alone"))
+    expect(paintOf("in-group")).toBe(paintOf("alone"))
+  })
+
+  it("sinks a recess below a well like its own in the dark too", function () {
+    render(<UIProvider preferences={{ theme: "dark", animations: true }}>
+      <Surface depth="recessed" data-testid="alone" />
+      <Surface depth="recessed"><Surface depth="recessed" data-testid="in-well" /></Surface>
+      <Surface depth="flat" color="default"><Surface depth="recessed" data-testid="in-group" /></Surface>
+    </UIProvider>)
+    const paintOf = (id: string) => [...screen.getByTestId(id).classList].find(name => name.startsWith("phreshos-paint-"))
+    expect(paintOf("in-well")).not.toBe(paintOf("alone"))
+    // On a dark canvas a field is close to a default-colored group as well, so it sinks below it too.
+    expect(paintOf("in-group")).not.toBe(paintOf("alone"))
+  })
+
   it("keeps consumer classes and styles above its own paint", function () {
     renderLight(<Surface data-testid="surface" className="mine" style={{ position: "absolute", color: "red" }} />)
     const surface = screen.getByTestId("surface")
