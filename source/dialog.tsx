@@ -63,7 +63,7 @@ export type DialogBackdropVariant = "dim" | "blur"
 
 // A blurred backdrop still dims a little, so the Dialog stays distinct on a
 // light canvas where blur alone barely separates it.
-const backdropDimming: Readonly<Record<DialogBackdropVariant, number>> = { dim: 0.32, blur: 0.16 }
+const backdropDimming: Readonly<Record<DialogBackdropVariant, number>> = { dim: 0.5, blur: 0.28 }
 
 export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(function DialogBackdrop({
   children,
