@@ -153,8 +153,8 @@ test("package contract", async () => {
   const systemAppearance = {
     ...defaultAppearance,
     wallpapers: {
-      light: { signIn: "sign-in-light.webp", desktop: "desktop-light.webp" },
-      dark: { signIn: "sign-in-dark.webp", desktop: "desktop-dark.webp" }
+      light: { signIn: "SIGN_IN_LIGHT_WALLPAPER", desktop: "DESKTOP_LIGHT_WALLPAPER" },
+      dark: { signIn: "SIGN_IN_DARK_WALLPAPER", desktop: "DESKTOP_DARK_WALLPAPER" }
     }
   } as const
   const compatibleAppearance: Appearance = systemAppearance
