@@ -26,6 +26,13 @@ it("closes for a press outside and for Escape, which stops there", function () {
   removeEventListener("keydown", outer)
 })
 
+it("keeps its surface still and scrolls what it holds inside a ScrollArea", function () {
+  const { container } = renderDrawer(true)
+  const surface = container.querySelector<HTMLElement>("[data-drawer]")!
+  expect(surface.style.overflow).toBe("hidden")
+  expect(surface.querySelector("[data-phreshos-scroll-area] nav")).toBeTruthy()
+})
+
 it("slides only while animations are on", function () {
   const still = renderDrawer(true)
   expect(still.container.querySelector("[data-drawer]")?.getAttribute("data-state")).toBeNull()

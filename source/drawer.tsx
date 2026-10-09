@@ -3,6 +3,7 @@ import { controlFontSizes, controlFontWeight } from "./control/control.js"
 import MotionStyle, { overlayTransition } from "./foundation/motion-style.js"
 import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
+import { ScrollArea } from "./scroll-area.js"
 import { Surface } from "./surface/surface.js"
 
 export interface DrawerProps {
@@ -23,7 +24,8 @@ export interface DrawerProps {
  * outside or Escape closes it. It slides in and back out along the same path, timed by the
  * motion of a change in place, the way out its own animation so its end is seen; without motion it
  * simply shows and goes. Only its position moves:
- * fading it would switch off the blur it draws of what is behind it.
+ * fading it would switch off the blur it draws of what is behind it. The surface itself never
+ * scrolls, so its material stays behind all of it; what it holds scrolls inside it.
  */
 export function Drawer({ open, onClose, title, className, style, children, ...properties }: DrawerProps) {
   const visual = useVisual()
@@ -59,11 +61,13 @@ export function Drawer({ open, onClose, title, className, style, children, ...pr
         boxSizing: "border-box",
         width: `min(${visual.spacing * 20}px, calc(100% - ${visual.spacing * 4}px))`,
         padding: inset,
-        overflow: "auto",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
         ...style
       }}>
-      {title != null && <div style={{ padding: `${inset}px ${inset}px ${visual.spacing}px`, fontSize: controlFontSizes.xlarge, fontWeight: controlFontWeight }}>{title}</div>}
-      {children}
+      {title != null && <div style={{ flex: "none", padding: `${inset}px ${inset}px ${visual.spacing}px`, fontSize: controlFontSizes.xlarge, fontWeight: controlFontWeight }}>{title}</div>}
+      <ScrollArea style={{ flex: "1 1 auto", minHeight: 0 }}>{children}</ScrollArea>
     </Surface>
   </>
 }
