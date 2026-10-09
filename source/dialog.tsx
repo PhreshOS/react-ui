@@ -51,6 +51,8 @@ export interface DialogBackdropProps extends
   readonly dismissable?: boolean
   /** Whether Escape closes the Dialog. */
   readonly keyboardDismissable?: boolean
+  /** DOM container the Dialog is drawn in, such as one that scales what it holds; the document's body by default. */
+  readonly portalContainer?: Element
   readonly style?: CSSProperties
 }
 
@@ -66,6 +68,7 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
   dir,
   dismissable = false,
   keyboardDismissable = true,
+  portalContainer,
   style,
   ...attributes
 }, ref) {
@@ -84,6 +87,7 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
     {...attributes}
     isDismissable={dismissable}
     isKeyboardDismissDisabled={!keyboardDismissable}
+    UNSTABLE_portalContainer={portalContainer}
     ref={ref}
     dir={direction}
     className={[backdropMotionClass, className].filter(Boolean).join(" ")}

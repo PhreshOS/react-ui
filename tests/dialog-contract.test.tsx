@@ -56,6 +56,20 @@ describe("Dialog", function () {
     expect(backdropOf(0).filter).toBe("")
   })
 
+  it("is drawn in the container it is given, such as one that scales what it holds", function () {
+    const container = document.createElement("div")
+    document.body.append(container)
+    render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
+      <AlertDialog open>
+        <AlertDialog.Backdrop data-testid="alert-backdrop" portalContainer={container}>
+          <AlertDialog.Content aria-label="Example">Content</AlertDialog.Content>
+        </AlertDialog.Backdrop>
+      </AlertDialog>
+    </UIProvider>)
+    expect(container.contains(screen.getByTestId("alert-backdrop"))).toBe(true)
+    container.remove()
+  })
+
   it("stays centered at any width: the width sizes the centered modal, which the Surface fills", async function () {
     render(<Dialog defaultOpen>
       <Dialog.Backdrop>
