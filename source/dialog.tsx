@@ -57,6 +57,9 @@ export interface DialogBackdropProps extends
 /** How far every backdrop darkens the interface behind a Dialog. */
 const backdropDimming = 0.5
 
+/** The share of the Appearance material's blur a backdrop takes: lighter than a frosted Surface. */
+const backdropBlurShare = 0.5
+
 export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(function DialogBackdrop({
   children,
   className,
@@ -72,6 +75,8 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
   // The backdrop dims toward whichever Appearance color is darker, in any Theme.
   const darker = darkCanvas(colors) ? colors.background : colors.foreground
   const backdrop = colorOpacity(darker, backdropDimming)
+  // Where the material blurs, the backdrop blurs too, more lightly; without it, it only dims.
+  const blur = visual.material.backdrop > 0 ? `blur(${visual.material.backdrop * backdropBlurShare}px)` : undefined
   const transition = overlayTransition(visual)
   const direction = resolveDirection(dir, useDirection())
 
@@ -84,6 +89,8 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
     className={[backdropMotionClass, className].filter(Boolean).join(" ")}
     style={{
       ...transition,
+      backdropFilter: blur,
+      WebkitBackdropFilter: blur,
       position: "fixed",
       inset: 0,
       zIndex: overlayLayer,

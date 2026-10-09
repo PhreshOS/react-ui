@@ -34,17 +34,24 @@ function Example({ onOpenChange }: Readonly<{ onOpenChange?(open: boolean): void
 }
 
 describe("Dialog", function () {
-  it("dims what is behind it, the one way every Dialog does", function () {
-    render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
-      <Dialog open>
-        <Dialog.Backdrop data-testid="dialog-backdrop">
-          <Dialog.Content aria-label="Example">Content</Dialog.Content>
-        </Dialog.Backdrop>
-      </Dialog>
-    </UIProvider>)
-    const backdrop = screen.getByTestId("dialog-backdrop")
-    expect(backdrop.style.background).not.toBe("")
-    expect(backdrop.style.backdropFilter).toBe("")
+  it("dims what is behind it, and blurs it lightly where the material blurs", function () {
+    const backdropOf = (blur: number) => {
+      const appearance = { ...defaultAppearance, material: { ...defaultAppearance.material, light: { ...defaultAppearance.material.light, backdrop: blur } } }
+      const view = render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
+        <Dialog open>
+          <Dialog.Backdrop data-testid="dialog-backdrop">
+            <Dialog.Content aria-label="Example">Content</Dialog.Content>
+          </Dialog.Backdrop>
+        </Dialog>
+      </UIProvider>)
+      const backdrop = screen.getByTestId("dialog-backdrop")
+      const result = { background: backdrop.style.background, filter: backdrop.style.backdropFilter }
+      view.unmount()
+      return result
+    }
+
+    expect(backdropOf(8)).toEqual({ background: expect.stringMatching(/.+/), filter: "blur(4px)" })
+    expect(backdropOf(0).filter).toBe("")
   })
 
   it("stays centered at any width: the width sizes the centered modal, which the Surface fills", async function () {
