@@ -236,7 +236,6 @@ export {
   type DialogProps,
   type DialogTriggerProps,
   type DialogBackdropProps,
-  type DialogBackdropVariant,
   type DialogContentProps,
   type DialogHeaderProps,
   type DialogTitleProps,

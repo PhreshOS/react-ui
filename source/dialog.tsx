@@ -52,18 +52,10 @@ export interface DialogBackdropProps extends
   /** Whether Escape closes the Dialog. */
   readonly keyboardDismissable?: boolean
   readonly style?: CSSProperties
-  /**
-   * How the interface behind the Dialog is held back: `dim` darkens it, and
-   * `blur` blurs it with the Appearance material while darkening it lightly.
-   */
-  readonly variant?: DialogBackdropVariant
 }
 
-export type DialogBackdropVariant = "dim" | "blur"
-
-// A blurred backdrop still dims a little, so the Dialog stays distinct on a
-// light canvas where blur alone barely separates it.
-const backdropDimming: Readonly<Record<DialogBackdropVariant, number>> = { dim: 0.5, blur: 0.28 }
+/** How far every backdrop darkens the interface behind a Dialog. */
+const backdropDimming = 0.5
 
 export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(function DialogBackdrop({
   children,
@@ -72,7 +64,6 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
   dismissable = false,
   keyboardDismissable = true,
   style,
-  variant = "dim",
   ...attributes
 }, ref) {
   const visual = useVisual()
@@ -80,8 +71,7 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
   const colors = visual.colors
   // The backdrop dims toward whichever Appearance color is darker, in any Theme.
   const darker = darkCanvas(colors) ? colors.background : colors.foreground
-  const backdrop = colorOpacity(darker, backdropDimming[variant])
-  const blur = variant === "blur" && visual.material.backdrop > 0 ? `blur(${visual.material.backdrop}px)` : undefined
+  const backdrop = colorOpacity(darker, backdropDimming)
   const transition = overlayTransition(visual)
   const direction = resolveDirection(dir, useDirection())
 
@@ -103,8 +93,6 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
       padding: inset,
       overflow: "auto",
       background: backdrop,
-      backdropFilter: blur,
-      WebkitBackdropFilter: blur,
       ...style
     }}
   >{children}</AriaModalOverlay></>
