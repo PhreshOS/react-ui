@@ -115,8 +115,7 @@ test("package contract", async () => {
   for (const exported of [UIProvider, Accordion, AlertDialog, Button, ContextMenu, Dialog, Disclosure, DropdownMenu, Flex, Grid, ListBox, Menu, Panel, Popover, Surface, Table, Tabs, Window, Tooltip, Input, Textarea, DateField, TimeField, Calendar, RangeCalendar, DatePicker, DateRangePicker, Checkbox, RadioGroup, Switch, Select, Slider, ProgressBar, Spinner, Toolbar, Tree, resolveRadius, resolveSpacing, useBrowserPreferences, useColor, useContrastingColor, useDirection, useDocumentDirection, usePreferences, useScale, useWindowMoveHandle]) {
     assert.notEqual(exported, undefined)
   }
-  assert.equal("signInWallpaper" in defaultAppearance, false)
-  assert.equal("desktopWallpaper" in defaultAppearance, false)
+  assert.equal("wallpaper" in defaultAppearance, false)
   assert.equal("WindowHeader" in reactUI, false)
   for (const name of [
     "Radio", "PanelRoot", "PanelHeader", "PanelContent", "ListBoxRoot", "ListBoxItem", "ListBoxSection", "ListBoxHeader",
@@ -153,8 +152,10 @@ test("package contract", async () => {
   const desktopThemed = <UIProvider preferences={desktopPreferences}><Surface>Desktop preferences</Surface></UIProvider>
   const systemAppearance = {
     ...defaultAppearance,
-    signInWallpaper: { light: null, dark: null },
-    desktopWallpaper: { light: null, dark: null }
+    wallpaper: {
+      light: { signIn: "sign-in-light.webp", desktop: "desktop-light.webp" },
+      dark: { signIn: "sign-in-dark.webp", desktop: "desktop-dark.webp" }
+    }
   } as const
   const compatibleAppearance: Appearance = systemAppearance
   const systemThemed = <UIProvider appearance={systemAppearance}><Surface>System appearance</Surface></UIProvider>
