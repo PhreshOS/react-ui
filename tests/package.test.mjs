@@ -213,7 +213,7 @@ test("package contract", async () => {
         </Grid></Panel.Content>
       </Panel>
       <Window>
-        <Window.Header beginMoveGesture={() => ({ ready: Promise.resolve(), finished: Promise.resolve(), move() {}, end() {}, cancel() {} })}><Window.Header.Identity title="Example" /><Window.Header.Actions><Window.Header.Close /></Window.Header.Actions></Window.Header>
+        <Window.Header beginMoveGesture={() => ({ finished: Promise.resolve(), move() {}, end() {}, cancel() {} })}><Window.Header.Identity title="Example" /><Window.Header.Actions><Window.Header.Close /></Window.Header.Actions></Window.Header>
         <Window.Content>Window content</Window.Content>
       </Window>
       <Popover><Popover.Trigger>Info</Popover.Trigger><Popover.Content><Popover.Dialog aria-label="Info"><Popover.Close>Close</Popover.Close></Popover.Dialog></Popover.Content></Popover>

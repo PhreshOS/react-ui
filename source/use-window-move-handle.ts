@@ -11,9 +11,8 @@ export interface WindowMoveHandle {
 
 /**
  * Turns one DOM element into a move handle for any compatible host gesture. The element holds the
- * pointer from press to release and reports where it goes; the host carries out the move. A press
- * that begins in a document stays with it until it ends in every browser, so nothing else could
- * receive those positions.
+ * pointer until the press becomes a move, then lets it go, so the host may take it; the document
+ * reports whatever of the pointer still reaches it, where the hand takes it and where it is let go.
  */
 export default function useWindowMoveHandle(
   beginMoveGesture?: BeginPresentationMoveGesture,
@@ -26,51 +25,68 @@ export default function useWindowMoveHandle(
   errorHandler.current = onError
 
   useEffect(() => () => {
-    active.current?.gesture?.cancel()
-    active.current = null
+    const move = active.current
+    if (!move) return
+    close(move)
+    move.gesture?.cancel()
   }, [])
 
   return useMemo(() => {
-    const point = (event: ReactPointerEvent<HTMLElement>) => ({ x: event.clientX, y: event.clientY })
-    const matching = (event: ReactPointerEvent<HTMLElement>) => active.current?.pointer === event.pointerId
-    const releaseCapture = (move: ActiveMove) => {
-      if (move.element.hasPointerCapture(move.pointer)) move.element.releasePointerCapture(move.pointer)
-    }
+    const point = (event: PointerEvent | ReactPointerEvent<HTMLElement>) => ({ x: event.clientX, y: event.clientY })
     const fail = (error: unknown) => {
       if (errorHandler.current) errorHandler.current(error)
       else if (typeof globalThis.reportError === "function") globalThis.reportError(error)
       else setTimeout(() => { throw error })
     }
-    // The move ends here, whatever ended it: the element lets the pointer go and forgets the move.
-    const close = (move: ActiveMove) => {
-      if (active.current === move) active.current = null
-      releaseCapture(move)
+
+    // Once the move began, the pointer may leave the element: the document hears what still reaches it.
+    function follow(move: ActiveMove, gesture: PresentationMoveGesture) {
+      const document = move.element.ownerDocument
+      const moved = (event: PointerEvent) => {
+        if (event.pointerId !== move.pointer || active.current !== move) return
+        // The window moving under a still pointer brings a pointer move the hand did not make; reported,
+        // it would move the window again, and again, for places nobody chose.
+        if (event.movementX === 0 && event.movementY === 0) return
+        gesture.move(point(event))
+      }
+      const released = (event: PointerEvent) => {
+        if (event.pointerId !== move.pointer || active.current !== move) return
+        close(move)
+        if (event.type === "pointerup") gesture.end()
+        else gesture.cancel()
+      }
+      document.addEventListener("pointermove", moved, true)
+      document.addEventListener("pointerup", released, true)
+      document.addEventListener("pointercancel", released, true)
+      move.unfollow = () => {
+        document.removeEventListener("pointermove", moved, true)
+        document.removeEventListener("pointerup", released, true)
+        document.removeEventListener("pointercancel", released, true)
+      }
     }
 
     return {
       onPointerDown(event) {
         if (!beginHandler.current || !event.isPrimary || event.button !== 0 || active.current) return
-        active.current = { pointer: event.pointerId, element: event.currentTarget, origin: point(event), gesture: null }
+        active.current = { pointer: event.pointerId, element: event.currentTarget, origin: point(event), gesture: null, unfollow: null }
         event.currentTarget.setPointerCapture(event.pointerId)
       },
       onPointerMove(event) {
         const move = active.current
         const begin = beginHandler.current
-        if (!matching(event) || !move) return
+        if (!move || move.gesture || move.pointer !== event.pointerId) return
+        if (event.movementX === 0 && event.movementY === 0) return
         const current = point(event)
-        if (move.gesture) {
-          move.gesture.move(current)
-          return
-        }
         // A press becomes a move once it travels a little; until then it may still be a click.
         if (!begin || Math.hypot(current.x - move.origin.x, current.y - move.origin.y) < 4) return
         try {
-          const gesture = begin({ origin: move.origin, point: current })
+          const gesture = begin(move.origin)
           move.gesture = gesture
-          // A failed start is reported through `ready`; its completion may reject as the same
-          // failure and must not escape alone.
-          void gesture.finished.catch(() => undefined)
-          void gesture.ready.then(() => gesture.finished).then(() => close(move), error => {
+          gesture.move(current)
+          follow(move, gesture)
+          // The host may take the pointer from here; until it does, the document still hears it.
+          if (move.element.hasPointerCapture(move.pointer)) move.element.releasePointerCapture(move.pointer)
+          void gesture.finished.then(() => close(move), error => {
             close(move)
             fail(error)
           })
@@ -81,26 +97,32 @@ export default function useWindowMoveHandle(
         }
       },
       onPointerUp(event) {
-        if (!matching(event)) return
-        const move = active.current!
-        if (move.gesture) move.gesture.end(point(event))
+        // A press that never became a move.
+        const move = active.current
+        if (!move || move.gesture || move.pointer !== event.pointerId) return
         close(move)
       },
       onPointerCancel(event) {
-        if (!matching(event)) return
-        const move = active.current!
-        move.gesture?.cancel()
+        const move = active.current
+        if (!move || move.gesture || move.pointer !== event.pointerId) return
         close(move)
       },
       onLostPointerCapture(event) {
-        // Capture held for the whole move: losing it before the release abandons the move.
-        if (!matching(event)) return
-        const move = active.current!
-        move.gesture?.cancel()
+        // Before the press became a move, losing the pointer abandons it; after, the handle let it go.
+        const move = active.current
+        if (!move || move.gesture || move.pointer !== event.pointerId) return
         close(move)
       }
     }
   }, [])
+
+  // The move ends here, whatever ended it: the element lets the pointer go and forgets the move.
+  function close(move: ActiveMove) {
+    if (active.current === move) active.current = null
+    move.unfollow?.()
+    move.unfollow = null
+    if (move.element.hasPointerCapture(move.pointer)) move.element.releasePointerCapture(move.pointer)
+  }
 }
 
 interface ActiveMove {
@@ -108,4 +130,5 @@ interface ActiveMove {
   element: HTMLElement
   origin: PresentationMovePoint
   gesture: PresentationMoveGesture | null
+  unfollow: (() => void) | null
 }
