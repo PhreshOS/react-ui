@@ -46,7 +46,10 @@ const SegmentedControlRoot = forwardRef<HTMLDivElement, SegmentedControlProps>(f
   const descriptionId = useId()
   const selected = value ?? defaultValue
 
-  return <AriaDirectionBoundary direction={direction}><div className={dimmedClass(disabled ?? false, className)} style={fieldStyle(metrics, style)}>
+  // A choice reads whole: across, the options keep their full width and the space beside them gives way.
+  const across = orientation === "horizontal"
+
+  return <AriaDirectionBoundary direction={direction}><div className={dimmedClass(disabled ?? false, className)} style={fieldStyle(metrics, { minWidth: across ? "min-content" : 0, ...style })}>
     {label != null && <span id={labelId} style={{ fontWeight: controlFontWeight }}>{label}</span>}
     <SegmentedStyleContext.Provider value={context}>
       <SelectionTrack metrics={metrics} color={color} material={material} orientation={orientation} selectedKey={selected}>
@@ -67,7 +70,7 @@ const SegmentedControlRoot = forwardRef<HTMLDivElement, SegmentedControlProps>(f
             if (key !== undefined) onChange?.(stringKey(key))
           }}
           isDisabled={disabled}
-          style={selectionListStyle(orientation)}
+          style={{ ...selectionListStyle(orientation), ...(across ? { minWidth: "max-content" } : {}) }}
         >{children}</AriaToggleButtonGroup>
       </SelectionTrack>
     </SegmentedStyleContext.Provider>
