@@ -9,7 +9,12 @@ export interface WindowMoveHandle {
   onLostPointerCapture: PointerEventHandler<HTMLElement>
 }
 
-/** Turns one DOM element into a move handle for any compatible host gesture. */
+/**
+ * Turns one DOM element into a move handle for any compatible host gesture. The element holds the
+ * pointer from press to release and reports where it goes; the host carries out the move. A press
+ * that begins in a document stays with it until it ends in every browser, so nothing else could
+ * receive those positions.
+ */
 export default function useWindowMoveHandle(
   beginMoveGesture?: BeginPresentationMoveGesture,
   onError?: (error: unknown) => void
@@ -36,81 +41,63 @@ export default function useWindowMoveHandle(
       else if (typeof globalThis.reportError === "function") globalThis.reportError(error)
       else setTimeout(() => { throw error })
     }
-    const cancel = (event: ReactPointerEvent<HTMLElement>) => {
-      if (!matching(event)) return
-      const move = active.current
-      active.current = null
-      move?.gesture?.cancel()
-      if (move) releaseCapture(move)
+    // The move ends here, whatever ended it: the element lets the pointer go and forgets the move.
+    const close = (move: ActiveMove) => {
+      if (active.current === move) active.current = null
+      releaseCapture(move)
     }
 
     return {
       onPointerDown(event) {
         if (!beginHandler.current || !event.isPrimary || event.button !== 0 || active.current) return
-        active.current = {
-          pointer: event.pointerId,
-          element: event.currentTarget,
-          origin: point(event),
-          gesture: null,
-          handedOff: false
-        }
+        active.current = { pointer: event.pointerId, element: event.currentTarget, origin: point(event), gesture: null }
         event.currentTarget.setPointerCapture(event.pointerId)
       },
       onPointerMove(event) {
         const move = active.current
         const begin = beginHandler.current
-        if (!begin || !matching(event) || !move || move.gesture) return
+        if (!matching(event) || !move) return
         const current = point(event)
-        if (Math.hypot(current.x - move.origin.x, current.y - move.origin.y) < 4) return
+        if (move.gesture) {
+          move.gesture.move(current)
+          return
+        }
+        // A press becomes a move once it travels a little; until then it may still be a click.
+        if (!begin || Math.hypot(current.x - move.origin.x, current.y - move.origin.y) < 4) return
         try {
-          // Capture proves that an intentional drag began. Releasing it lets
-          // the ready host receive the continuous pointer stream without transport.
           const gesture = begin({ origin: move.origin, point: current })
           move.gesture = gesture
-          // A failed handoff is reported through `ready`; its corresponding
-          // completion may reject as the same failure and must not escape alone.
+          // A failed start is reported through `ready`; its completion may reject as the same
+          // failure and must not escape alone.
           void gesture.finished.catch(() => undefined)
-          void gesture.ready.then(() => {
-            if (active.current !== move) {
-              gesture.cancel()
-              return gesture.finished
-            }
-            move.handedOff = true
-            releaseCapture(move)
-            return gesture.finished
-          }).then(() => {
-            if (active.current === move) active.current = null
-          }, error => {
-            if (active.current === move) {
-              active.current = null
-              releaseCapture(move)
-            }
+          void gesture.ready.then(() => gesture.finished).then(() => close(move), error => {
+            close(move)
             fail(error)
           })
         }
         catch (error) {
-          active.current = null
-          releaseCapture(move)
+          close(move)
           fail(error)
         }
       },
       onPointerUp(event) {
         if (!matching(event)) return
-        const move = active.current
-        active.current = null
-        move?.gesture?.cancel()
-        if (move) releaseCapture(move)
+        const move = active.current!
+        if (move.gesture) move.gesture.end(point(event))
+        close(move)
       },
-      onPointerCancel: cancel,
-      onLostPointerCapture(event) {
+      onPointerCancel(event) {
         if (!matching(event)) return
-        // Losing capture after handoff is expected because the host now owns
-        // the pointer. Before handoff it means the local candidate was abandoned.
-        const move = active.current
-        if (move && !move.handedOff) {
-          active.current = null
-          move.gesture?.cancel()
-        }
+        const move = active.current!
+        move.gesture?.cancel()
+        close(move)
+      },
+      onLostPointerCapture(event) {
+        // Capture held for the whole move: losing it before the release abandons the move.
+        if (!matching(event)) return
+        const move = active.current!
+        move.gesture?.cancel()
+        close(move)
       }
     }
   }, [])
@@ -121,5 +108,4 @@ interface ActiveMove {
   element: HTMLElement
   origin: PresentationMovePoint
   gesture: PresentationMoveGesture | null
-  handedOff: boolean
 }
