@@ -399,6 +399,7 @@ const stylesheet = `
   background-size: 100% ${spillDepth}, 100% ${spillDepth}, ${grainSize}px ${grainSize}px;
   background-position: center top, center bottom, 0 0;
   background-repeat: no-repeat, no-repeat, repeat;
+  image-rendering: pixelated;
   -webkit-backdrop-filter: var(--phreshos-surface-frost);
   backdrop-filter: var(--phreshos-surface-frost);
   transition: background-color var(--phreshos-surface-duration) var(--phreshos-surface-easing);

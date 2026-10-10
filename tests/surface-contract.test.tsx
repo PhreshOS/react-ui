@@ -145,7 +145,7 @@ describe("Surface material", function () {
     expect(variable(at("none"), "grain")).toBe("none")
     expect(variable(at("none"), "rim")).toBe("none")
     // Grain travels as one shared rule per texture, not inline on every Surface.
-    expect(at("basic").grain?.rule).toContain("data:image/svg+xml")
+    expect(at("basic").grain?.rule).toContain("data:image/png;base64,")
     expect(at("none").grain).toBeNull()
     expect(variable(at("basic"), "paint")).toBe(at("basic").fill)
     expect(variable(at("extended"), "paint")).toContain("color-mix(in srgb")
@@ -159,7 +159,7 @@ describe("Surface material", function () {
       {Array.from({ length: 12 }, (_, index) => <Surface key={index}>Surface</Surface>)}
     </UIProvider>)
 
-    expect(html.match(/data:image\/svg\+xml/g)?.length).toBe(1)
+    expect(html.match(/data:image\/png/g)?.length).toBe(1)
     expect(html).not.toMatch(/style="[^"]*--phreshos-surface-grain/)
   })
 
