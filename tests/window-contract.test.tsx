@@ -104,15 +104,11 @@ describe("Window", () => {
     expect(onMaximize).toHaveBeenCalledTimes(2)
   })
 
-  it("owns one drag-intent cursor before and after a move handoff", () => {
+  it("shows the drag-intent cursor on a header that can move its window", () => {
     const beginMoveGesture = vi.fn()
-    render(provider(<>
-      <Window.Header beginMoveGesture={beginMoveGesture} data-testid="header" />
-      <Window.MoveCapture data-testid="capture" />
-    </>))
+    render(provider(<Window.Header beginMoveGesture={beginMoveGesture} data-testid="header" />))
 
     expect(screen.getByTestId("header").style.cursor).toBe("grab")
-    expect(screen.getByTestId("capture").style.cursor).toBe("grab")
   })
 
   it("uses danger as the overridable semantic default for Window Close", () => {

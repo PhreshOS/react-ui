@@ -311,26 +311,8 @@ const Header = Object.assign(HeaderRoot, {
   Close: WindowClose
 })
 
-export type WindowMoveCaptureProps = HTMLAttributes<HTMLDivElement>
-
-/** The active full-viewport side of a Window move handoff. */
-const WindowMoveCapture = forwardRef<HTMLDivElement, WindowMoveCaptureProps>(function WindowMoveCapture({
-  style,
-  ...properties
-}, ref) {
-  return <div {...properties} ref={ref} style={{
-    position: "fixed",
-    inset: 0,
-    touchAction: "none",
-    userSelect: "none",
-    cursor: "grab",
-    ...style
-  }} />
-})
-
 /** One Surface with a ready-to-use header-and-content composition. */
 export const Window = Object.assign(WindowRoot, {
   Header,
-  Content: WindowContent,
-  MoveCapture: WindowMoveCapture
+  Content: WindowContent
 })

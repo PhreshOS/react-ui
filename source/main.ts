@@ -64,8 +64,7 @@ export {
   type WindowActionProps,
   type WindowControlProps,
   type WindowMaximizeProps,
-  type WindowCloseProps,
-  type WindowMoveCaptureProps
+  type WindowCloseProps
 } from "./window.js"
 export { default as useWindowMoveHandle, type WindowMoveHandle } from "./use-window-move-handle.js"
 export { Drawer, type DrawerProps } from "./drawer.js"
