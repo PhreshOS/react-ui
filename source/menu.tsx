@@ -119,7 +119,10 @@ export interface MenuItemProps<T = object> extends Omit<AriaMenuItemProps<T>, "c
   readonly className?: string
   /** Whether activating this Item closes the menu, overriding the Menu. */
   readonly closeOnSelect?: boolean
-  /** Color laid beneath this Item when it is selected. */
+  /**
+   * Color laid beneath this Item when it is selected. In a Menu that does not select, it colors the
+   * Item's content instead, as for an action that removes something (`danger`).
+   */
   readonly color?: Color
   readonly disabled?: boolean
   readonly style?: CSSProperties
@@ -140,15 +143,19 @@ const MenuItemImplementation = forwardRef(function MenuItem<T = object>(
     textValue={textValue ?? (typeof children === "string" ? children : undefined)}
     className={className}
     isDisabled={disabled}
-    render={surfaceRender<MenuItemRenderProps>("div", state => itemSurface(metrics.visual, itemColor, {
-      selected: state.isSelected,
-      // Keyboard focus moves the highlight through a menu the way the pointer does;
-      // pointer-restored focus alone must not keep an item highlighted.
-      hovered: state.isHovered || state.isFocusVisible,
-      pressed: state.isPressed,
-      focusVisible: false,
-      disabled: state.isDisabled
-    }, itemRadius))}
+    render={surfaceRender<MenuItemRenderProps>("div", state => {
+      const surface = itemSurface(metrics.visual, itemColor, {
+        selected: state.isSelected,
+        // Keyboard focus moves the highlight through a menu the way the pointer does;
+        // pointer-restored focus alone must not keep an item highlighted.
+        hovered: state.isHovered || state.isFocusVisible,
+        pressed: state.isPressed,
+        focusVisible: false,
+        disabled: state.isDisabled
+      }, itemRadius)
+      // With nothing to select, its own color colors its content, as a Surface with no depth does.
+      return color !== undefined && !selecting ? { ...surface, depth: "none", color } : surface
+    })}
     style={{ ...itemStyle(metrics, disabled), ...style }}
   >{state => <>
     {typeof children === "function" ? children(state) : children}
