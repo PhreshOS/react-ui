@@ -107,6 +107,25 @@ it("draws each card as a whole flat Surface in the default color, in its selecti
   expect(surfaceFill(card)).not.toBe(surfaceFill(reference))
 })
 
+it("shows a card's check where its Mark stands, and its work under way there, in place of the corner", function () {
+  renderGrid(<GridList aria-label="Appearances" selectionMode="single" value="sprout">
+    <GridList.Item id="sprout" textValue="Sprout"><span>Sprout <GridList.Mark /></span></GridList.Item>
+    <GridList.Item id="moss" textValue="Moss"><span>Moss <GridList.Mark pending /></span></GridList.Item>
+    <GridList.Item id="calm" textValue="Calm">Calm</GridList.Item>
+  </GridList>)
+
+  const card = (name: string) => screen.getByRole("row", { name })
+  const checks = (name: string) => [...card(name).querySelectorAll("svg:not([data-spinner-indicator])")]
+  // One check each: a card with a Mark draws none in its corner.
+  expect(checks("Sprout")).toHaveLength(1)
+  expect(checks("Sprout")[0].parentElement?.tagName).toBe("SPAN")
+  expect(getComputedStyle(checks("Sprout")[0]).opacity).toBe("1")
+  expect(card("Moss").querySelector("[data-spinner-indicator]")).not.toBeNull()
+  expect(checks("Moss")).toHaveLength(0)
+  // A card without one keeps its corner.
+  expect(checks("Calm")).toHaveLength(1)
+})
+
 it("draws cards at rest in another color when given one, on the GridList or on one card", function () {
   renderGrid(<>
     <GridList aria-label="Programs" selectionMode="none" restColor="primary:soft">

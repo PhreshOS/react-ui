@@ -101,6 +101,7 @@ export {
   type GridListMultipleSelectionProps,
   type GridListMultipleValue,
   type GridListItemProps,
+  type GridListMarkProps,
   type GridListSectionProps,
   type GridListHeaderProps
 } from "./grid-list.js"

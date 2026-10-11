@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useContext, useMemo } from "react"
+import { createContext, forwardRef, useContext, useLayoutEffect, useMemo, useState } from "react"
 import type { CSSProperties, ForwardedRef, ReactElement, RefAttributes } from "react"
 import {
   GridList as AriaGridList,
@@ -14,7 +14,8 @@ import type {
   GridListSectionProps as AriaGridListSectionProps
 } from "react-aria-components"
 import { useControlMetrics, type ControlMetrics } from "./control/control.js"
-import { dropTargetOutline, itemSurface, SelectionMark } from "./control/item.js"
+import { dropTargetOutline, itemSurface, SelectionMark, selectionMarkSize } from "./control/item.js"
+import { Spinner } from "./spinner.js"
 import {
   ariaSelection,
   type MultipleSelectionProps,
@@ -125,7 +126,13 @@ export interface GridListItemProps<T = object> extends Omit<AriaGridListItemProp
   readonly style?: CSSProperties
 }
 
-/** One card. It holds whatever it is given, and shows a check in its corner when selected. */
+/** What a card tells the Mark it holds: whether it is selected, and that a Mark took the corner's place. */
+const ItemMarkContext = createContext<Readonly<{ selected: boolean, claim: () => () => void }> | null>(null)
+
+/**
+ * One card. It holds whatever it is given, and shows a check when selected: in its corner, or where
+ * a GridList.Mark it holds stands.
+ */
 const GridListItemImplementation = forwardRef(function GridListItem<T = object>(
   { children, className, color, restColor, disabled = false, style, textValue, ...properties }: GridListItemProps<T>,
   ref: ForwardedRef<HTMLDivElement>
@@ -133,6 +140,12 @@ const GridListItemImplementation = forwardRef(function GridListItem<T = object>(
   const inherited = useGridListStyle()
   const itemColor = color ?? inherited.color
   const { metrics } = inherited
+  // How many Marks this card holds: with one, the check stands there and not in the corner.
+  const [marks, setMarks] = useState(0)
+  const claim = useMemo(() => () => {
+    setMarks(count => count + 1)
+    return () => setMarks(count => count - 1)
+  }, [])
 
   return <AriaGridListItem
     {...properties}
@@ -167,12 +180,12 @@ const GridListItemImplementation = forwardRef(function GridListItem<T = object>(
       outlineOffset: -1,
       ...style
     }}
-  >{state => <>
+  >{state => <ItemMarkContext.Provider value={{ selected: state.isSelected, claim }}>
     {typeof children === "function" ? children(state) : children}
-    <span style={{ position: "absolute", insetBlockStart: metrics.inset, insetInlineEnd: metrics.inset, display: "flex" }}>
+    {marks === 0 && <span style={{ position: "absolute", insetBlockStart: metrics.inset, insetInlineEnd: metrics.inset, display: "flex" }}>
       <SelectionMark visible={state.isSelected} />
-    </span>
-  </>}</AriaGridListItem>
+    </span>}
+  </ItemMarkContext.Provider>}</AriaGridListItem>
 })
 
 export type GridListItemComponent = <T = object>(
@@ -219,10 +232,30 @@ function useGridListStyle() {
 }
 
 /** A selectable grid of cards whose Items and Sections remain independently composable. */
+export interface GridListMarkProps {
+  /** Work the card started is under way: a Spinner shows here in place of the check. */
+  readonly pending?: boolean
+}
+
+/**
+ * Where a card shows its check, in place of its corner: the check once the card is selected, and a
+ * Spinner while work it started is under way. It holds its place either way, so nothing beside it moves.
+ */
+function GridListMark({ pending = false }: GridListMarkProps) {
+  const item = useContext(ItemMarkContext)
+  if (!item) throw new Error("GridList.Mark belongs inside a GridList.Item")
+  const { claim } = item
+  useLayoutEffect(() => claim(), [claim])
+  return pending
+    ? <Spinner decorative color="currentColor" style={{ width: selectionMarkSize, height: selectionMarkSize }} />
+    : <SelectionMark visible={item.selected} placed />
+}
+
 export const GridList = Object.assign(GridListRootImplementation as GridListRootComponent, {
   Item: GridListItemImplementation as GridListItemComponent,
   Section: GridListSectionImplementation as GridListSectionComponent,
-  Header: GridListHeader
+  Header: GridListHeader,
+  Mark: GridListMark
 })
 
 export type GridListProps<T extends object = object> = GridListRootProps<T>

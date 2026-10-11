@@ -69,8 +69,12 @@ export function itemStyle(metrics: ControlMetrics, disabled: boolean): CSSProper
 }
 
 /** The selection mark drawn at the end of a selected entry. */
-export function SelectionMark({ visible }: Readonly<{ visible: boolean }>) {
-  return <Check {...iconProps(14)} style={{ flexShrink: 0, marginInlineStart: "auto", opacity: visible ? 1 : 0 }} />
+/** The size of the check a selected item shows. */
+export const selectionMarkSize = 14
+
+/** A selected item's check; at the end of its row unless it is placed where it stands. */
+export function SelectionMark({ visible, placed = false }: Readonly<{ visible: boolean, placed?: boolean }>) {
+  return <Check {...iconProps(selectionMarkSize)} style={{ flexShrink: 0, marginInlineStart: placed ? undefined : "auto", opacity: visible ? 1 : 0 }} />
 }
 
 /**
