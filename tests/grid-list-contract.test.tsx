@@ -118,8 +118,8 @@ it("shows a card's check where its Mark stands, and its work under way there, in
   const checks = (name: string) => [...card(name).querySelectorAll("svg:not([data-spinner-indicator])")]
   // One check each: a card with a Mark draws none in its corner.
   expect(checks("Sprout")).toHaveLength(1)
-  expect(checks("Sprout")[0].parentElement?.tagName).toBe("SPAN")
-  expect(getComputedStyle(checks("Sprout")[0]).opacity).toBe("1")
+  expect(checks("Sprout")[0]!.parentElement?.tagName).toBe("SPAN")
+  expect(getComputedStyle(checks("Sprout")[0]!).opacity).toBe("1")
   expect(card("Moss").querySelector("[data-spinner-indicator]")).not.toBeNull()
   expect(checks("Moss")).toHaveLength(0)
   // A card without one keeps its corner.
