@@ -1,4 +1,4 @@
-import { forwardRef, useState } from "react"
+import { forwardRef, useEffect, useState } from "react"
 import type { CSSProperties } from "react"
 import { Check, Copy } from "lucide-react"
 import { controlFontSizes, useControlMetrics } from "./control/control.js"
@@ -28,6 +28,13 @@ export const Snippet = forwardRef<HTMLDivElement, SnippetProps>(function Snippet
   const metrics = useControlMetrics("small")
   const { spacing, radius } = metrics.visual
   const [copied, setCopied] = useState(false)
+  // The check says it was copied, then the button is the copy button again; copying again restarts it.
+  const [copies, setCopies] = useState(0)
+  useEffect(() => {
+    if (!copied) return
+    const back = setTimeout(() => setCopied(false), copiedFor)
+    return () => clearTimeout(back)
+  }, [copied, copies])
   // A recess holding one value, like a field: it pads as a control does, not as a container.
   const padding = scale(spacing, "medium")
 
@@ -51,11 +58,14 @@ export const Snippet = forwardRef<HTMLDivElement, SnippetProps>(function Snippet
     }}>{children}</div>
     <Button size="small" shadow={false} aria-label={copied ? "Copied" : copyLabel}
       iconOnly style={{ position: "absolute", insetBlockStart: padding / 2, insetInlineEnd: padding / 2 }}
-      onPress={() => void copyText(children).then(setCopied)}>
+      onPress={() => void copyText(children).then(done => { setCopied(done); setCopies(count => count + 1) })}>
       {copied ? <Check {...iconProps(14)} /> : <Copy {...iconProps(14)} />}
     </Button>
   </Surface>
 })
+
+/** How long the copy button shows that it copied: long enough to read, short enough to copy again. */
+const copiedFor = 2000
 
 /**
  * Writes text to the clipboard and reports whether it could. A Program's frame
