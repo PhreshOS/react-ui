@@ -1,7 +1,8 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { act, cleanup, render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it, vi } from "vitest"
-import { Button, ContextMenu, DropdownMenu, Menu, Popover, Tooltip } from "../source/main.js"
+import { Button, ContextMenu, defaultAppearance, DropdownMenu, Menu, Popover, Select, Tooltip, UIProvider } from "../source/main.js"
+import { paintDeclarations } from "./support/paint.js"
 
 afterEach(cleanup)
 
@@ -28,6 +29,47 @@ describe("DropdownMenu", function () {
     await userEvent.setup().click(screen.getByRole("menuitem", { name: "Rename" }))
     expect(action).toHaveBeenCalledOnce()
     expect(screen.queryByRole("menu")).toBeNull()
+  })
+})
+
+describe("Window focus", function () {
+  it("closes an open list or menu when its window loses focus, as a native one does", async function () {
+    const user = userEvent.setup()
+    render(<>
+      <Select label="Theme"><Select.Item id="light">Light</Select.Item><Select.Item id="dark">Dark</Select.Item></Select>
+      <DropdownMenu>
+        <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>
+        <DropdownMenu.Content><Menu aria-label="Actions"><Menu.Item id="rename">Rename</Menu.Item></Menu></DropdownMenu.Content>
+      </DropdownMenu>
+    </>)
+
+    await user.click(screen.getByRole("button", { name: /Theme/ }))
+    expect(screen.getByRole("listbox")).toBeTruthy()
+    act(() => { window.dispatchEvent(new FocusEvent("blur")) })
+    await waitFor(() => expect(screen.queryByRole("listbox")).toBeNull())
+
+    await user.click(screen.getByRole("button", { name: "Actions" }))
+    expect(screen.getByRole("menu", { name: "Actions" })).toBeTruthy()
+    act(() => { window.dispatchEvent(new FocusEvent("blur")) })
+    await waitFor(() => expect(screen.queryByRole("menu")).toBeNull())
+  })
+})
+
+describe("Floating layers", function () {
+  it("frost what lies under them by default, and take another material when given one", async function () {
+    const user = userEvent.setup()
+    const blurred = { ...defaultAppearance, material: { ...defaultAppearance.material, light: { ...defaultAppearance.material.light, backdropBlur: 8 } } }
+    render(<UIProvider appearance={blurred} preferences={{ theme: "light", animations: false }}>
+      <Popover><Popover.Trigger>Details</Popover.Trigger><Popover.Content data-testid="frosted"><Popover.Dialog aria-label="Details">Text</Popover.Dialog></Popover.Content></Popover>
+      <Popover><Popover.Trigger>Plain</Popover.Trigger><Popover.Content data-testid="plain" material="translucent"><Popover.Dialog aria-label="Plain">Text</Popover.Dialog></Popover.Content></Popover>
+    </UIProvider>)
+    await user.click(screen.getByRole("button", { name: "Details" }))
+    const frosted = screen.getByTestId("frosted").querySelector<HTMLElement>(".phreshos-surface")!
+    expect(paintDeclarations(frosted)["--phreshos-surface-frost"]).toBe("blur(8px)")
+    await user.keyboard("[Escape]")
+    await user.click(screen.getByRole("button", { name: "Plain" }))
+    const plain = screen.getByTestId("plain").querySelector<HTMLElement>(".phreshos-surface")!
+    expect(paintDeclarations(plain)["--phreshos-surface-frost"]).toBe("none")
   })
 })
 

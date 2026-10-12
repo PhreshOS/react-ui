@@ -38,7 +38,7 @@ function Example({ onOpenChange }: Readonly<{ onOpenChange?(open: boolean): void
 describe("Dialog", function () {
   it("dims what is behind it, and blurs it lightly where the material blurs", function () {
     const backdropOf = (blur: number) => {
-      const appearance = { ...defaultAppearance, material: { ...defaultAppearance.material, light: { ...defaultAppearance.material.light, backdrop: blur } } }
+      const appearance = { ...defaultAppearance, material: { ...defaultAppearance.material, light: { ...defaultAppearance.material.light, backdropBlur: blur } } }
       const view = render(<UIProvider appearance={appearance} preferences={{ theme: "light", animations: true }}>
         <Dialog open>
           <Dialog.Backdrop data-testid="dialog-backdrop">
@@ -46,13 +46,15 @@ describe("Dialog", function () {
           </Dialog.Backdrop>
         </Dialog>
       </UIProvider>)
-      const backdrop = screen.getByTestId("dialog-backdrop")
-      const result = { background: backdrop.style.background, filter: backdrop.style.backdropFilter }
+      const holder = screen.getByTestId("dialog-backdrop")
+      const dimming = holder.querySelector<HTMLElement>(":scope > [aria-hidden=true]")!
+      // What holds the Dialog filters nothing, so the Dialog's own material sees what lies behind it.
+      const result = { background: dimming.style.background, filter: dimming.style.backdropFilter, holder: holder.style.backdropFilter + holder.style.background }
       view.unmount()
       return result
     }
 
-    expect(backdropOf(8)).toEqual({ background: expect.stringMatching(/.+/), filter: "blur(4px)" })
+    expect(backdropOf(8)).toEqual({ background: expect.stringMatching(/.+/), filter: "blur(4px)", holder: "" })
     expect(backdropOf(0).filter).toBe("")
   })
 

@@ -14,8 +14,10 @@ import { resolveDirectionalPlacement } from "./foundation/overlay-placement.js"
 import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
 import { timing } from "./foundation/timing.js"
+import { floatingMaterial } from "./surface/material-options.js"
 import { floatingShadow } from "./surface/shadow-options.js"
 import { FloatingLayer, Surface, type SurfaceOwnProps } from "./surface/surface.js"
+import { containerZoom } from "./foundation/container-zoom.js"
 
 export type TooltipRootProps = OverlayRootProps & Readonly<Pick<AriaTooltipTriggerProps, "closeDelay" | "trigger">> & Readonly<{
   /** Milliseconds the pointer rests on the trigger before the Tooltip opens: four changes in place by default. */
@@ -75,6 +77,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
   const inset = scale(visual.spacing, "small")
   const transition = overlayTransition(visual)
   const direction = resolveDirection(dir, useDirection())
+  const zoom = containerZoom(portalContainer)
 
   return <><MotionStyle /><AriaTooltip
     {...attributes}
@@ -84,15 +87,15 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
     placement={resolveDirectionalPlacement(placement, direction)}
     UNSTABLE_portalContainer={portalContainer}
     className={overlayMotionClass}
-    style={transition}
+    style={zoom === 1 ? transition : { ...transition, zoom: 1 / zoom }}
   >
     <FloatingLayer><Surface
       dir={direction}
       className={className}
       color={color ?? "foreground"}
-      material={material}
+      material={material ?? floatingMaterial}
       radius={radius}
-      shadow={shadow ?? floatingShadow(visual.shadow)}
+      shadow={shadow ?? floatingShadow}
       style={{
         boxSizing: "border-box",
         maxWidth: "28em",
@@ -101,6 +104,7 @@ export const TooltipContent = forwardRef<HTMLDivElement, TooltipContentProps>(fu
         outline: "none",
         fontSize: controlFontSizes.small,
         lineHeight: controlLineHeight,
+        ...(zoom === 1 ? {} : { zoom }),
         ...style
       }}
     >{children}</Surface></FloatingLayer>

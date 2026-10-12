@@ -1,9 +1,10 @@
-import { forwardRef } from "react"
+import { forwardRef, useContext, useEffect } from "react"
 import type { ComponentProps, CSSProperties, ReactNode } from "react"
 import {
   Dialog as AriaDialog,
   DialogTrigger as AriaDialogTrigger,
   Heading as AriaHeading,
+  OverlayTriggerStateContext,
   Popover as AriaPopover
 } from "react-aria-components"
 import type {
@@ -19,8 +20,10 @@ import MotionStyle, { overlayMotionClass, overlayTransition } from "./foundation
 import { resolveDirectionalPlacement } from "./foundation/overlay-placement.js"
 import { scale } from "./foundation/scale.js"
 import { useVisual } from "./foundation/visual.js"
+import { floatingMaterial } from "./surface/material-options.js"
 import { floatingShadow } from "./surface/shadow-options.js"
 import { FloatingLayer, Surface, type SurfaceOwnProps } from "./surface/surface.js"
+import { containerZoom } from "./foundation/container-zoom.js"
 
 export type PopoverRootProps = OverlayRootProps
 
@@ -73,6 +76,18 @@ const PositionedContent = forwardRef<HTMLElement, PositionedContentProps>(functi
   const inset = scale(visual.spacing, "small")
   const transition = overlayTransition(visual)
   const direction = resolveDirection(dir, useDirection())
+  const zoom = containerZoom(portalContainer)
+  const state = useContext(OverlayTriggerStateContext)
+
+  // An open list or menu belongs to its window while that window has focus: when the person goes to
+  // another window, it closes, as a native one does. In a frame this matters twice, since the frame's
+  // focus would otherwise be pulled back into the list, away from the window the person went to.
+  useEffect(() => {
+    if (!state?.isOpen) return
+    const close = () => state.close()
+    window.addEventListener("blur", close)
+    return () => window.removeEventListener("blur", close)
+  }, [state])
 
   return <><MotionStyle /><AriaPopover
     {...attributes}
@@ -83,20 +98,21 @@ const PositionedContent = forwardRef<HTMLElement, PositionedContentProps>(functi
     placement={resolveDirectionalPlacement(placement, direction)}
     UNSTABLE_portalContainer={portalContainer}
     className={overlayMotionClass}
-    style={transition}
+    style={zoom === 1 ? transition : { ...transition, zoom: 1 / zoom }}
   >
     <FloatingLayer><Surface
       dir={direction}
       className={className}
       color={color}
-      material={material}
-      shadow={shadow ?? floatingShadow(visual.shadow)}
+      material={material ?? floatingMaterial}
+      shadow={shadow ?? floatingShadow}
       radius={radius}
       style={{
         boxSizing: "border-box",
-        maxWidth: `calc(100vw - ${inset * 2}px)`,
-        maxHeight: `calc(100vh - ${inset * 2}px)`,
+        maxWidth: `calc((100vw - ${inset * 2}px) / ${zoom})`,
+        maxHeight: `calc((100vh - ${inset * 2}px) / ${zoom})`,
         outline: "none",
+        ...(zoom === 1 ? {} : { zoom }),
         ...style
       }}
     >{children}</Surface></FloatingLayer>

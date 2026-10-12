@@ -23,6 +23,7 @@ import MotionStyle, { backdropMotionClass, overlayLayer, overlayMotionClass, ove
 import { scale } from "./foundation/scale.js"
 import { containerPadding } from "./foundation/spacing.js"
 import { useVisual } from "./foundation/visual.js"
+import { floatingMaterial } from "./surface/material-options.js"
 import { floatingShadow } from "./surface/shadow-options.js"
 import { FloatingLayer, Surface, type SurfaceOwnProps } from "./surface/surface.js"
 
@@ -79,7 +80,7 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
   const darker = darkCanvas(colors) ? colors.background : colors.foreground
   const backdrop = colorOpacity(darker, backdropDimming)
   // Where the material blurs, the backdrop blurs too, more lightly; without it, it only dims.
-  const blur = visual.material.backdrop > 0 ? `blur(${visual.material.backdrop * backdropBlurShare}px)` : undefined
+  const blur = visual.material.backdropBlur > 0 ? `blur(${visual.material.backdropBlur * backdropBlurShare}px)` : undefined
   const transition = overlayTransition(visual)
   const direction = resolveDirection(dir, useDirection())
 
@@ -93,8 +94,6 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
     className={[backdropMotionClass, className].filter(Boolean).join(" ")}
     style={{
       ...transition,
-      backdropFilter: blur,
-      WebkitBackdropFilter: blur,
       position: "fixed",
       inset: 0,
       zIndex: overlayLayer,
@@ -103,10 +102,14 @@ export const DialogBackdrop = forwardRef<HTMLDivElement, DialogBackdropProps>(fu
       boxSizing: "border-box",
       padding: inset,
       overflow: "auto",
-      background: backdrop,
       ...style
     }}
-  >{children}</AriaModalOverlay></>
+  >
+    {/* The dimming is a layer of its own behind the Dialog, not the element that holds it: a blur
+        on what holds the Dialog would be all the Dialog's own material could see through. */}
+    <div aria-hidden="true" style={{ position: "fixed", inset: 0, zIndex: -1, background: backdrop, backdropFilter: blur, WebkitBackdropFilter: blur }} />
+    {children}
+  </AriaModalOverlay></>
 })
 
 export interface DialogContentProps extends
@@ -149,11 +152,11 @@ export const DialogContent = forwardRef<HTMLElement, DialogContentProps>(functio
     <FloatingLayer><Surface
       className={className}
       color={color}
-      material={material}
+      material={material ?? floatingMaterial}
       // Dialog content is composed by its consumer, so no owned rounded shape
       // sits at a known inset; it keeps the plain Appearance radius like Popover.
       radius={radius}
-      shadow={shadow ?? floatingShadow(visual.shadow)}
+      shadow={shadow ?? floatingShadow}
       style={{
         boxSizing: "border-box",
         width: "100%",
