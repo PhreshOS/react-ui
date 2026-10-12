@@ -104,16 +104,19 @@ holder also claims its hairline. There are no separate state colors.
 
 ### Material
 
-`MaterialOptions` defines `opacity`, `backdrop`, `grain`, `grainAmount`,
-`distortion`, and `saturation`. Every Surface-based component accepts them
-through `material`. Rendering is progressive: `none` paints the resolved color
-only; `basic` (default) adds grain and the edge while remaining solid;
-`extended` applies Material opacity; `full` adds backdrop, saturation, and
-distortion. A `MaterialOptions` object selects full rendering with those
-overrides. Backdrop effects are omitted whenever the final paint is opaque.
+`MaterialOptions` defines `grain`, `opacity`, `backdropBlur`,
+`backdropSaturation`, and `refraction`. Every Surface-based component accepts them
+through `material`. Each mode is named by what it draws: `none` paints the
+resolved color only; `opaque` adds grain and the edge while remaining solid;
+`translucent` (default) also applies Material opacity; `frosted` also adds
+backdrop blur, backdrop saturation, and refraction. A `MaterialOptions` object is its
+`mode`, `frosted` by default, with those overrides. Backdrop effects are omitted whenever the final paint is
+opaque. `grain` moves the grains' count and strength against each other: at 0
+every pixel holds a grain no one sees, at 1 none is left at full strength.
 
-`shadow` groups `x`, `y`, `blur`, `spread`, and `opacity` for raised Surfaces;
-`false` removes it.
+`shadow` is the strength of a raised Surface's shadow, centered at one fixed
+blur: omission or `true` takes the Appearance's, a level or a number sets it,
+and `false` removes it.
 
 ### Radius
 
@@ -164,7 +167,7 @@ that depend on it are its properties, such as `Panel.Header` and
 `Dialog.Title`.
 
 `Panel` is a frosted shell with an optional header and one content region. The
-content takes the shell's color, raised with the `extended` material and the
+content takes the shell's color, raised and translucent without frost, with the
 same Appearance radius, sits half the spacing inside the shell, and pads its
 content by the spacing. The header is the same row as a Window header.
 

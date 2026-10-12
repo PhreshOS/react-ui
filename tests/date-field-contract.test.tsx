@@ -69,7 +69,7 @@ it("associates feedback and preserves disabled, read-only, required, and invalid
 })
 
 it("holds its segments in one recessed Surface", function () {
-  const { container } = renderDate(<DateField aria-label="Date" color="secondary" material="basic" />)
+  const { container } = renderDate(<DateField aria-label="Date" color="secondary" material="opaque" />)
 
   const wells = container.querySelectorAll<HTMLElement>(".phreshos-surface")
   expect(wells).toHaveLength(1)

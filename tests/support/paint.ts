@@ -18,9 +18,15 @@ export function paintDeclarations(element: Element): Record<string, string> {
   throw new Error(`No rule exists for ${name}`)
 }
 
-/** The resolved fill of a Surface. */
+/** The color a Surface paints, before its material's opacity: what a test of its color compares. */
+export function paintColor(declarations: Record<string, string>): string {
+  const paint = declarations["--phreshos-surface-paint"]!
+  return /^color-mix\(in srgb,\s*(.+) [\d.]+%,\s*transparent\)$/.exec(paint)?.[1] ?? paint
+}
+
+/** The resolved fill of a Surface, before its material's opacity. */
 export function surfaceFill(element: Element): string {
-  return paintDeclarations(element)["--phreshos-surface-paint"]!
+  return paintColor(paintDeclarations(element))
 }
 
 /** Normalizes a color the way the browser serializes standard properties. */

@@ -42,7 +42,7 @@ export const PanelRoot = forwardRef<HTMLDivElement, PanelRootProps>(function Pan
   const radius = resolveRadius(properties.radius ?? "medium", useVisual().radius)
 
   return <PanelContext.Provider value={{ color: properties.color, hasHeader, radius }}>
-    <FloatingLayer><Surface material="full" {...properties} ref={ref} radius={radius} style={{
+    <FloatingLayer><Surface material="frosted" {...properties} ref={ref} radius={radius} style={{
       display: "grid",
       gridTemplateRows: hasHeader ? "auto minmax(0, 1fr)" : "minmax(0, 1fr)",
       minWidth: 0,
@@ -55,7 +55,7 @@ export const PanelRoot = forwardRef<HTMLDivElement, PanelRootProps>(function Pan
 
 /**
  * The inset region that holds a Panel's content. It is the Panel's own color,
- * raised, with a more solid material than the frosted shell, so recessed
+ * raised, translucent without the shell's frost, so recessed
  * fields inside it stand out. It sits `small` spacing inside the frame and
  * pads its content by the Appearance spacing.
  */
@@ -70,7 +70,7 @@ export const PanelContent = forwardRef<HTMLDivElement, PanelContentProps>(functi
   // or style still sets its own.
   const padded = usePaintClasses() ? paintClass(`padding: ${padding}px`) : undefined
 
-  return <Surface color={color} material="extended" radius={radius} {...properties} ref={ref}
+  return <Surface color={color} radius={radius} {...properties} ref={ref}
     className={[padded, className].filter(Boolean).join(" ") || undefined}
     style={{
       ...(padded === undefined ? { padding } : {}),

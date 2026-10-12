@@ -3,41 +3,47 @@ import { isScaleLevel, scale, scaleMultiplier, type ScaleLevel } from "../founda
 
 /** Optional values of visual substance, expressed directly or relative to Appearance. */
 export interface MaterialOptions {
-  readonly opacity?: ScaleLevel | number
-  readonly backdrop?: ScaleLevel | number
+  /** Which mode these values apply to: `frosted` by default. */
+  readonly mode?: MaterialMode
   readonly grain?: ScaleLevel | number
-  readonly grainAmount?: ScaleLevel | number
-  readonly distortion?: ScaleLevel | number
-  readonly saturation?: ScaleLevel | number
+  readonly opacity?: ScaleLevel | number
+  readonly backdropBlur?: ScaleLevel | number
+  readonly backdropSaturation?: ScaleLevel | number
+  readonly refraction?: ScaleLevel | number
 }
 
-/** React UI's progressively complete browser rendering strategies for a resolved Material. */
-export type MaterialMode = "none" | "basic" | "extended" | "full"
+/**
+ * How much of the Appearance material a Surface draws, named by what it draws: `none` no material;
+ * `opaque` the grain and the edge, solid whatever the Appearance opacity; `translucent` also the
+ * Appearance opacity; `frosted` also the backdrop blur and saturation behind it.
+ */
+export type MaterialMode = "none" | "opaque" | "translucent" | "frosted"
+
+/** Something floating above the interface, such as a menu or a dialog, frosts what lies under it. */
+export const floatingMaterial: MaterialMode = "frosted"
 
 /** Grouped material customization exposed by components built on Surface. */
 export interface MaterialOverrides {
-  /** Omission uses basic rendering. An options object uses full rendering with those overrides. */
+  /** Omission is `translucent`. An options object is its `mode`, `frosted` by default, with those overrides. */
   readonly material?: MaterialMode | MaterialOptions
 }
 
 /** Resolves overrides against an already selected material branch. */
 export function resolveMaterialOptions(values: MaterialOptions, defaults: Readonly<{
-  opacity: number
-  backdrop: number
   grain: number
-  grainAmount: number
-  distortion: number
-  saturation: number
+  opacity: number
+  backdropBlur: number
+  backdropSaturation: number
+  refraction: number
 }>) {
   const limits = appearanceLimits.material
 
   return {
-    opacity: resolve(values.opacity, defaults.opacity, limits.opacity),
-    backdrop: resolve(values.backdrop, defaults.backdrop, limits.backdrop),
     grain: resolve(values.grain, defaults.grain, limits.grain),
-    grainAmount: resolve(values.grainAmount, defaults.grainAmount, limits.grainAmount),
-    distortion: resolve(values.distortion, defaults.distortion, limits.distortion),
-    saturation: resolve(values.saturation, defaults.saturation, limits.saturation, scaleMultiplier)
+    opacity: resolve(values.opacity, defaults.opacity, limits.opacity),
+    backdropBlur: resolve(values.backdropBlur, defaults.backdropBlur, limits.backdropBlur),
+    backdropSaturation: resolve(values.backdropSaturation, defaults.backdropSaturation, limits.backdropSaturation, scaleMultiplier),
+    refraction: resolve(values.refraction, defaults.refraction, limits.refraction)
   }
 }
 

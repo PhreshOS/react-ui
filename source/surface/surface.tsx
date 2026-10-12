@@ -7,10 +7,9 @@ import { useVisual, type Visual } from "../foundation/visual.js"
 import { grainSeed, grainSize, grainTexture } from "./grain.js"
 import { flushPaintRules, paintClass, usePaintClasses } from "./paint-class.js"
 import { resolveMaterialOptions, type MaterialMode, type MaterialOptions, type MaterialOverrides } from "./material-options.js"
-import { resolveShadowOptions, shadowStyle, type ShadowOverrides } from "./shadow-options.js"
+import { shadowStrength, shadowStyle, type ShadowOverrides } from "./shadow-options.js"
 
 export type { MaterialMode, MaterialOptions } from "./material-options.js"
-export type { ShadowOptions } from "./shadow-options.js"
 
 /**
  * Where a Surface sits relative to its surroundings. Every depth is the same
@@ -130,7 +129,7 @@ export const SurfaceView = forwardRef<Element, SurfaceImplementationProps>(funct
     className: [surfaceClass, paint.grain?.name, painted, dimmedClass(interaction?.disabled ?? false), className].filter(Boolean).join(" "),
     // Without a document (server rendering), the same declarations travel inline.
     style: painted === undefined ? { ...inlineDeclarations(declarations), ...style } : style
-  }, <SurfaceStyle />, paint.grain && <GrainStyle grain={paint.grain} />, paint.distortion > 0 && <Refraction identity={identity} distortion={paint.distortion} />,
+  }, <SurfaceStyle />, paint.grain && <GrainStyle grain={paint.grain} />, paint.refraction > 0 && <Refraction identity={identity} refraction={paint.refraction} />,
   // A clear Surface paints nothing, so what is inside it sits on what is around it.
   paint.rest === null ? children : <SurroundingPaint.Provider value={paint.rest}>{children}</SurroundingPaint.Provider>)
 })
@@ -162,7 +161,7 @@ const dimmed = "phreshos-dimmed"
 
 const surfaceClass = "phreshos-surface"
 
-const materialLevel = Object.freeze({ none: 0, basic: 1, extended: 2, full: 3 } satisfies Record<MaterialMode, number>)
+const materialLevel = Object.freeze({ none: 0, opaque: 1, translucent: 2, frosted: 3 } satisfies Record<MaterialMode, number>)
 
 /** How far hover and press move a paint toward the text color. */
 export const interactionShift = Object.freeze({ hovered: 0.05, pressed: 0.1 })
@@ -227,22 +226,25 @@ export function surfacePaint(
     ? shift > 0 ? colorOpacity(colors.foreground, shift * clearVeil) : "transparent"
     : mixColor(rest, colors.foreground, shift)
 
-  const mode = clear ? "none" : typeof options === "object" ? "full" : options ?? "basic"
+  const mode = clear ? "none" : typeof options === "object" ? options.mode ?? "frosted" : options ?? "translucent"
   const level = materialLevel[mode]
   const material = resolveMaterialOptions(typeof options === "object" ? options : {}, visual.material)
-  const opacity = level >= materialLevel.extended ? material.opacity : 1
+  const opacity = level >= materialLevel.translucent ? material.opacity : 1
   const translucent = opacity < 1
-  const frost = level >= materialLevel.full && translucent
-    ? [material.backdrop > 0 ? `blur(${material.backdrop}px)` : "", material.saturation !== 1 ? `saturate(${material.saturation})` : ""].filter(Boolean).join(" ")
+  const frost = level >= materialLevel.frosted && translucent
+    ? [material.backdropBlur > 0 ? `blur(${material.backdropBlur}px)` : "", material.backdropSaturation !== 1 ? `saturate(${material.backdropSaturation})` : ""].filter(Boolean).join(" ")
     : ""
-  const grain = level >= materialLevel.basic && material.grain > 0 && material.grainAmount > 0
-    ? grainTexture(grainSeed, material.grainAmount, level === materialLevel.basic ? material.grain * material.opacity : material.grain)
+  // One value moves the grains' count and strength against each other: at 0 every pixel holds a
+  // grain no one sees, at 1 none is left; neither end draws anything. The count falls faster than
+  // the strength rises, so the grains thin out well before the end.
+  const grain = level >= materialLevel.opaque && material.grain > 0 && material.grain < 1
+    ? grainTexture(grainSeed, (1 - material.grain) ** 2, level === materialLevel.opaque ? material.grain * material.opacity : material.grain)
     : null
 
   const ringBase = interaction?.invalid
     ? colors.danger
     : !clear && (contrast(base, colors.background) ?? 1) >= 1.6 ? base : colors.primary
-  const edged = level >= materialLevel.basic
+  const edged = level >= materialLevel.opaque
   const lit = edgeLight(depth, darkness)
   const light = mixColor(fill, "#ffffff", 0.7)
   // Light rises from the middle of the top and bottom edges and spreads along
@@ -266,10 +268,9 @@ export function surfacePaint(
     : claimed
       ? `0 0 0 1px ${ringBase}`
       : `0 0 0 0.5px ${colorOpacity("#000000", lit.hairline)}`
-  const shadow = visual.shadow
   const outer = clear || depth !== "raised" || shadowOptions === false || (active && interaction.pressed)
     ? null
-    : shadowStyle(resolveShadowOptions(typeof shadowOptions === "object" ? shadowOptions : {}, shadow))
+    : shadowStyle(shadowStrength(shadowOptions ?? true, visual.shadow))
 
   return {
     fill,
@@ -280,7 +281,7 @@ export function surfacePaint(
     text: tinted ? base : clear ? "inherit" : readableColor(rest, colors),
     ring: colorOpacity(ringBase, 0.34),
     shadow: [hairline, outer === "none" ? null : outer].filter(Boolean).join(", ") || "none",
-    distortion: level >= materialLevel.full && translucent ? material.distortion : 0,
+    refraction: level >= materialLevel.frosted && translucent ? material.refraction : 0,
     grain,
     variables: {
       "--phreshos-surface-paint": translucent ? colorOpacity(fill, opacity) : fill,
@@ -348,7 +349,7 @@ const edgeLightEnds = Object.freeze({
 } as const)
 
 /** A separate compositor pass for refraction, present only when it is visible. */
-function Refraction({ identity, distortion }: Readonly<{ identity: string, distortion: number }>) {
+function Refraction({ identity, refraction }: Readonly<{ identity: string, refraction: number }>) {
   const filter = `phreshos-refraction-${identity.replaceAll(":", "")}`
 
   return <span aria-hidden="true" data-surface-refraction="" style={{
@@ -364,7 +365,7 @@ function Refraction({ identity, distortion }: Readonly<{ identity: string, disto
       <filter id={filter} x="-20%" y="-20%" width="140%" height="140%" colorInterpolationFilters="sRGB">
         <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves={2} seed={92} result="noise" />
         <feGaussianBlur in="noise" stdDeviation={2} result="soft" />
-        <feDisplacementMap in="SourceGraphic" in2="soft" scale={distortion} xChannelSelector="R" yChannelSelector="G" />
+        <feDisplacementMap in="SourceGraphic" in2="soft" scale={refraction} xChannelSelector="R" yChannelSelector="G" />
       </filter>
     </svg>
   </span>

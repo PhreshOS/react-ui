@@ -4,7 +4,6 @@ import {
   type Appearance as SystemAppearance,
   type AppearanceColors,
   type AppearanceMaterial,
-  type AppearanceShadow,
   type ThemedValue
 } from "@phreshos/core"
 
@@ -13,7 +12,6 @@ export type {
   AppearanceColors,
   AppearanceMaterial,
   AppearanceRange,
-  AppearanceShadow,
   Transaction,
   Easing,
   ThemedValue
@@ -31,7 +29,7 @@ type AppearanceUpdateFields = Readonly<{
   colors?: Themed<AppearanceColors>
   spacing?: number
   radius?: number
-  shadow?: Themed<AppearanceShadow>
+  shadow?: Readonly<{ light?: number, dark?: number }>
   material?: Themed<AppearanceMaterial>
   tempo?: number
 }>
@@ -68,7 +66,7 @@ export function mergeAppearance(appearance: Appearance, update: AppearanceUpdate
     colors: mergeThemed(appearance.colors, update.colors),
     spacing: update.spacing ?? appearance.spacing,
     radius: update.radius ?? appearance.radius,
-    shadow: mergeThemed(appearance.shadow, update.shadow),
+    shadow: Object.freeze({ light: update.shadow?.light ?? appearance.shadow.light, dark: update.shadow?.dark ?? appearance.shadow.dark }),
     material: mergeThemed(appearance.material, update.material),
     tempo: update.tempo ?? appearance.tempo
   })

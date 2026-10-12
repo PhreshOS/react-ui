@@ -4,7 +4,7 @@ import { afterEach, describe, expect, expectTypeOf, it, vi } from "vitest"
 import { createRef, type ReactNode } from "react"
 import { Button, defaultAppearance, UIProvider, type ButtonColor, type ButtonProps, type ScaleLevel } from "../source/main.js"
 import { mixColor, readableColor } from "../source/foundation/color.js"
-import { cssColor, lifted, paintDeclarations, surfaceFill } from "./support/paint.js"
+import { cssColor, lifted, paintColor, paintDeclarations, surfaceFill } from "./support/paint.js"
 
 afterEach(cleanup)
 
@@ -89,14 +89,14 @@ describe("Button", function () {
   it("is a raised neutral Surface by default", function () {
     renderButton(<Button>Continue</Button>)
     const paint = paintDeclarations(screen.getByRole("button"))
-    expect(paint["--phreshos-surface-paint"]).toBe(colors.default)
+    expect(paintColor(paint)).toBe(colors.default)
     expect(lifted(paint["box-shadow"])).toBe(true)
   })
 
   it.each(["primary", "secondary", "success", "warning", "danger", "info"] as const)("paints %s with its readable content color", function (role) {
     renderButton(<Button color={role}>Continue</Button>)
     const paint = paintDeclarations(screen.getByRole("button"))
-    expect(paint["--phreshos-surface-paint"]).toBe(colors[role])
+    expect(paintColor(paint)).toBe(colors[role])
     expect(paint.color).toBe(cssColor(readableColor(colors[role], colors)))
   })
 
@@ -182,7 +182,7 @@ describe("Button with href", function () {
     expect(link.tagName).toBe("A")
     expect(link.getAttribute("href")).toBe("/blog")
     expect(link.getAttribute("type")).toBeNull()
-    expect(paintDeclarations(link)["--phreshos-surface-paint"]).toBe(colors.default)
+    expect(surfaceFill(link)).toBe(colors.default)
   })
 
   it("passes link attributes through", function () {

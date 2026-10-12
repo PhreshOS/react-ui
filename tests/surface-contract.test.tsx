@@ -28,14 +28,21 @@ describe("Surface depth", function () {
   it("raises with an outer Appearance shadow, a lit rim, and an inward spill", function () {
     const raised = paint("background", "raised")
     expect(raised.shadow).toContain(shadowStyle(defaultAppearance.shadow.light))
-    expect(defaultAppearance.shadow.light.x).toBe(0)
-    expect(defaultAppearance.shadow.light.y).toBe(0)
+    expect(raised.shadow).toContain(`0 0 10px 0 rgba(0, 0, 0, ${defaultAppearance.shadow.light})`)
     expect(raised.shadow).toMatch(/^0 0 0 0\.5px /)
     // Light rises from the middle of the top and bottom edges and fades before the sides.
     expect(variable(raised, "rim")).toMatch(/^linear-gradient\(to right, transparent, .* 50%, .*, transparent\)$/)
     // The spill fills its own layer; the stylesheet limits that layer's height.
     expect(variable(raised, "spill-top")).toMatch(/^radial-gradient\(50% 100% at 50% 0,/)
     expect(variable(raised, "spill-bottom")).toMatch(/^radial-gradient\(50% 100% at 50% 100%,/)
+  })
+
+  it("takes one shadow strength, centered at one blur", function () {
+    const visual = resolveVisual(defaultAppearance, { theme: "light", animations: true })
+    expect(surfacePaint(visual, "default", "raised", undefined, 0.2, undefined).shadow).toContain("0 0 10px 0 rgba(0, 0, 0, 0.2)")
+    expect(surfacePaint(visual, "default", "raised", undefined, 0, undefined).shadow).not.toContain("rgba(0, 0, 0, 0)")
+    expect(surfacePaint(visual, "default", "raised", undefined, 1, undefined).shadow).toContain("rgba(0, 0, 0, 0.3)")
+    expect(surfacePaint(visual, "default", "raised", undefined, "large", undefined).shadow).toContain(`0 0 10px 0 rgba(0, 0, 0, ${0.07 * 1.5})`)
   })
 
   it("recesses with a slightly deeper paint, a dimmer rim, and no outer shadow", function () {
@@ -135,23 +142,30 @@ describe("Surface material", function () {
     const appearance = {
       ...defaultAppearance,
       material: {
-        light: { ...defaultAppearance.material.light, opacity: 0.4, backdrop: 8, saturation: 1.8, grain: 0.2, distortion: 12 },
+        light: { ...defaultAppearance.material.light, opacity: 0.4, backdropBlur: 8, backdropSaturation: 1.8, grain: 0.2, refraction: 12 },
         dark: defaultAppearance.material.dark
       }
     }
     const translucent = resolveVisual(appearance, { theme: "light", animations: true })
-    const at = (material: "none" | "basic" | "extended" | "full") => surfacePaint(translucent, "background", "raised", material, undefined, undefined)
+    const at = (material: "none" | "opaque" | "translucent" | "frosted") => surfacePaint(translucent, "background", "raised", material, undefined, undefined)
 
     expect(variable(at("none"), "grain")).toBe("none")
     expect(variable(at("none"), "rim")).toBe("none")
     // Grain travels as one shared rule per texture, not inline on every Surface.
-    expect(at("basic").grain?.rule).toContain("data:image/png;base64,")
+    expect(at("opaque").grain?.rule).toContain("data:image/png;base64,")
     expect(at("none").grain).toBeNull()
-    expect(variable(at("basic"), "paint")).toBe(at("basic").fill)
-    expect(variable(at("extended"), "paint")).toContain("color-mix(in srgb")
-    expect(variable(at("extended"), "frost")).toBe("none")
-    expect(variable(at("full"), "frost")).toBe("blur(8px) saturate(1.8)")
-    expect(at("full").distortion).toBe(12)
+    expect(variable(at("opaque"), "paint")).toBe(at("opaque").fill)
+    expect(variable(at("translucent"), "paint")).toContain("color-mix(in srgb")
+    expect(variable(at("translucent"), "frost")).toBe("none")
+    expect(variable(at("frosted"), "frost")).toBe("blur(8px) saturate(1.8)")
+    expect(at("frosted").refraction).toBe(12)
+    // Options apply to `frosted` unless they name another mode.
+    const overridden = surfacePaint(translucent, "background", "raised", { opacity: 0.35 }, undefined, undefined)
+    expect(variable(overridden, "frost")).toBe("blur(8px) saturate(1.8)")
+    const plain = surfacePaint(translucent, "background", "raised", { mode: "translucent", opacity: 0.35 }, undefined, undefined)
+    expect(variable(plain, "paint")).toContain("35%")
+    expect(variable(plain, "frost")).toBe("none")
+    expect(plain.refraction).toBe(0)
   })
 
   it("writes each grain texture once in server HTML, however many Surfaces use it", function () {
@@ -164,9 +178,9 @@ describe("Surface material", function () {
   })
 
   it("omits backdrop work when the final paint is opaque", function () {
-    const full = surfacePaint(visual, "background", "raised", { opacity: 1, backdrop: 12 }, undefined, undefined)
+    const full = surfacePaint(visual, "background", "raised", { opacity: 1, backdropBlur: 12 }, undefined, undefined)
     expect(variable(full, "frost")).toBe("none")
-    expect(full.distortion).toBe(0)
+    expect(full.refraction).toBe(0)
   })
 })
 
@@ -251,8 +265,8 @@ describe("Surface element", function () {
     expect(ruleFor("pixels")).toContain("border-radius: 3px")
   })
 
-  it("adds a refraction pass only when distortion is visible", function () {
-    renderLight(<Surface data-testid="surface" material={{ opacity: 0.5, distortion: 20 }} />)
+  it("adds a refraction pass only when refraction is visible", function () {
+    renderLight(<Surface data-testid="surface" material={{ opacity: 0.5, refraction: 20 }} />)
     expect(screen.getByTestId("surface").querySelector("[data-surface-refraction]")).not.toBeNull()
   })
 

@@ -1,65 +1,29 @@
-import { appearanceLimits, type AppearanceRange } from "../foundation/appearance.js"
+import { appearanceLimits } from "../foundation/appearance.js"
 import { isScaleLevel, scale, type ScaleLevel } from "../foundation/scale.js"
 
-/** Optional outer-shadow values expressed directly or relative to Appearance. */
-export interface ShadowOptions {
-  readonly x?: ScaleLevel | number
-  readonly y?: ScaleLevel | number
-  readonly blur?: ScaleLevel | number
-  readonly spread?: ScaleLevel | number
-  readonly opacity?: ScaleLevel | number
-}
-
-/** Grouped shadow customization exposed by components built on Surface. */
+/** Shadow customization exposed by components built on Surface. */
 export interface ShadowOverrides {
-  /** Omission or true uses Appearance defaults; false removes the shadow. */
-  readonly shadow?: boolean | ShadowOptions
+  /**
+   * How strong the shadow is: omission or true is the Appearance's, false is none, and a level or
+   * a number is that strength. It falls evenly on every side, at one fixed blur.
+   */
+  readonly shadow?: boolean | ScaleLevel | number
 }
 
-/** Resolves overrides against an already selected shadow branch. */
-export function resolveShadowOptions(values: ShadowOptions, defaults: Readonly<{
-  x: number
-  y: number
-  blur: number
-  spread: number
-  opacity: number
-}>) {
-  const limits = appearanceLimits.shadow
+/** Every shadow falls at this blur; only its strength changes. */
+const shadowBlur = 10
 
-  return {
-    x: resolve(values.x, defaults.x, limits.x),
-    y: resolve(values.y, defaults.y, limits.y),
-    blur: resolve(values.blur, defaults.blur, limits.blur),
-    spread: resolve(values.spread, defaults.spread, limits.spread),
-    opacity: resolve(values.opacity, defaults.opacity, limits.opacity)
-  }
-}
-
-export type ResolvedShadow = ReturnType<typeof resolveShadowOptions>
-
-/** Serializes one resolved neutral-black outer shadow. */
-export function shadowStyle({ x, y, blur, spread, opacity }: ResolvedShadow) {
-  return opacity === 0 ? "none" : `${x}px ${y}px ${blur}px ${spread}px rgba(0, 0, 0, ${opacity})`
-}
-
-function resolve(value: ScaleLevel | number | undefined, base: number, range: AppearanceRange) {
-  const resolved = isScaleLevel(value) ? scale(base, value) : value ?? base
+/** A Surface's shadow strength, from its own value and the Appearance's. */
+export function shadowStrength(value: true | ScaleLevel | number, base: number) {
+  const resolved = value === true ? base : isScaleLevel(value) ? scale(base, value) : value
   const finite = Number.isFinite(resolved) ? resolved : base
-  return Math.min(range.maximum, Math.max(range.minimum, finite))
+  return Math.min(appearanceLimits.shadow.maximum, Math.max(appearanceLimits.shadow.minimum, finite))
 }
 
-/**
- * The outer shadow of something floating above the interface, such as an
- * overlay: the same Appearance shadow, only wider and slightly denser. It keeps
- * the Appearance offset, so a directionless Appearance stays directionless.
- */
-export function floatingShadow(shadow: Readonly<{ x: number, y: number, blur: number, spread: number, opacity: number }>): ShadowOptions {
-  const limits = appearanceLimits.shadow
-  return {
-    x: shadow.x,
-    y: shadow.y,
-    blur: Math.min(limits.blur.maximum, Math.max(24, shadow.blur * 3)),
-    spread: shadow.spread,
-    opacity: Math.min(limits.opacity.maximum, shadow.opacity * 1.6)
-  }
+/** Serializes one neutral-black shadow, centered on its Surface. */
+export function shadowStyle(strength: number) {
+  return strength === 0 ? "none" : `0 0 ${shadowBlur}px 0 rgba(0, 0, 0, ${strength})`
 }
+
+/** Something floating above the interface, such as a menu or a dialog, casts the shadow a level stronger. */
+export const floatingShadow = "large"

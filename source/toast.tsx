@@ -9,8 +9,8 @@ import { colorLevel, resolveColor, type Color } from "./foundation/color.js"
 import MotionStyle, { overlayLayer, overlayTransition } from "./foundation/motion-style.js"
 import { resolveRadius } from "./foundation/radius.js"
 import { scale } from "./foundation/scale.js"
-import { Surface } from "./surface/surface.js"
 import { floatingShadow } from "./surface/shadow-options.js"
+import { Surface } from "./surface/surface.js"
 import { containerPadding } from "./foundation/spacing.js"
 
 export interface ToastContent {
@@ -74,7 +74,7 @@ export function ToastRegion({ className, style }: ToastRegionProps) {
     const color = item.content.color ?? "info"
     const Icon = meaningIcon(color)
     return <AriaToast toast={item} style={{ outline: "none", ...overlayTransition(visual), animation: `phreshos-ui-overlay-enter var(--phreshos-ui-motion-duration) var(--phreshos-ui-motion-easing) both` }}>
-      <Surface material="full" shadow={floatingShadow(visual.shadow)} radius={resolveRadius("medium", visual.radius)} style={{
+      <Surface material="frosted" shadow={floatingShadow} radius={resolveRadius("medium", visual.radius)} style={{
         display: "grid",
         gridTemplateColumns: "auto minmax(0, 1fr) auto",
         alignItems: "start",

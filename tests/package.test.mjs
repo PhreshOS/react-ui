@@ -192,7 +192,7 @@ test("package contract", async () => {
           <Flex align="center" justify="between">
             <Button onPress={() => undefined} material={{ opacity: "large" }}>Save</Button>
             {surface}
-            <Surface color="background:soft" radius={12} material={{ backdrop: 8 }}>Surface</Surface>
+            <Surface color="background:soft" radius={12} material={{ backdropBlur: 8 }}>Surface</Surface>
             <Derived />
             <Input label="Name" onChange={value => value.toUpperCase()} />
             <Textarea label="Notes" rows={3} />

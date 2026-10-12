@@ -52,7 +52,7 @@ it("does not reactivate the field when pointer dismissal restores trigger focus"
 })
 
 it("uses the same visible Surface and segmented value contract as DateField", function () {
-  const { container } = renderPicker(<DatePicker aria-label="Date" color="secondary" material="basic" />)
+  const { container } = renderPicker(<DatePicker aria-label="Date" color="secondary" material="opaque" />)
 
   expect(container.querySelectorAll(".phreshos-surface:not(button)")).toHaveLength(1)
   expect(screen.getAllByRole("spinbutton")).toHaveLength(3)

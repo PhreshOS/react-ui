@@ -6,7 +6,6 @@ import {
   type Appearance,
   type AppearanceColors,
   type AppearanceMaterial,
-  type AppearanceShadow,
   type ThemedValue
 } from "./appearance.js"
 import type { Preferences } from "./preferences.js"
@@ -21,7 +20,8 @@ export interface Visual {
   readonly preferences: Preferences
   readonly colors: AppearanceColors
   readonly material: AppearanceMaterial
-  readonly shadow: AppearanceShadow
+  /** How strong a raised Surface's shadow is. */
+  readonly shadow: number
   readonly spacing: number
   readonly radius: number
   /** Duration in milliseconds of a change in place, already zero when animations are disabled. */
