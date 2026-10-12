@@ -46,9 +46,10 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider({
   const initialValue = useRef(defaultValue ?? minValue)
   const [uncontrolledValue, setUncontrolledValue] = useState(initialValue.current)
   const vertical = orientation === "vertical"
-  // The Switch's proportions: its bed height, and a thumb inset by the same gap.
-  const bed = metrics.indicator
-  const inset = 3
+  // A bed a little thinner than a Switch's, so a row of them stays light, with the thumb inset by a
+  // narrower gap, so it stays as easy to take.
+  const bed = metrics.indicator - 4
+  const inset = 2
   const thumb = bed - inset * 2
   const describedBy = [properties["aria-describedby"], description != null ? descriptionId : null].filter(Boolean).join(" ") || undefined
   const controlled = value !== undefined
