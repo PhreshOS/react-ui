@@ -117,6 +117,38 @@ it("raises one selection out of a recessed track of equal columns", async functi
   expect(screen.getByRole("tab", { name: "Activity" }).style.color).toBe(cssColor(readableColor(defaultAppearance.colors.light.primary, defaultAppearance.colors.light)))
 })
 
+it("slides only to another selection, and follows a settling layout in place", async function () {
+  const user = userEvent.setup()
+  let width = 80
+  const measure = vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+    const tab = this.closest("[role=tab]")
+    const left = tab === null ? 0 : tab.textContent === "Activity" ? width + 4 : 4
+    return { x: left, y: 3, left, top: 3, right: left + width, bottom: 33, width: tab === null ? width * 2 + 8 : width, height: 30, toJSON() {} } as DOMRect
+  })
+  const view = (label: ReactNode) => <Tabs defaultValue="overview">
+    <Tabs.List aria-label="Views">
+      <Tabs.Tab id="overview">{label}</Tabs.Tab>
+      <Tabs.Tab id="activity">Activity</Tabs.Tab>
+    </Tabs.List>
+  </Tabs>
+  const { rerender } = renderTabs(view("Overview"))
+  const list = screen.getByRole("tablist", { name: "Views" })
+  const indicator = () => list.parentElement!.querySelector<HTMLElement>(":scope > [data-selection-indicator]")!
+  await waitFor(() => expect(indicator()).not.toBeNull())
+  expect(indicator().style.transitionProperty).toBe("")
+
+  // The same Tab grows as its content arrives: the selection follows it at once.
+  width = 120
+  rerender(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>{view(<span>Overview, loaded</span>)}</UIProvider>)
+  await waitFor(() => expect(indicator().style.width).toBe("120px"))
+  expect(indicator().style.transitionProperty).toBe("")
+
+  await user.click(screen.getByRole("tab", { name: "Activity" }))
+  await waitFor(() => expect(indicator().style.translate).toBe("124px 0px"))
+  expect(indicator().style.transitionProperty).toBe("translate, width, height")
+  measure.mockRestore()
+})
+
 function renderTabs(component: ReactNode) {
   return render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: true }}>
     {component}

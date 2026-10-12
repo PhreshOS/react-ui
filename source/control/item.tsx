@@ -35,7 +35,8 @@ export function itemSurface(visual: Visual, color: Color, state: ItemState, radi
   return {
     color: state.selected ? selectionColor(resolveColor(color, visual.colors), visual.colors) : "transparent",
     depth: "flat",
-    material: "none",
+    // A selected entry takes the material a selection takes elsewhere, as in Tabs; the rest stays bare.
+    material: state.selected ? undefined : "none",
     radius,
     interaction: itemInteraction(state)
   }

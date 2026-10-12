@@ -114,11 +114,12 @@ export function SelectionItemLabel({ metrics, emphasized, children }: Readonly<{
   }}>{children}</span>
 }
 
-type SelectionPlacement = Readonly<{ x: number, y: number, width: number, height: number, moving: boolean }>
+type SelectionPlacement = Readonly<{ x: number, y: number, width: number, height: number, item: HTMLElement, moving: boolean }>
 
 /**
- * Where the selected item sits inside the track. The first placement appears
- * in place; later ones slide.
+ * Where the selected item sits inside the track. Only a change of selection slides: the first
+ * placement, and every one that follows the same item as the layout settles or resizes, such as
+ * while the content loads, appear in place.
  */
 function useSelectionPlacement(
   track: { readonly current: HTMLDivElement | null },
@@ -145,10 +146,10 @@ function useSelectionPlacement(
         width: inner.width / scale,
         height: inner.height / scale
       }
-      setPlacement(previous => previous !== null && previous.x === next.x && previous.y === next.y
+      setPlacement(previous => previous !== null && previous.item === item && previous.x === next.x && previous.y === next.y
         && previous.width === next.width && previous.height === next.height
         ? previous
-        : { ...next, moving: previous !== null })
+        : { ...next, item, moving: previous !== null && previous.item !== item })
     }
     measure()
     // Items render after the list itself, and selection is written onto them.

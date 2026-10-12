@@ -13,10 +13,12 @@ import type {
   Key,
   TreeItemContentProps as AriaTreeItemContentProps,
   TreeItemProps as AriaTreeItemProps,
+  TreeItemRenderProps,
   TreeProps as AriaTreeProps
 } from "react-aria-components"
 import { proportionalRadius, transition, useControlMetrics, type ControlMetrics } from "./control/control.js"
-import { dropTargetOutline, itemPaint, itemStyle } from "./control/item.js"
+import { dropTargetOutline, itemStyle, itemSurface } from "./control/item.js"
+import { surfaceRender } from "./control/surface-render.js"
 import {
   ariaSelection,
   stringKey,
@@ -145,26 +147,24 @@ const TreeItemImplementation = forwardRef(function TreeItem<T = object>(
     className={state => dimmedClass(state.isDisabled, className ?? state.defaultClassName) ?? ""}
     isDisabled={disabled}
     onAction={onAction}
-    style={state => {
+    // An entry is a Surface, as in every other collection, so it takes the same treatment.
+    render={surfaceRender<TreeItemRenderProps>("div", state => {
       const responds = interactive || onAction != null || state.hasChildItems
-      return {
-        ...itemStyle(metrics, state.isDisabled),
-        ...itemPaint(metrics.visual, color, {
-          // What a drag would drop into shows as chosen.
-          selected: state.isSelected || state.isDropTarget === true,
-          hovered: responds && state.isHovered,
-          pressed: responds && state.isPressed,
-          focusVisible: false,
-          disabled: state.isDisabled
-        }),
-        paddingInlineStart: metrics.inset / 2 + Math.max(0, state.level - 1) * metrics.spacing,
-        borderRadius: itemRadius,
-        outline: `3px solid ${state.isFocusVisible ? colorOpacity(metrics.visual.colors.primary, 0.34) : "transparent"}`,
-        outlineOffset: 1,
-        cursor: state.isDisabled ? "not-allowed" : responds ? "pointer" : "default",
-        ...style
-      }
-    }}
+      return itemSurface(metrics.visual, color, {
+        // What a drag would drop into shows as chosen.
+        selected: state.isSelected || state.isDropTarget === true,
+        hovered: responds && state.isHovered,
+        pressed: responds && state.isPressed,
+        focusVisible: state.isFocusVisible,
+        disabled: state.isDisabled
+      }, itemRadius)
+    })}
+    style={state => ({
+      ...itemStyle(metrics, state.isDisabled),
+      paddingInlineStart: metrics.inset / 2 + Math.max(0, state.level - 1) * metrics.spacing,
+      cursor: state.isDisabled ? "not-allowed" : interactive || onAction != null || state.hasChildItems ? "pointer" : "default",
+      ...style
+    })}
   />
 })
 
