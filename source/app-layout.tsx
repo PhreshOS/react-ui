@@ -2,7 +2,7 @@ import { createContext, forwardRef, useCallback, useContext, useEffect, useLayou
 import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from "react"
 import { PanelLeft } from "lucide-react"
 import { Button } from "./button.js"
-import { controlFontSizes, controlFontWeight } from "./control/control.js"
+import { controlFontSizes, controlFontWeight, useControlMetrics } from "./control/control.js"
 import { headerHeight } from "./foundation/layout.js"
 import { resolveRadius } from "./foundation/radius.js"
 import { scale } from "./foundation/scale.js"
@@ -110,7 +110,12 @@ const AppLayoutTitle = forwardRef<HTMLHeadingElement, AppLayoutTitleProps>(funct
   const { narrow } = useLayoutState()
   const { setTitle } = useRegistry()
 
-  useLayoutEffect(() => { setTitle(children); return () => setTitle(null) }, [children, setTitle])
+  // Atop the Drawer it keeps its own row: what it holds stands side by side, as beside the sidebar.
+  const gap = style?.gap
+  useLayoutEffect(() => {
+    setTitle(<span style={{ display: "flex", alignItems: "center", gap, minWidth: 0 }}>{children}</span>)
+    return () => setTitle(null)
+  }, [children, gap, setTitle])
 
   // Out of sight while narrow, but still the page's heading, so what is named by it keeps its name.
   if (narrow) return <h1 {...properties} ref={ref} style={visuallyHidden}>{children}</h1>
@@ -143,9 +148,8 @@ const AppLayoutSidebar = forwardRef<HTMLElement, AppLayoutSidebarProps>(function
 
   useLayoutEffect(() => { setSidebarLabel(label); return () => setSidebarLabel(undefined) }, [label, setSidebarLabel])
 
-  if (narrow) return <Drawer open={sidebarOpen} onClose={() => setSidebarOpen(false)} title={title} aria-label={label}>
+  if (narrow) return <Drawer open={sidebarOpen} onClose={() => setSidebarOpen(false)} title={title} footer={footer} aria-label={label}>
     {children}
-    {footer != null && <div style={{ paddingTop: padding }}>{footer}</div>}
   </Drawer>
 
   return <aside {...properties} ref={ref} style={{ gridArea: "sidebar", minHeight: 0, display: "flex", flexDirection: "column", ...style }}>
@@ -176,7 +180,7 @@ const AppLayoutHeader = forwardRef<HTMLElement, AppLayoutRegionProps>(function A
 const AppLayoutContent = forwardRef<HTMLElement, AppLayoutContentProps>(function AppLayoutContent({ children, depth = "recessed", style, ...properties }, ref) {
   const { spacing, radius } = useLayout()
 
-  return <Surface as="main" {...properties} ref={ref} depth={depth} material="extended" radius={resolveRadius("medium", radius)} style={{
+  return <Surface as="main" {...properties} ref={ref} depth={depth} radius={resolveRadius("medium", radius)} style={{
     gridArea: "content",
     minWidth: 0,
     minHeight: 0,
@@ -207,9 +211,13 @@ const AppLayoutPlaceholder = forwardRef<HTMLDivElement, HTMLAttributes<HTMLDivEl
   }} />
 })
 
-/** An optional row below the content, such as the actions that apply to it. */
+/**
+ * An optional row below the content, such as the actions that apply to it. It is always as tall as
+ * the small controls it holds, so the content above keeps its size as they come and go.
+ */
 const AppLayoutFooter = forwardRef<HTMLElement, AppLayoutRegionProps>(function AppLayoutFooter({ style, ...properties }, ref) {
   const { spacing } = useLayout()
+  const control = useControlMetrics("xsmall")
 
   return <footer {...properties} ref={ref} style={{
     gridArea: "footer",
@@ -218,6 +226,9 @@ const AppLayoutFooter = forwardRef<HTMLElement, AppLayoutRegionProps>(function A
     justifyContent: "flex-end",
     gap: scale(spacing, "small"),
     minWidth: 0,
+    // The height is its row's; the padding above it is added, whatever the page's box sizing.
+    boxSizing: "content-box",
+    minHeight: control.height,
     paddingTop: scale(spacing, "small"),
     ...style
   }} />

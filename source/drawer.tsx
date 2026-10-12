@@ -12,6 +12,8 @@ export interface DrawerProps {
   readonly onClose: () => void
   /** Shown at its top, such as the name of what it belongs to. */
   readonly title?: ReactNode
+  /** Shown at its bottom, below what scrolls, such as the entry to the settings of what it belongs to. */
+  readonly footer?: ReactNode
   readonly "aria-label"?: string
   readonly className?: string
   readonly style?: CSSProperties
@@ -27,7 +29,7 @@ export interface DrawerProps {
  * fading it would switch off the blur it draws of what is behind it. The surface itself never
  * scrolls, so its material stays behind all of it; what it holds scrolls inside it.
  */
-export function Drawer({ open, onClose, title, className, style, children, ...properties }: DrawerProps) {
+export function Drawer({ open, onClose, title, footer, className, style, children, ...properties }: DrawerProps) {
   const visual = useVisual()
   const animated = visual.duration > 0
   const inset = scale(visual.spacing, "small")
@@ -50,7 +52,7 @@ export function Drawer({ open, onClose, title, className, style, children, ...pr
     <MotionStyle />
     {open && <div data-drawer-scrim="" style={{ position: "absolute", inset: 0, zIndex: 10 }} onPointerDown={onClose} />}
     <Surface {...properties} data-drawer="" data-state={animated ? open ? "opening" : "closing" : undefined}
-      material="full" className={["phreshos-ui-drawer", className].filter(Boolean).join(" ")}
+      material="frosted" className={["phreshos-ui-drawer", className].filter(Boolean).join(" ")}
       onAnimationEnd={() => { if (!open) setPresent(false) }}
       style={{
         ...overlayTransition(visual),
@@ -68,6 +70,7 @@ export function Drawer({ open, onClose, title, className, style, children, ...pr
       }}>
       {title != null && <div style={{ flex: "none", padding: `${inset}px ${inset}px ${visual.spacing}px`, fontSize: controlFontSizes.xlarge, fontWeight: controlFontWeight }}>{title}</div>}
       <ScrollArea style={{ flex: "1 1 auto", minHeight: 0 }}>{children}</ScrollArea>
+      {footer != null && <div style={{ flex: "none", paddingTop: inset }}>{footer}</div>}
     </Surface>
   </>
 }

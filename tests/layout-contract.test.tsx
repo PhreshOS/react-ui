@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react"
 import { createRef } from "react"
 import { afterEach, describe, expect, it } from "vitest"
 import { AppLayout, UIProvider, Flex, Grid, defaultAppearance, useAppLayout } from "../source/main.js"
@@ -158,6 +158,35 @@ it("gives a narrow layout's title and sidebar to a Drawer that its toggle opens,
     expect(screen.getAllByText("Files")).toHaveLength(2)
     fireEvent.click(screen.getByText("Home (narrow)"))
     expect(screen.queryByText("Home (narrow)")).toBeNull()
+  } finally {
+    if (width) Object.defineProperty(HTMLElement.prototype, "getBoundingClientRect", width)
+  }
+})
+
+it("keeps a narrow layout's title in its row and the sidebar's footer below what scrolls, as when wide", function () {
+  const width = Object.getOwnPropertyDescriptor(HTMLElement.prototype, "getBoundingClientRect")
+  HTMLElement.prototype.getBoundingClientRect = function () { return { width: 500, height: 400, x: 0, y: 0, top: 0, left: 0, right: 500, bottom: 400, toJSON() {} } as DOMRect }
+  try {
+    render(<UIProvider appearance={defaultAppearance} preferences={{ theme: "light", animations: false }}>
+      <AppLayout>
+        <AppLayout.Title style={{ gap: 9 }}><img alt="" data-testid="logo" />Files</AppLayout.Title>
+        <AppLayout.Sidebar aria-label="Places" footer={<button type="button">Settings</button>}>Home</AppLayout.Sidebar>
+        <AppLayout.Header><AppLayout.SidebarToggle /></AppLayout.Header>
+        <AppLayout.Content>Content</AppLayout.Content>
+      </AppLayout>
+    </UIProvider>)
+
+    fireEvent.click(screen.getByRole("button", { name: "Places" }))
+    const drawer = document.querySelector<HTMLElement>("[data-drawer]")!
+    const row = within(drawer).getByTestId("logo").parentElement!
+    expect(row.style.display).toBe("flex")
+    expect(row.style.alignItems).toBe("center")
+    expect(row.style.gap).toBe("9px")
+
+    // The footer is outside what scrolls, so it stays at the bottom.
+    const footer = within(drawer).getByRole("button", { name: "Settings" })
+    expect(within(drawer).getByText("Home").closest("[data-drawer] > *")).not.toBe(footer.closest("[data-drawer] > *"))
+    expect(footer.closest("[data-drawer] > *")?.contains(within(drawer).getByText("Home"))).toBe(false)
   } finally {
     if (width) Object.defineProperty(HTMLElement.prototype, "getBoundingClientRect", width)
   }
