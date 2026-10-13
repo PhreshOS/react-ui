@@ -97,6 +97,24 @@ it("clips row and header paints to its resolved radius", function () {
   expect(table.style.overflow).toBe("hidden")
 })
 
+it("rests a Row in its own color, which selection still takes over", function () {
+  renderTable(<Table aria-label="Programs" selectionMode="single" value="tinted">
+    <Table.Header>
+      <Table.Column id="name" rowHeader>Name</Table.Column>
+    </Table.Header>
+    <Table.Body>
+      <Table.Row id="plain"><Table.Cell>Plain</Table.Cell></Table.Row>
+      <Table.Row id="attached" restColor="#fcf4e9"><Table.Cell>Attached</Table.Cell></Table.Row>
+      <Table.Row id="tinted" restColor="#fcf4e9"><Table.Cell>Tinted</Table.Cell></Table.Row>
+    </Table.Body>
+  </Table>)
+
+  const row = (name: string) => screen.getByText(name).closest("tr")!
+  expect(row("Plain").style.background).toBe("transparent")
+  expect(row("Attached").style.background).toBe("rgb(252, 244, 233)")
+  expect(row("Tinted").style.background).not.toBe("rgb(252, 244, 233)")
+})
+
 it("cuts a column's name short in a narrow column", function () {
   renderTable(<Table aria-label="Programs">
     <Table.Header>

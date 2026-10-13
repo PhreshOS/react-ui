@@ -247,12 +247,14 @@ export interface TableRowProps<T extends object = object> extends Omit<AriaRowPr
   readonly id: string
   readonly className?: string
   readonly disabled?: boolean
+  /** Color of this Row while it is not selected, such as a tint that sets it apart; none unless given. */
+  readonly restColor?: Color
   readonly style?: CSSProperties
 }
 
 /** Rows use the collection Item treatment as their own paint. */
 const TableRowImplementation = forwardRef(function TableRow<T extends object = object>(
-  { className, disabled = false, onAction, style, ...properties }: TableRowProps<T>,
+  { className, disabled = false, onAction, restColor, style, ...properties }: TableRowProps<T>,
   ref: ForwardedRef<HTMLTableRowElement | HTMLDivElement>
 ) {
   const { color, interactive, metrics } = useTableStyle()
@@ -273,7 +275,7 @@ const TableRowImplementation = forwardRef(function TableRow<T extends object = o
         pressed: responds && state.isPressed,
         focusVisible: false,
         disabled: state.isDisabled
-      }),
+      }, restColor),
       outline: `3px solid ${state.isFocusVisible ? colorOpacity(metrics.visual.colors.primary, 0.34) : "transparent"}`,
       outlineOffset: -3,
       cursor: state.isDisabled ? "not-allowed" : responds ? "pointer" : "default",

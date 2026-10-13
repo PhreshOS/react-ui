@@ -43,8 +43,10 @@ export function itemSurface(visual: Visual, color: Color, state: ItemState, radi
 }
 
 /** The same treatment as a plain paint, for elements that cannot host a Surface. */
-export function itemPaint(visual: Visual, color: Color, state: ItemState): Readonly<{ background: string, color: string }> {
-  const paint = surfacePaint(visual, state.selected ? selectionColor(resolveColor(color, visual.colors), visual.colors) : "transparent", "flat", "none", false, itemInteraction(state))
+export function itemPaint(visual: Visual, color: Color, state: ItemState, restColor?: Color): Readonly<{ background: string, color: string }> {
+  // At rest an entry has no paint of its own, unless it is given a color to rest in.
+  const rest = restColor === undefined ? "transparent" : restColor
+  const paint = surfacePaint(visual, state.selected ? selectionColor(resolveColor(color, visual.colors), visual.colors) : rest, "flat", "none", false, itemInteraction(state))
   return { background: paint.fill, color: paint.text }
 }
 
