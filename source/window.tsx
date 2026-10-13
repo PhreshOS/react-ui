@@ -177,6 +177,9 @@ const WindowIdentity = forwardRef<HTMLDivElement, WindowIdentityProps>(function 
 }, ref) {
   const { active, iconRadius, spacing, transition } = useHeader()
 
+  // With nothing to show it takes no place, nor the header's gap beside it.
+  if (!icon && title == null) return null
+
   return <div {...properties} ref={ref} style={{
     ...transition,
     transitionProperty: "opacity",

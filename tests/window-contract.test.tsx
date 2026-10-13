@@ -12,6 +12,16 @@ function provider(children: ReactNode, animations = true) {
 }
 
 describe("Window", () => {
+  it("leaves no place for an Identity with neither an icon nor a title, so its gap goes too", () => {
+    render(provider(<Window.Header data-testid="header">
+      <Window.Header.Identity data-testid="identity" />
+      <Window.Header.Center data-testid="center" />
+    </Window.Header>))
+
+    expect(screen.queryByTestId("identity")).toBeNull()
+    expect(screen.getByTestId("header").firstElementChild).toBe(screen.getByTestId("center"))
+  })
+
   it("provides one Surface with a ready header-and-content layout", () => {
     const root = createRef<HTMLDivElement>()
     const content = createRef<HTMLDivElement>()
