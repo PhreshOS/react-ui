@@ -51,6 +51,21 @@ it("keeps command menus selection-free by default", async function () {
   expect(onAction).toHaveBeenLastCalledWith("open")
 })
 
+it("makes an Item with an address a link the browser follows, and keeps the others commands", function () {
+  render(<Menu aria-label="Pages">
+    <Menu.Item id="docs" href="/docs">Docs</Menu.Item>
+    <Menu.Item id="source" href="https://example.com" target="_blank">Source</Menu.Item>
+    <Menu.Item id="refresh">Refresh</Menu.Item>
+  </Menu>)
+
+  const docs = screen.getByRole("menuitem", { name: "Docs" })
+  expect(docs.tagName).toBe("A")
+  expect(docs.getAttribute("href")).toBe("/docs")
+  expect(docs.style.textDecoration).toBe("none")
+  expect(screen.getByRole("menuitem", { name: "Source" }).getAttribute("target")).toBe("_blank")
+  expect(screen.getByRole("menuitem", { name: "Refresh" }).tagName).toBe("DIV")
+})
+
 function Wallpaper({ onAction, onPlace }: Readonly<{ onAction?(value: string): void, onPlace?(value: string): void }>) {
   return <DropdownMenu>
     <DropdownMenu.Trigger>Actions</DropdownMenu.Trigger>

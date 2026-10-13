@@ -65,6 +65,8 @@ export function itemStyle(metrics: ControlMetrics, disabled: boolean): CSSProper
     minHeight: metrics.height,
     paddingInline: metrics.inset,
     boxSizing: "border-box",
+    // An Item may be a link; it reads as an Item still, as a Button with an address reads as a Button.
+    textDecoration: "none",
     cursor: disabled ? "not-allowed" : "pointer",
     userSelect: "none",
     outlineOffset: -1

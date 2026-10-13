@@ -143,7 +143,8 @@ const MenuItemImplementation = forwardRef(function MenuItem<T = object>(
     textValue={textValue ?? (typeof children === "string" ? children : undefined)}
     className={className}
     isDisabled={disabled}
-    render={surfaceRender<MenuItemRenderProps>("div", state => {
+    // An Item with an address is a link, so the browser follows it as it follows any link.
+    render={surfaceRender<MenuItemRenderProps>(properties.href === undefined ? "div" : "a", state => {
       const surface = itemSurface(metrics.visual, itemColor, {
         selected: state.isSelected,
         // Keyboard focus moves the highlight through a menu the way the pointer does;
