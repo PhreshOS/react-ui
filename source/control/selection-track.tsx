@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState } from "react"
+import { flushSync } from "react-dom"
 import type { CSSProperties, ReactNode } from "react"
 import { colorOpacity, readableColor, resolveColor, type Color } from "../foundation/color.js"
 import type { MaterialOverrides } from "../surface/material-options.js"
@@ -16,18 +17,20 @@ export const selectionTrackInset = 3
  * slides to whichever item is selected. The list inside marks itself with
  * `data-selection-list`, and React Aria marks the selected item `data-selected`.
  */
-export function SelectionTrack({ metrics, color, material, orientation, selectedKey, className, style, children }: Readonly<{
+export function SelectionTrack({ metrics, color, material, orientation, selectedKey, following = false, className, style, children }: Readonly<{
   metrics: ControlMetrics
   color: Color
   material: MaterialOverrides["material"]
   orientation: Orientation
   selectedKey: unknown
+  /** Whether the selected item is moving on its own, such as a dragged tab: the selection then keeps to it each frame. */
+  following?: boolean
   className?: string
   style?: CSSProperties
   children: ReactNode
 }>) {
   const track = useRef<HTMLDivElement>(null)
-  const selection = useSelectionPlacement(track, selectedKey, orientation)
+  const selection = useSelectionPlacement(track, selectedKey, orientation, following)
 
   return <SurfaceView ref={track} color="background" depth="recessed" material={material} radius={metrics.radius} className={className}
     style={{ padding: selectionTrackInset, width: orientation === "horizontal" ? "100%" : undefined, boxSizing: "border-box", ...style }}>
@@ -42,7 +45,9 @@ export function SelectionTrack({ metrics, color, material, orientation, selected
         position: "absolute",
         top: 0,
         left: 0,
-        zIndex: 1,
+        // Under the items, unless its item is lifted and moving: it is then that item's body,
+        // above the others it passes over, and only the item's own content lies above it.
+        zIndex: following ? 3 : 1,
         width: selection.width,
         height: selection.height,
         translate: `${selection.x}px ${selection.y}px`
@@ -124,7 +129,8 @@ type SelectionPlacement = Readonly<{ x: number, y: number, width: number, height
 function useSelectionPlacement(
   track: { readonly current: HTMLDivElement | null },
   selectedKey: unknown,
-  orientation: Orientation
+  orientation: Orientation,
+  following: boolean
 ): SelectionPlacement | null {
   const [placement, setPlacement] = useState<SelectionPlacement | null>(null)
 
@@ -152,16 +158,28 @@ function useSelectionPlacement(
         : { ...next, item, moving: previous !== null && previous.item !== item })
     }
     measure()
+    // A moving item is measured only once a frame, just before it is drawn: a change in between,
+    // such as the list taking its new order, may still be moving it into place.
+    const changed = following ? () => undefined : measure
     // Items render after the list itself, and selection is written onto them.
-    const mutations = new MutationObserver(measure)
+    const mutations = new MutationObserver(changed)
     mutations.observe(list, { subtree: true, childList: true, attributeFilter: ["data-selected"] })
-    const resizes = typeof ResizeObserver === "function" ? new ResizeObserver(measure) : null
+    const resizes = typeof ResizeObserver === "function" ? new ResizeObserver(changed) : null
     resizes?.observe(list)
+    // A moving item is measured where it is drawn each frame, so the selection goes with it.
+    let frame = 0
+    // Drawn in the same frame it is measured in, so the selection never trails the item.
+    const follow = () => {
+      flushSync(measure)
+      frame = requestAnimationFrame(follow)
+    }
+    if (following) frame = requestAnimationFrame(follow)
     return () => {
       mutations.disconnect()
       resizes?.disconnect()
+      cancelAnimationFrame(frame)
     }
-  }, [track, selectedKey, orientation])
+  }, [track, selectedKey, orientation, following])
 
   return placement
 }

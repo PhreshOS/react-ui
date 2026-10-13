@@ -111,6 +111,7 @@ export {
   type TabsPanelsProps,
   type TabsPanelProps
 } from "./tabs.js"
+export { DocumentTabs, type DocumentTabsProps, type DocumentTabsTabProps } from "./document-tabs.js"
 export {
   Table,
   type TableProps,
