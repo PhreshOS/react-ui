@@ -1,4 +1,4 @@
-import { createContext, forwardRef, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { createContext, forwardRef, useContext, useLayoutEffect, useMemo, useRef, useState } from "react"
 import type { CSSProperties, ReactNode, RefObject } from "react"
 import { Tab as AriaTab, TabList as AriaTabList, Tabs as AriaTabs, TabListStateContext } from "react-aria-components"
 import { Plus, X } from "lucide-react"
@@ -27,19 +27,14 @@ const tabGap = 2
 const tabLayer = 2
 const liftedLayer = 4
 
-/** How wide a Tab is with room to spare, and how narrow it gets before the strip scrolls, in control heights. */
+/** How wide a Tab is with room to spare, in control heights. */
 const widest = 6
-const narrowest = 2.5
 
 /** The choice of no Tab, while none is chosen; React Aria's Tabs always hold a choice. */
 const noTab = "\u0000none"
 
 /** How long a dropped Tab waits for its caller to apply the move before it goes back to its place. */
 const moveWait = 1000
-
-/** How near the strip's edge a dragged tab scrolls it, and how far each frame. */
-const edge = 24
-const edgeStep = 8
 
 type DocumentTabsContext = Readonly<{
   color: Color
@@ -115,7 +110,6 @@ const DocumentTabsRoot = forwardRef<HTMLDivElement, DocumentTabsProps>(function 
 }, ref) {
   const metrics = useControlMetrics(size, radius)
   const direction = resolveDirection(dir, useDirection())
-  const scroller = useRef<HTMLDivElement>(null)
   const list = useRef<HTMLDivElement>(null)
   const drag = useRef<Drag | null>(null)
   const settle = useRef<{
@@ -192,8 +186,6 @@ const DocumentTabsRoot = forwardRef<HTMLDivElement, DocumentTabsProps>(function 
         id, pointer: event.pointerId, startX: event.clientX, scale: 1, started: false, origin: 0, target: 0,
         tabs: [], gap: 0, startLeft: 0, clientX: event.clientX, left: 0
       }
-      let frame = 0
-
       const place = () => {
         const current = drag.current
         if (current === null || !current.started) return
@@ -223,22 +215,6 @@ const DocumentTabsRoot = forwardRef<HTMLDivElement, DocumentTabsProps>(function 
         })
       }
 
-      // Near an edge of a strip that scrolls, it scrolls on toward the dragged Tab.
-      const scroll = () => {
-        const current = drag.current
-        const view = scroller.current
-        if (current === null) return
-        if (current.started && view !== null) {
-          const box = view.getBoundingClientRect()
-          const step = current.clientX < box.left + edge ? -edgeStep : current.clientX > box.right - edge ? edgeStep : 0
-          if (step !== 0 && view.scrollWidth > view.clientWidth) {
-            view.scrollLeft += step
-            place()
-          }
-        }
-        frame = requestAnimationFrame(scroll)
-      }
-
       const moving = (event: PointerEvent) => {
         const current = drag.current
         if (current === null || event.pointerId !== current.pointer) return
@@ -265,7 +241,6 @@ const DocumentTabsRoot = forwardRef<HTMLDivElement, DocumentTabsProps>(function 
       }
 
       const finish = () => {
-        cancelAnimationFrame(frame)
         globalThis.removeEventListener("pointermove", moving, true)
         globalThis.removeEventListener("pointerup", finish, true)
         globalThis.removeEventListener("pointercancel", cancel, true)
@@ -296,7 +271,6 @@ const DocumentTabsRoot = forwardRef<HTMLDivElement, DocumentTabsProps>(function 
       globalThis.addEventListener("pointermove", moving, true)
       globalThis.addEventListener("pointerup", finish, true)
       globalThis.addEventListener("pointercancel", cancel, true)
-      frame = requestAnimationFrame(scroll)
     }
   }), [color, direction, metrics, onClose, onMove, sliding])
 
@@ -310,21 +284,20 @@ const DocumentTabsRoot = forwardRef<HTMLDivElement, DocumentTabsProps>(function 
       onSelectionChange={key => onChange?.(stringKey(key))}
       style={{ display: "flex", alignItems: "center", gap: metrics.gap, minWidth: 0, fontFamily: "inherit", ...style }}
     >
-      <DocumentTabsStrip scroller={scroller} list={list} material={material} following={following} labels={labels}>{children}</DocumentTabsStrip>
+      <DocumentTabsStrip list={list} material={material} following={following} labels={labels}>{children}</DocumentTabsStrip>
       {onAdd !== undefined && <Button iconOnly depth="none" size={size} radius={radius} aria-label={addLabel} onPress={onAdd}><Plus /></Button>}
     </AriaTabs></AriaDirectionBoundary>
   </DocumentTabsStyleContext.Provider>
 })
 
-/** Where a Tab stands in its list, in the list's own pixels, wherever the strip is scrolled to or however it is scaled. */
+/** Where a Tab stands in its list, in the list's own pixels, however it is scaled. */
 function placeIn(list: HTMLElement, tab: HTMLElement, box = list.getBoundingClientRect(), scale = list.offsetWidth > 0 ? box.width / list.offsetWidth : 1) {
   const rect = tab.getBoundingClientRect()
   return { scale, left: (rect.left - box.left) / (scale || 1), width: rect.width / (scale || 1) }
 }
 
-/** The Tabs in their track, which shrink together as more open and then scroll. */
-function DocumentTabsStrip({ scroller, list, material, following, labels, children }: Readonly<{
-  scroller: RefObject<HTMLDivElement | null>
+/** The Tabs in their track, which shrink together as more open. */
+function DocumentTabsStrip({ list, material, following, labels, children }: Readonly<{
   list: RefObject<HTMLDivElement | null>
   material: MaterialOverrides["material"]
   following: boolean
@@ -334,29 +307,12 @@ function DocumentTabsStrip({ scroller, list, material, following, labels, childr
   const { color, direction, metrics, onClose, onMove } = useDocumentTabsStyle()
   const state = useContext(TabListStateContext)
   const selectedKey = state?.selectedKey
-  // The track is as wide as its Tabs at their widest, and gives way down to their narrowest;
-  // the Tabs share it evenly, and below that the strip scrolls.
+  // The track is as wide as its Tabs at their widest, and gives way to the room there is;
+  // the Tabs share it evenly.
   const count = state?.collection.size ?? 0
   const around = selectionTrackInset * 2 + tabGap * Math.max(0, count - 1)
 
-  // The chosen one comes into view, as far as it must and no further: once it is drawn, as a Tab
-  // just opened is drawn after the list.
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      const view = scroller.current
-      const tab = list.current?.querySelector<HTMLElement>("[data-selected]")
-      if (!view || !tab) return
-      const outer = view.getBoundingClientRect()
-      const inner = tab.getBoundingClientRect()
-      const scale = view.offsetWidth > 0 ? outer.width / view.offsetWidth : 1
-      if (inner.left < outer.left) view.scrollLeft -= (outer.left - inner.left) / scale
-      else if (inner.right > outer.right) view.scrollLeft += (inner.right - outer.right) / scale
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [scroller, list, selectedKey, count])
-
   return <div
-    ref={scroller}
     // Before the list hears them: Delete closes the focused Tab, and Ctrl+Shift with an arrow moves it a place.
     onKeyDownCapture={event => {
       const tab = (event.target as HTMLElement).closest<HTMLElement>("[data-document-tab]")
@@ -377,15 +333,10 @@ function DocumentTabsStrip({ scroller, list, material, following, labels, childr
       const to = from + ((event.key === "ArrowRight") === (direction === "ltr") ? 1 : -1)
       if (from >= 0 && to >= 0 && to < order.length) onMove(id, to)
     }}
-    onWheel={event => {
-      // A wheel that turns up and down scrolls the strip across.
-      const view = event.currentTarget
-      if (Math.abs(event.deltaY) > Math.abs(event.deltaX)) view.scrollLeft += event.deltaY
-    }}
-    style={{ display: "flex", flex: "0 1 auto", minWidth: 0, overflowX: "auto", overflowY: "hidden", scrollbarWidth: "none", touchAction: "pan-x" }}
+    style={{ display: "flex", flex: "0 1 auto", minWidth: 0 }}
   >
     <SelectionTrack metrics={metrics} color={color} material={material} orientation="horizontal" selectedKey={selectedKey} following={following}
-      style={{ flex: "0 1 auto", width: count * metrics.height * widest + around, minWidth: count * metrics.height * narrowest + around, fontSize: metrics.fontSize }}>
+      style={{ flex: "0 1 auto", width: count * metrics.height * widest + around, minWidth: 0, fontSize: metrics.fontSize }}>
       <AriaTabList {...labels} ref={list} data-selection-list="" style={{ position: "relative", display: "flex", gap: tabGap, minWidth: 0 }}>
         {children}
       </AriaTabList>
@@ -423,8 +374,7 @@ const DocumentTabsTab = forwardRef<HTMLDivElement, DocumentTabsTabProps>(functio
     isDisabled={disabled}
     onPointerDown={event => {
       if (event.button === 1) event.preventDefault()
-      // Mouse and pen drag a Tab; a finger scrolls the strip.
-      if (!disabled && event.button === 0 && event.pointerType !== "touch") beginDrag(id, event.nativeEvent)
+      if (!disabled && event.button === 0) beginDrag(id, event.nativeEvent)
     }}
     onAuxClick={event => {
       if (event.button === 1 && canClose) onClose?.(id)
@@ -433,7 +383,8 @@ const DocumentTabsTab = forwardRef<HTMLDivElement, DocumentTabsTabProps>(functio
       ...selectionItemStyle(metrics, color, "horizontal", state),
       justifyContent: "flex-start",
       flex: "1 1 0",
-      minWidth: metrics.height * narrowest,
+      // A finger drags a Tab as a mouse does, rather than panning what lies around it.
+      touchAction: "none",
       // The list holds no layer of its own: the Tabs share the track's with the selection, above it at rest.
       zIndex: tabLayer,
       paddingInlineEnd: canClose ? metrics.inset / 2 : metrics.inset,
