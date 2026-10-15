@@ -168,6 +168,8 @@ export interface WindowIdentityProps extends Omit<HTMLAttributes<HTMLDivElement>
   readonly title?: ReactNode
 }
 
+const identityIconSize = 16
+
 /** The icon and truncating title share the window's active treatment. */
 const WindowIdentity = forwardRef<HTMLDivElement, WindowIdentityProps>(function WindowIdentity({
   icon,
@@ -187,13 +189,14 @@ const WindowIdentity = forwardRef<HTMLDivElement, WindowIdentityProps>(function 
     alignItems: "center",
     gap: spacing,
     flex: "0 1 auto",
-    minWidth: 0,
+    // Only the title gives way; the icon keeps its place.
+    minWidth: icon ? identityIconSize : 0,
     opacity: active ? 1 : 0.6,
     ...style
   }}>
     {icon && <img src={icon} alt="" draggable={false} style={{
-      width: 16,
-      height: 16,
+      width: identityIconSize,
+      height: identityIconSize,
       flexShrink: 0,
       borderRadius: iconRadius,
       objectFit: "contain"
